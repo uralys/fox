@@ -1,1 +1,6 @@
+# godot
 *.import
+export_presets.cfg
+
+# osx
+*.DS_Store

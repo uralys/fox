@@ -1,10 +1,63 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://extension/assets/tile-test.glb" type="PackedScene" id=1]
-[ext_resource path="res://extension/materials/Green08.material" type="Material" id=2]
+[ext_resource path="res://extension/resources/platformer.tres" type="TileSet" id=1]
 
-[node name="tile-test" instance=ExtResource( 1 )]
+[node name="Node2D" type="Node2D"]
 
-[node name="Prop_Flooring_Cobble_Stone_01" parent="." index="0"]
-transform = Transform( 0.0254, 0, 0, 0, 4.54187e-09, -0.0254, 0, 0.0254, 4.54187e-09, 1.19209e-07, 5.96046e-08, 0 )
-material/0 = ExtResource( 2 )
+[node name="Floor" type="TileMap" parent="."]
+mode = 1
+tile_set = ExtResource( 1 )
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+tile_data = PoolIntArray( -2, 76, 0, 65533, 71, 0, 65534, 74, 0, 65535, 362, 0, 0, 74, 0, 1, 74, 0, 2, 74, 0, 131070, 74, 0, 131071, 362, 0, 65536, 74, 0, 65537, 74, 0, 65538, 74, 0, 196606, 74, 0, 196607, 74, 0, 131072, 413, 0, 131073, 74, 0, 131074, 74, 0, 262142, 74, 0, 262143, 74, 0, 196608, 74, 0, 196609, 74, 0, 196610, 74, 0, 327678, 74, 0, 327679, 74, 0, 262144, 74, 0, 262145, 74, 0, 262146, 74, 0, 262147, 100, 0, 393215, 188, 0, 327680, 188, 0, 327681, 112, 0, 327682, 112, 0, 327683, 112, 0, 458751, 188, 0, 393216, 188, 0, 393217, 112, 0, 393218, 112, 0, 393219, 112, 0, 458752, 188, 0 )
+
+[node name="Floor2" type="TileMap" parent="."]
+mode = 1
+tile_set = ExtResource( 1 )
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+tile_data = PoolIntArray( 131070, 413, 0, 131071, 392, 0, 65536, 411, 0, 196606, 364, 0, 196607, 413, 0, 131072, 318, 0, 131073, 362, 0, 262142, 351, 0, 262143, 392, 0, 196608, 374, 0, 196609, 411, 0, 196610, 360, 0, 327678, 351, 0, 327679, 392, 0, 262144, 411, 0, 262145, 411, 0, 262146, 360, 0, 393215, 342, 0, 327680, 296, 0, 458751, 301, 0, 393216, 300, 0, 393217, 308, 0, 458752, 308, 0 )
+
+[node name="Floor3" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+
+[node name="Floor4" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+
+[node name="Floor5" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+
+[node name="Floor6" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+
+[node name="Floor7" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+
+[node name="Floor8" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1
+
+[node name="Floor9" type="TileMap" parent="."]
+mode = 1
+cell_size = Vector2( 256, 128 )
+centered_textures = true
+format = 1

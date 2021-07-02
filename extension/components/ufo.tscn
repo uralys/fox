@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://extension/assets/kenney-td/ufo/enemy_ufoGreen_E.png" type="Texture" id=1]
+
+[node name="Sprite" type="Sprite"]
+light_mask = 32769
+texture = ExtResource( 1 )
+offset = Vector2( 0, -90 )
