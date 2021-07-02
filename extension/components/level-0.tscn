@@ -34,6 +34,6 @@ position = Vector2( 64, 160 )
 [node name="ufo" parent="." instance=ExtResource( 2 )]
 position = Vector2( 64, -32 )
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="camera" type="Camera2D" parent="."]
 position = Vector2( 88, 96 )
 current = true
