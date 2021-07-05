@@ -1,12 +1,7 @@
 const chokidar = require('chokidar');
 const shelljs = require('shelljs');
 
-const path = require('path');
-const {cwd} = require('process');
-
 // -----------------------------------------------------------------------------
-
-const SRC = path.resolve(cwd(), `./src`);
 
 let currentInstance;
 
@@ -27,7 +22,7 @@ const restart = () => {
 // -----------------------------------------------------------------------------
 
 const runGodot = () => {
-  const watcher = chokidar.watch(`${SRC}/*/*.gd`);
+  const watcher = chokidar.watch(`**/*.gd`);
 
   watcher.on('ready', (event, path) => {
     restart();

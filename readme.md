@@ -8,7 +8,7 @@ To keep same paths and `res://`, symlink like this:
 > ln -s ../godox/extension extension
 ```
 
-## use core elements
+## prepare core elements
 
 - Main
 
@@ -32,4 +32,12 @@ extends 'res://extension/screens/playground.gd'
 
 func onOpen():
   .onOpen()
+```
+
+## run
+
+watch files and restart `Godot` using:
+
+```sh
+> node extension/scripts/run.js
 ```
