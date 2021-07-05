@@ -2,5 +2,8 @@
 *.import
 export_presets.cfg
 
+# npm
+node_modules
+
 # osx
 *.DS_Store
