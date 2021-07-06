@@ -10,22 +10,26 @@ To keep same paths and `res://`, symlink like this:
 
 ## prepare core elements
 
-- Main
+### Main
+
+create a Main scene, attach `main.gd`
+
+```gdscript
+extends 'res://extension/core/main.gd'
+```
+
+Default start screen is `Home`, you can override `startScreen()`
 
 ```gdscript
 extends 'res://extension/core/main.gd'
 
-func _ready():
-  ._ready()
+func startScreen():
+  Router.openYourCustomScreen()
 ```
 
-- Router
+### Playground
 
-```gdscript
-extends 'res://extension/core/router.gd'
-```
-
-- Playground
+create a `src/screens/playground.gd`
 
 ```gdscript
 extends 'res://extension/screens/playground.gd'
@@ -33,6 +37,16 @@ extends 'res://extension/screens/playground.gd'
 func onOpen():
   .onOpen()
 ```
+
+### Router
+
+create a `src/core/router.gd`
+
+```gdscript
+extends 'res://extension/core/router.gd'
+```
+
+and add it as `Autoload`
 
 ## run
 
