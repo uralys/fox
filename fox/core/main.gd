@@ -2,7 +2,7 @@ extends Node
 
 func _ready():
   print('-------------------------------')
-  print('[🤖 Godox] 1.0]')
+  print('[🦊 Fox] 1.0]')
   print('-------------------------------')
   startScreen()
 

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://extension/resources/platformer.tres" type="TileSet" id=1]
+[ext_resource path="res://fox/resources/platformer.tres" type="TileSet" id=1]
 
 [node name="Node2D" type="Node2D"]
 

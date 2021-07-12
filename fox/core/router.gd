@@ -6,8 +6,8 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-var home = preload("res://extension/screens/home.tscn")
-var playground = preload("res://extension/screens/playground.tscn")
+var home = preload("res://fox/screens/home.tscn")
+var playground = preload("res://fox/screens/playground.tscn")
 
 # ------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ func _openScene(scene, params = null):
 
   # Instance the new scene.
   currentScene = scene.instance()
-  print('[🤖 Godox Router]> ' + str(currentScene.name))
+  print('[🦊 Fox Router]> ' + str(currentScene.name))
 
   # Add it to the active scene, as child of root.
   get_tree().get_root().add_child(currentScene)
