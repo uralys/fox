@@ -5,34 +5,33 @@
 
 [node name="Level0" type="Node2D"]
 
-[node name="Sprite2" parent="." instance=ExtResource( 1 )]
-position = Vector2( 64, -32 )
-
-[node name="Sprite" parent="." instance=ExtResource( 1 )]
-position = Vector2( 128, 0 )
-
-[node name="Sprite3" parent="." instance=ExtResource( 1 )]
-position = Vector2( 192, 32 )
-
-[node name="Sprite4" parent="." instance=ExtResource( 1 )]
-position = Vector2( 256, 64 )
-
-[node name="Sprite5" parent="." instance=ExtResource( 1 )]
-position = Vector2( 192, 96 )
-
-[node name="Sprite6" parent="." instance=ExtResource( 1 )]
-position = Vector2( 128, 128 )
+[node name="Sprite00" parent="." instance=ExtResource( 1 )]
 
 [node name="Sprite10" parent="." instance=ExtResource( 1 )]
+position = Vector2( 64, 32 )
 
-[node name="Sprite9" parent="." instance=ExtResource( 1 )]
-position = Vector2( 0, 128 )
+[node name="Sprite20" parent="." instance=ExtResource( 1 )]
+position = Vector2( 128, 64 )
 
-[node name="Sprite7" parent="." instance=ExtResource( 1 )]
+[node name="Sprite30" parent="." instance=ExtResource( 1 )]
+position = Vector2( 192, 96 )
+
+[node name="Sprite31" parent="." instance=ExtResource( 1 )]
+position = Vector2( 128, 128 )
+
+[node name="Sprite32" parent="." instance=ExtResource( 1 )]
 position = Vector2( 64, 160 )
 
+[node name="Sprite01" parent="." instance=ExtResource( 1 )]
+position = Vector2( -64, 32 )
+
+[node name="Sprite23" parent="." instance=ExtResource( 1 )]
+position = Vector2( -64, 160 )
+
+[node name="Sprite33" parent="." instance=ExtResource( 1 )]
+position = Vector2( 0, 192 )
+
 [node name="ufo" parent="." instance=ExtResource( 2 )]
-position = Vector2( 64, -32 )
 
 [node name="camera" type="Camera2D" parent="."]
 position = Vector2( 88, 96 )
