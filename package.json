@@ -1,25 +1,12 @@
 {
-  "name": "tuto1",
+  "name": "@uralys/fox",
   "version": "1.0.0",
-  "description": "exploring Godot Engine",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/chrisdugne/godot-tuto1.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/chrisdugne/godot-tuto1/issues"
-  },
-  "homepage": "https://github.com/chrisdugne/godot-tuto1#readme",
+  "description": "🦊 Starter and Components for your Godot Engine app",
+  "author": "chrisdugne",
+  "license": "MIT",
+  "homepage": "https://github.com/uralys/fox#readme",
   "devDependencies": {
-    "chokidar": "^3.5.2"
-  },
-  "dependencies": {
+    "chokidar": "^3.5.2",
     "shelljs": "^0.8.4"
   }
 }

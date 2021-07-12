@@ -1,11 +1,13 @@
-# Godot extension
+# 🦊 Fox
+
+Godot extension to share between apps.
 
 ## install
 
 To keep same paths and `res://`, symlink like this:
 
 ```sh
-> ln -s ../godox/extension extension
+> ln -s ../fox/fox fox
 ```
 
 ## prepare core elements
@@ -15,13 +17,13 @@ To keep same paths and `res://`, symlink like this:
 create a Main scene, attach `main.gd`
 
 ```gdscript
-extends 'res://extension/core/main.gd'
+extends 'res://fox/core/main.gd'
 ```
 
 Default start screen is `Home`, you can override `startScreen()`
 
 ```gdscript
-extends 'res://extension/core/main.gd'
+extends 'res://fox/core/main.gd'
 
 func startScreen():
   Router.openYourCustomScreen()
@@ -32,10 +34,11 @@ func startScreen():
 create a `src/screens/playground.gd`
 
 ```gdscript
-extends 'res://extension/screens/playground.gd'
+extends 'res://fox/screens/playground.gd'
 
 func onOpen():
-  .onOpen()
+  # --> anything you need to setup
+  .onOpen() # --> then call fox.playground.onOpen()
 ```
 
 ### Router
@@ -43,7 +46,7 @@ func onOpen():
 create a `src/core/router.gd`
 
 ```gdscript
-extends 'res://extension/core/router.gd'
+extends 'res://fox/core/router.gd'
 ```
 
 and add it as `Autoload`
@@ -53,5 +56,5 @@ and add it as `Autoload`
 watch files and restart `Godot` using:
 
 ```sh
-> node extension/scripts/run.js
+> node fox/scripts/run.js
 ```
