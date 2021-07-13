@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://fox/assets/blocks/block1.png" type="Texture" id=1]
+
+[node name="Sprite" type="Sprite" groups=[
+"block",
+]]
+texture = ExtResource( 1 )
+offset = Vector2( 0, 64 )

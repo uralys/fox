@@ -1,0 +1,11 @@
+# Made using Asset Forge (2.2.0)
+
+:materials
+
+[name:Material;color:RGBA(0.899, 0.494, 0.186, 1.000);scale:(1.0, 1.0);shader:Default;valueA:0;valueB:0.8;]
+[name:Material.005;color:RGBA(0.000, 0.952, 0.588, 1.000);scale:(1.0, 1.0);shader:Default;valueA:0.5;valueB:0;]
+
+:models
+
+[name:;collection:uralys;type:cube;position:(0.0000, 0.0000, 0.0000);rotation:(0.0000, 0.0000, 0.0000);scale:(1.0000, 0.7128, 1.0000);group:;locked:False;hidden:False;materials:Material;]
+[name:;collection:uralys;type:top-cube;position:(0.0000, 0.6696, 0.0000);rotation:(0.0000, 0.0000, 0.0000);scale:(1.0000, 1.1700, 1.0000);group:;locked:False;hidden:False;materials:Material.005;]
