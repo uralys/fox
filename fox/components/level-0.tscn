@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://fox/components/tiles/block.tscn" type="PackedScene" id=1]
 [ext_resource path="res://fox/components/ufo.tscn" type="PackedScene" id=2]
+[ext_resource path="res://fox/assets/blocks/block1/block_00.png" type="Texture" id=3]
 
 [node name="Level0" type="Node2D"]
 
@@ -9,6 +10,7 @@
 
 [node name="Sprite10" parent="." instance=ExtResource( 1 )]
 position = Vector2( 64, 32 )
+texture = ExtResource( 3 )
 
 [node name="Sprite20" parent="." instance=ExtResource( 1 )]
 position = Vector2( 128, 64 )
@@ -20,7 +22,7 @@ position = Vector2( 192, 96 )
 position = Vector2( 128, 128 )
 
 [node name="Sprite32" parent="." instance=ExtResource( 1 )]
-position = Vector2( 64, 160 )
+position = Vector2( 63.4772, 160 )
 
 [node name="Sprite01" parent="." instance=ExtResource( 1 )]
 position = Vector2( -64, 32 )
@@ -32,6 +34,7 @@ position = Vector2( -64, 160 )
 position = Vector2( 0, 192 )
 
 [node name="ufo" parent="." instance=ExtResource( 2 )]
+position = Vector2( 0.522827, -0.522827 )
 
 [node name="camera" type="Camera2D" parent="."]
 position = Vector2( 88, 96 )
