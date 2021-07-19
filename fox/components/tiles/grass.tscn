@@ -17,14 +17,15 @@ animations = [ {
 "speed": 24.0
 } ]
 
-[node name="GrassBlock" type="Area2D"]
+[node name="GrassBlock" type="Area2D" groups=[
+"block",
+]]
 
 [node name="AnimatedSprite" type="AnimatedSprite" parent="."]
-position = Vector2( 0, 0.14534 )
+position = Vector2( -0.0956917, 0.14534 )
 frames = SubResource( 1 )
 animation = "rotate"
 offset = Vector2( 0, 64 )
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
-position = Vector2( 0.283638, -0.28252 )
-polygon = PoolVector2Array( -0.868416, 32.6413, 62.091, -0.247894, -0.546127, -31.616, -61.7003, -0.529736 )
+polygon = PoolVector2Array( -0.562515, 33.6099, 63.4124, 1.36035, -0.546127, -31.616, -64.9503, 0.628155 )
