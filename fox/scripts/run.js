@@ -37,11 +37,12 @@ const runGodot = () => {
   });
 
   watcher.on('change', (event, path) => {
+    shelljs.exec('clear');
+
     if (currentInstance) {
       shelljs.exec(`kill -9 ${currentInstance.pid}`);
     }
 
-    shelljs.exec('clear');
     restart();
   });
 };
