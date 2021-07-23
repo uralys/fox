@@ -29,7 +29,7 @@ func _openScene(scene, params = null):
 
   # Instance the new scene.
   currentScene = scene.instance()
-  print('[🦊 Fox Router]> ' + str(currentScene.name))
+  print('[🦊 Router]> ' + str(currentScene.name))
 
   # Add it to the active scene, as child of root.
   get_tree().get_root().add_child(currentScene)
