@@ -23,7 +23,7 @@ const restart = () => {
 // -----------------------------------------------------------------------------
 
 const runGodot = () => {
-  const watcher = chokidar.watch(`**/*.gd`);
+  const watcher = chokidar.watch(['**/*.gd', '**/*.tscn']);
 
   console.log('🦊 starting Godot Editor');
   shelljs.exec(
