@@ -4,8 +4,8 @@ extends Node2D
 
 # ------------------------------------------------------------------------------
 
-func onOpen(_params):
-  print('[🦊 Playground] onOpen')
+func _ready():
+  print('[🦊 Playground] ready')
 
   if not G.DEBUG:
     $debugHUD.visible = false

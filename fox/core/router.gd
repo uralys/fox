@@ -18,12 +18,12 @@ var currentScene = null
 func openHome():
   call_deferred("_openScene", home)
 
-func openPlayground(num):
-  call_deferred("_openScene", playground, [num])
+func openPlayground():
+  call_deferred("_openScene", playground)
 
 # ------------------------------------------------------------------------------
 
-func _openScene(scene, params = null):
+func _openScene(scene):
   if currentScene != null:
     currentScene.queue_free()
 
@@ -36,6 +36,3 @@ func _openScene(scene, params = null):
 
   # Optionally, to make it compatible with the SceneTree.change_scene() API.
   get_tree().set_current_scene(currentScene)
-
-  if currentScene.has_method('onOpen'):
-    currentScene.onOpen(params)
