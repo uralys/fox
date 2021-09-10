@@ -27,7 +27,7 @@ const runGodot = () => {
 
   console.log('🦊 starting Godot Editor');
   shelljs.exec(
-    '/Applications/Apps/Godot.app/Contents/MacOS/Godot -e --windowed --resolution 2580x1720 --position 50,170',
+    '/Applications/Apps/Godot.app/Contents/MacOS/Godot -e --windowed --resolution 2980x2220 --position 50,170',
     {
       async: true,
     }
