@@ -1,25 +1,10 @@
 # ------------------------------------------------------------------------------
-# https://docs.godotengine.org/en/stable/getting_started/step_by_step/singletons_autoload.html
-# ------------------------------------------------------------------------------
 
 extends Node
 
 # ------------------------------------------------------------------------------
 
-var home = preload("res://fox/screens/home.tscn")
-var playground = preload("res://fox/screens/playground.tscn")
-
-# ------------------------------------------------------------------------------
-
 var currentScene = null
-
-# ------------------------------------------------------------------------------
-
-func openHome():
-  call_deferred("_openScene", home)
-
-func openPlayground():
-  call_deferred("_openScene", playground)
 
 # ------------------------------------------------------------------------------
 
