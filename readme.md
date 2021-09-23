@@ -29,18 +29,6 @@ func startScreen():
   Router.openYourCustomScreen()
 ```
 
-### Playground
-
-create a `src/screens/playground.gd`
-
-```gdscript
-extends 'res://fox/screens/playground.gd'
-
-func onOpen():
-  # --> anything you need to setup
-  .onOpen() # --> then call fox.playground.onOpen()
-```
-
 ### Router
 
 create a `src/core/router.gd`

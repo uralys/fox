@@ -1,7 +1,13 @@
+# tools
+
 ## effects
 
 - <https://github.com/GDQuest/godot-shaders>
 - <https://godotshaders.com/>
+
+## godot scripts/examples
+
+- transitions: <https://github.com/Hamdiovish/zarbia-viewmanager>
 
 ## audio
 
