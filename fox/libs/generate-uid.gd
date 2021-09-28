@@ -5,11 +5,11 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-class_name L
+class_name generateUID
 
 # ------------------------------------------------------------------------------
 
-static func generateUID(prefix):
+static func withPrefix(prefix):
   var _prefix = ''
   if (prefix):
     _prefix = prefix + '-'
