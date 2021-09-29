@@ -2,15 +2,15 @@
 
 [ext_resource path="res://fox/components/screen-fader.gd" type="Script" id=1]
 
-[node name="screenFader" type="ColorRect"]
+[node name="screenFader" type="CanvasLayer"]
+script = ExtResource( 1 )
+
+[node name="rect" type="ColorRect" parent="."]
 visible = false
-margin_left = -37.0
-margin_top = -55.0
-margin_right = 1950.0
-margin_bottom = 1142.0
+margin_right = 164.0
+margin_bottom = 128.0
 mouse_filter = 2
 color = Color( 0, 0, 0, 1 )
-script = ExtResource( 1 )
 __meta__ = {
 "_edit_use_anchors_": false
 }

@@ -4,15 +4,15 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-class_name generateUID
+signal done
 
 # ------------------------------------------------------------------------------
 
-static func withPrefix(prefix):
-  var _prefix = ''
-  if (prefix):
-    _prefix = prefix + '-'
-
-  return _prefix + str(OS.get_unix_time()) + '-' + str(OS.get_ticks_msec()) + '-' + str(randi() % 900000 + 100000)
+func start(parent, timetoWait):
+  var _Timer = Timer.new()
+  parent.add_child(_Timer)
+  _Timer.start(timetoWait);
+  yield(_Timer, "timeout")
+  emit_signal('done')
 
 # ------------------------------------------------------------------------------

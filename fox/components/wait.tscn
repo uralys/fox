@@ -1,0 +1,2 @@
+[gd_scene load_steps=2 format=2]
+[node name="wait" type="Timer"]
