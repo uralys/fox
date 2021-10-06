@@ -10,12 +10,12 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "Node",
-"class": "L",
+"class": "generateUID",
 "language": "GDScript",
-"path": "res://fox/libs.gd"
+"path": "res://fox/libs/generate-uid.gd"
 } ]
 _global_script_class_icons={
-"L": ""
+"generateUID": ""
 }
 
 [application]
