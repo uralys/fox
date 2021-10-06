@@ -25,14 +25,6 @@ const restart = () => {
 const runGodot = () => {
   const watcher = chokidar.watch(['**/*.gd', '**/*.tscn']);
 
-  console.log('🦊 starting Godot Editor');
-  shelljs.exec(
-    '/Applications/Apps/Godot.app/Contents/MacOS/Godot -e --windowed --resolution 2980x2220 --position 50,170',
-    {
-      async: true,
-    }
-  );
-
   watcher.on('ready', (event, path) => {
     restart();
   });
