@@ -4,15 +4,14 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-signal done
+class_name Wait
 
 # ------------------------------------------------------------------------------
 
-func start(parent, timetoWait):
+static func start(parent, timetoWait):
   var _Timer = Timer.new()
   parent.add_child(_Timer)
   _Timer.start(timetoWait);
-  yield(_Timer, "timeout")
-  emit_signal('done')
+  return _Timer
 
 # ------------------------------------------------------------------------------
