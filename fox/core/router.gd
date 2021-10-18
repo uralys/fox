@@ -8,6 +8,9 @@ var currentScene = null
 
 # ------------------------------------------------------------------------------
 
+func getCurrentScene():
+  return currentScene
+
 func _openScene(scene):
   if currentScene != null:
     currentScene.queue_free()
