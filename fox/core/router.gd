@@ -11,6 +11,11 @@ var currentScene = null
 func getCurrentScene():
   return currentScene
 
+func prepare():
+  return currentScene
+
+# ------------------------------------------------------------------------------
+
 func _openScene(scene):
   if currentScene != null:
     currentScene.queue_free()
@@ -19,8 +24,11 @@ func _openScene(scene):
   currentScene = scene.instance()
   print('[🦊 Router]> ' + str(currentScene.name))
 
-  # Add it to the active scene, as child of root.
-  get_tree().get_root().add_child(currentScene)
 
-  # Optionally, to make it compatible with the SceneTree.change_scene() API.
-  get_tree().set_current_scene(currentScene)
+  var leftCurtain = $'/root/app/curtain/left'
+  var rightCurtain = $'/root/app/curtain/right'
+
+  Move.addValue(leftCurtain, 'anchor_right', +0.66)
+  Move.addValue(rightCurtain, 'anchor_left', -0.66)
+
+  $'/root/app/scene'.add_child(currentScene)
