@@ -11,7 +11,7 @@ func _ready():
     $rect,
     'modulate:a',
     1, 0,
-    0.5,
+    1,
     Tween.TRANS_LINEAR, Tween.EASE_OUT
   )
 
