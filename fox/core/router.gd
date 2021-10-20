@@ -17,12 +17,15 @@ var currentScene = null
 var CURTAIN_DURATION = 0.7 #s
 
 var isCurtainOpen = true
+
+var curtain
 var leftCurtain
 var rightCurtain
 
 # ------------------------------------------------------------------------------
 
 func _ready():
+  curtain = $'/root/app/curtain'
   leftCurtain = $'/root/app/curtain/left'
   rightCurtain = $'/root/app/curtain/right'
 
@@ -39,18 +42,21 @@ func openDefault():
 # ------------------------------------------------------------------------------
 
 func _openScene(scene):
+  var previousSceneName = 'none'
+
   if(currentScene):
-    prints('[🦊 Router] <', str(currentScene.name))
+    previousSceneName = str(currentScene.name)
 
     if(isCurtainOpen):
       closeCurtain()
       var _timer = Wait.start(leftCurtain, CURTAIN_DURATION)
       yield(_timer, 'timeout')
 
+    $'/root/app/scene'.remove_child(currentScene)
     currentScene.queue_free()
 
   currentScene = scene.instance()
-  prints('[🦊 Router] >', str(currentScene.name))
+  prints('[🦊 Router]>', previousSceneName, '>', str(currentScene.name))
   $'/root/app/scene'.add_child(currentScene)
 
 # ------------------------------------------------------------------------------
@@ -84,10 +90,13 @@ func getLoadedResource(path):
 
 func closeCurtain():
   isCurtainOpen = false
-  Move.setValue(leftCurtain, 'anchor_right', 0.66, CURTAIN_DURATION)
-  Move.setValue(rightCurtain, 'anchor_left', 0.33, CURTAIN_DURATION)
+  Move.to(leftCurtain, 'anchor_right', 0.66, CURTAIN_DURATION)
+  Move.to(rightCurtain, 'anchor_left', 0.33, CURTAIN_DURATION)
 
 func openCurtain():
   isCurtainOpen = true
-  Move.setValue(leftCurtain, 'anchor_right', 0, CURTAIN_DURATION, 0, Tween.EASE_IN)
-  Move.setValue(rightCurtain, 'anchor_left', 1, CURTAIN_DURATION, 0, Tween.EASE_IN)
+  if(curtain.has_node('decoration')):
+    curtain.remove_child(curtain.get_node('decoration'))
+
+  Move.to(leftCurtain, 'anchor_right', 0, CURTAIN_DURATION, 0, Tween.EASE_IN)
+  Move.to(rightCurtain, 'anchor_left', 1, CURTAIN_DURATION, 0, Tween.EASE_IN)

@@ -8,16 +8,15 @@ class_name Move
 
 # ------------------------------------------------------------------------------
 
-static func addValue(object, property, valueToAdd, duration = 0.75, delay = 0, _ease = null):
-  var fromValue = object[property]
-  var toValue = fromValue + valueToAdd
+static func from(object, property, fromValue, duration = 0.75, delay = 0, _ease = null):
+  var toValue = object[property]
+  object[property] = fromValue
   _animate(object, property, fromValue, toValue, duration, delay, _ease)
 
 # ------------------------------------------------------------------------------
 
-static func setValue(object, property, valueToSet, duration = 0.75, delay = 0, _ease = null):
+static func to(object, property, toValue, duration = 0.75, delay = 0, _ease = null):
   var fromValue = object[property]
-  var toValue = valueToSet
   _animate(object, property, fromValue, toValue, duration, delay, _ease)
 
 # ------------------------------------------------------------------------------
