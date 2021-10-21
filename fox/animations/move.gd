@@ -26,16 +26,25 @@ static func swing(object, property, toValue, duration = 0.75, delay = 0, _ease =
   if(easing == null):
     easing = Tween.EASE_IN_OUT
 
+  if(not object.swinging):
+    return
+
   var fromValue = object[property]
   _animate(object, property, fromValue, toValue, duration, delay, easing)
 
   var _timer = Wait.start(object, duration + delay)
   yield(_timer, 'timeout')
 
+  if(not object.swinging):
+    return
+
   _animate(object, property, toValue, fromValue, duration, 0, easing)
 
   var _timerBack = Wait.start(object, duration)
   yield(_timerBack, 'timeout')
+
+  if(not object.swinging):
+    return
 
   swing(object, property, toValue, duration, 0, easing)
 
