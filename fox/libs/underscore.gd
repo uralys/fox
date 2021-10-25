@@ -8,7 +8,10 @@ class_name __
 
 # ------------------------------------------------------------------------------
 
-static func getAtPath(path, obj):
+static func Get(path, obj):
+  if(not obj):
+    return null
+
   if(not path):
     return obj
 
@@ -23,13 +26,13 @@ static func getAtPath(path, obj):
 
 # ------------------------------------------------------------------------------
 
-static func setAtPath(value, path, obj):
+static func Set(value, path, obj):
   if(not path):
     return obj
 
   if '.' in path:
     var fields = path.split('.')
     var first = fields.pop_front()
-    setAtPath(value, String(fields), obj[first])
+    Set(value, String(fields), obj[first])
   else:
     obj[path] = value

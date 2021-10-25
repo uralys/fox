@@ -9,15 +9,34 @@ class_name Move
 # ------------------------------------------------------------------------------
 
 static func from(object, propertyPath, fromValue, duration = 0.75, delay = 0, _ease = null):
-  var toValue = __.getAtPath(propertyPath, object)
-  __.setAtPath(fromValue, propertyPath, object)
+  var toValue = __.Get(propertyPath, object)
+  __.Set(fromValue, propertyPath, object)
   _animate(object, propertyPath, fromValue, toValue, duration, delay, _ease)
 
 # ------------------------------------------------------------------------------
 
 static func to(object, propertyPath, toValue, duration = 0.75, delay = 0, _ease = null):
-  var fromValue = __.getAtPath(propertyPath, object)
+  var fromValue = __.Get(propertyPath, object)
   _animate(object, propertyPath, fromValue, toValue, duration, delay, _ease)
+
+# ------------------------------------------------------------------------------
+
+static func bounce(object, times = 2, stepDuration = 1.5):
+  var currentScale = object.scale
+  var duration = float(stepDuration)/2
+
+  to(object, 'scale', currentScale + Vector2(0.05, 0.05), duration )
+
+  var _timer = Wait.start(object, duration)
+  yield(_timer, 'timeout')
+
+  to(object, 'scale', currentScale, duration )
+
+  _timer = Wait.start(object, duration)
+  yield(_timer, 'timeout')
+
+  if(times > 1):
+    bounce(object, times - 1, stepDuration)
 
 # ------------------------------------------------------------------------------
 
@@ -29,7 +48,7 @@ static func swing(object, propertyPath, toValue, duration = 0.75, delay = 0, _ea
   if(not object.swinging):
     return
 
-  var fromValue = __.getAtPath(propertyPath, object)
+  var fromValue = __.Get(propertyPath, object)
   _animate(object, propertyPath, fromValue, toValue, duration, delay, easing)
 
   var _timer = Wait.start(object, duration + delay)
@@ -58,7 +77,7 @@ static func _animate(object, propertyPath, fromValue, toValue, duration = 0.75, 
 
   if(fields.size() > 0):
     var nestedPath = PoolStringArray(fields).join('.')
-    nestedToAnimate = __.getAtPath(nestedPath, object)
+    nestedToAnimate = __.Get(nestedPath, object)
 
   if(delay > 0):
     var _timer = Wait.start(object, delay)
