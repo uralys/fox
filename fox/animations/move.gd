@@ -40,12 +40,15 @@ static func bounce(object, times = 2, stepDuration = 1.5):
 
 # ------------------------------------------------------------------------------
 
+static func _stoppedSwinging(object):
+  return object.get('swinging') != null and not object.swinging
+
 static func swing(object, propertyPath, toValue, duration = 0.75, delay = 0, _ease = null):
   var easing = _ease
   if(easing == null):
     easing = Tween.EASE_IN_OUT
 
-  if(not object.swinging):
+  if(_stoppedSwinging(object)):
     return
 
   var fromValue = __.Get(propertyPath, object)
@@ -54,7 +57,7 @@ static func swing(object, propertyPath, toValue, duration = 0.75, delay = 0, _ea
   var _timer = Wait.start(object, duration + delay)
   yield(_timer, 'timeout')
 
-  if(not object.swinging):
+  if(_stoppedSwinging(object)):
     return
 
   _animate(object, propertyPath, toValue, fromValue, duration, 0, easing)
@@ -62,7 +65,7 @@ static func swing(object, propertyPath, toValue, duration = 0.75, delay = 0, _ea
   var _timerBack = Wait.start(object, duration)
   yield(_timerBack, 'timeout')
 
-  if(not object.swinging):
+  if(_stoppedSwinging(object)):
     return
 
   swing(object, propertyPath, toValue, duration, 0, easing)
