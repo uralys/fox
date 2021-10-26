@@ -21,6 +21,8 @@ static func Get(path, obj):
   while(fields.size() > 0):
     var field = fields.pop_front()
     res = res.get(field)
+    if(res == null):
+      return null
 
   return res
 
