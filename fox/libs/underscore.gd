@@ -20,7 +20,7 @@ static func Get(path, obj):
 
   while(fields.size() > 0):
     var field = fields.pop_front()
-    res = res[field]
+    res = res.get(field)
 
   return res
 
