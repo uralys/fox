@@ -21,22 +21,22 @@ static func to(object, propertyPath, toValue, duration = 0.75, delay = 0, _ease 
 
 # ------------------------------------------------------------------------------
 
-static func bounce(object, times = 2, stepDuration = 1.5):
-  var currentScale = object.scale
+static func bounce(object, upScale = 0.06, stepDuration = 0.25, property = "scale", times = 1):
+  var currentScale =__.Get(property, object)
   var duration = float(stepDuration)/2
 
-  to(object, 'scale', currentScale + Vector2(0.05, 0.05), duration )
+  to(object, property, currentScale + Vector2(upScale, upScale), duration )
 
   var _timer = Wait.start(object, duration)
   yield(_timer, 'timeout')
 
-  to(object, 'scale', currentScale, duration )
+  to(object, property, currentScale, duration )
 
   _timer = Wait.start(object, duration)
   yield(_timer, 'timeout')
 
   if(times > 1):
-    bounce(object, times - 1, stepDuration)
+    bounce(object, upScale, stepDuration, property, times - 1)
 
 # ------------------------------------------------------------------------------
 

@@ -33,7 +33,7 @@ static func Set(value, path, obj):
     return obj
 
   if '.' in path:
-    var fields = path.split('.')
+    var fields = Array(path.split('.'))
     var first = fields.pop_front()
     Set(value, String(fields), obj[first])
   else:
