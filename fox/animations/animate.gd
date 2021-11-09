@@ -8,13 +8,13 @@ class_name Animate
 
 # ------------------------------------------------------------------------------
 
-static func bounceSprite(sprite):
-  var initialScale = _getInitialValue(sprite, 'scale');
-  _bounce(sprite, initialScale, 0.05, 0.2)
-
-static func bounceRect(object):
-  var initialScale = _getInitialValue(object, 'rect_scale');
-  _bounce(object, initialScale, 0.05, 0.2, 'rect_scale')
+static func bounce(object):
+  if(object.get('scale')):
+    _bounceProperty(object, 'scale')
+  elif(object.get('rect_scale')):
+    _bounceProperty(object, 'rect_scale')
+  else:
+    prints('❌ scale/rect_scale not found on this object; cannot bounce.')
 
 # ------------------------------------------------------------------------------
 
@@ -80,6 +80,12 @@ static func _getInitialValue(object, property):
     object.set_meta(metaName, initialValue)
 
   return initialValue
+
+# ------------------------------------------------------------------------------
+
+static func _bounceProperty(object, property):
+  var initialScale = _getInitialValue(object, property);
+  _bounce(object, initialScale, 0.05, 0.2, property)
 
 # ------------------------------------------------------------------------------
 
