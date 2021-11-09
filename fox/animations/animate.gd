@@ -8,6 +8,16 @@ class_name Animate
 
 # ------------------------------------------------------------------------------
 
+static func bounceSprite(sprite):
+  var initialScale = _getInitialValue(sprite, 'scale');
+  _bounce(sprite, initialScale, 0.05, 0.2)
+
+static func bounceRect(object):
+  var initialScale = _getInitialValue(object, 'rect_scale');
+  _bounce(object, initialScale, 0.05, 0.2, 'rect_scale')
+
+# ------------------------------------------------------------------------------
+
 static func from(object, propertyPath, fromValue, duration = 0.75, delay = 0, _ease = null):
   var toValue = __.Get(propertyPath, object)
   __.Set(fromValue, propertyPath, object)
@@ -36,8 +46,6 @@ static func show(object, duration = 0.75):
   opacityTween.start()
 
   yield(opacityTween, 'tween_completed')
-  prints('opacityTween show done')
-
   object.remove_child(opacityTween)
   opacityTween.queue_free()
 
@@ -58,29 +66,38 @@ static func hide(object, duration = 0.75):
   opacityTween.start()
 
   yield(opacityTween, 'tween_completed')
-  prints('opacityTween hide done')
-
   object.remove_child(opacityTween)
   opacityTween.queue_free()
 
 # ------------------------------------------------------------------------------
 
-static func bounce(object, upScale = 0.06, stepDuration = 0.25, property = "scale", times = 1):
-  var currentScale =__.Get(property, object)
+static func _getInitialValue(object, property):
+  var initialValue = object[property];
+  var metaName = 'initial-'+property;
+  if(object.has_meta(metaName)):
+    initialValue = object.get_meta(metaName)
+  else:
+    object.set_meta(metaName, initialValue)
+
+  return initialValue
+
+# ------------------------------------------------------------------------------
+
+static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, property = "scale", times = 1):
   var duration = float(stepDuration)/2
 
-  to(object, property, currentScale + Vector2(upScale, upScale), duration )
+  to(object, property, fromScale + Vector2(upScale, upScale), duration )
 
   var _timer = Wait.start(object, duration)
   yield(_timer, 'timeout')
 
-  to(object, property, currentScale, duration )
+  to(object, property, fromScale, duration )
 
   _timer = Wait.start(object, duration)
   yield(_timer, 'timeout')
 
   if(times > 1):
-    bounce(object, upScale, stepDuration, property, times - 1)
+    _bounce(object, fromScale, upScale, stepDuration, property, times - 1)
 
 # ------------------------------------------------------------------------------
 
@@ -146,3 +163,7 @@ static func _animate(object, propertyPath, fromValue, toValue, duration = 0.75, 
   )
 
   tween.start()
+
+  yield(tween, 'tween_completed')
+  object.remove_child(tween)
+  tween.queue_free()
