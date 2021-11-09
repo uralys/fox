@@ -9,6 +9,7 @@ var screen_start_position
 var tweening = false
 var dragging = false
 var moving = false
+var startPressingTime = 0
 
 # ------------------------------------------------------------------------------
 
@@ -30,13 +31,23 @@ func _ready():
 func _input(event):
   if event is InputEventMouseButton:
     if event.is_pressed():
-      mouse_start_pos = event.position
-      screen_start_position = position
-      dragging = true
+      var now = OS.get_ticks_msec()
+      startPressingTime = now
+
     else:
       dragging = false
-  elif event is InputEventMouseMotion and dragging:
-    position = zoom * (mouse_start_pos - event.position) + screen_start_position
+      startPressingTime = 0
+
+  elif event is InputEventMouseMotion:
+    if(startPressingTime > 0):
+      var now = OS.get_ticks_msec()
+      if(now - startPressingTime > 200):
+        if(not dragging):
+          dragging = true
+          mouse_start_pos = event.position
+          screen_start_position = position
+
+        position = zoom * (mouse_start_pos - event.position) + screen_start_position
 
 # ------------------------------------------------------------------------------
 

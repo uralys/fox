@@ -90,13 +90,13 @@ func getLoadedResource(path):
 
 func closeCurtain():
   isCurtainOpen = false
-  Move.to(leftCurtain, 'anchor_right', 0.66, CURTAIN_DURATION)
-  Move.to(rightCurtain, 'anchor_left', 0.33, CURTAIN_DURATION)
+  Animate.to(leftCurtain, 'anchor_right', 0.66, CURTAIN_DURATION)
+  Animate.to(rightCurtain, 'anchor_left', 0.33, CURTAIN_DURATION)
 
 func openCurtain():
   isCurtainOpen = true
   if(curtain.has_node('decoration')):
     curtain.remove_child(curtain.get_node('decoration'))
 
-  Move.to(leftCurtain, 'anchor_right', 0, CURTAIN_DURATION, 0, Tween.EASE_IN)
-  Move.to(rightCurtain, 'anchor_left', 1, CURTAIN_DURATION, 0, Tween.EASE_IN)
+  Animate.to(leftCurtain, 'anchor_right', 0, CURTAIN_DURATION, 0, Tween.EASE_IN)
+  Animate.to(rightCurtain, 'anchor_left', 1, CURTAIN_DURATION, 0, Tween.EASE_IN)

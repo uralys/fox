@@ -4,7 +4,7 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-class_name Move
+class_name Animate
 
 # ------------------------------------------------------------------------------
 
@@ -18,6 +18,50 @@ static func from(object, propertyPath, fromValue, duration = 0.75, delay = 0, _e
 static func to(object, propertyPath, toValue, duration = 0.75, delay = 0, _ease = null):
   var fromValue = __.Get(propertyPath, object)
   _animate(object, propertyPath, fromValue, toValue, duration, delay, _ease)
+
+# ------------------------------------------------------------------------------
+
+static func show(object, duration = 0.75):
+  var opacityTween = Tween.new()
+  object.add_child(opacityTween)
+
+  opacityTween.interpolate_property(
+    object,
+    'modulate:a',
+    object.modulate.a, 1,
+    0.3,
+    Tween.TRANS_QUAD, Tween.EASE_OUT
+  )
+
+  opacityTween.start()
+
+  yield(opacityTween, 'tween_completed')
+  prints('opacityTween show done')
+
+  object.remove_child(opacityTween)
+  opacityTween.queue_free()
+
+# ------------------------------------------------------------------------------
+
+static func hide(object, duration = 0.75):
+  var opacityTween = Tween.new()
+  object.add_child(opacityTween)
+
+  opacityTween.interpolate_property(
+    object,
+    'modulate:a',
+    object.modulate.a, 0,
+    0.3,
+    Tween.TRANS_QUAD, Tween.EASE_OUT
+  )
+
+  opacityTween.start()
+
+  yield(opacityTween, 'tween_completed')
+  prints('opacityTween hide done')
+
+  object.remove_child(opacityTween)
+  opacityTween.queue_free()
 
 # ------------------------------------------------------------------------------
 
