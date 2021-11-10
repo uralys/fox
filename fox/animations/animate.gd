@@ -31,43 +31,13 @@ static func to(object, propertyPath, toValue, duration = 0.75, delay = 0, _ease 
 
 # ------------------------------------------------------------------------------
 
-static func show(object, duration = 0.75):
-  var opacityTween = Tween.new()
-  object.add_child(opacityTween)
-
-  opacityTween.interpolate_property(
-    object,
-    'modulate:a',
-    object.modulate.a, 1,
-    0.3,
-    Tween.TRANS_QUAD, Tween.EASE_OUT
-  )
-
-  opacityTween.start()
-
-  yield(opacityTween, 'tween_completed')
-  object.remove_child(opacityTween)
-  opacityTween.queue_free()
+static func show(object, duration = 0.3, delay = 0):
+  _animate(object, 'modulate:a', object.modulate.a, 1, duration, delay)
 
 # ------------------------------------------------------------------------------
 
-static func hide(object, duration = 0.75):
-  var opacityTween = Tween.new()
-  object.add_child(opacityTween)
-
-  opacityTween.interpolate_property(
-    object,
-    'modulate:a',
-    object.modulate.a, 0,
-    0.3,
-    Tween.TRANS_QUAD, Tween.EASE_OUT
-  )
-
-  opacityTween.start()
-
-  yield(opacityTween, 'tween_completed')
-  object.remove_child(opacityTween)
-  opacityTween.queue_free()
+static func hide(object, duration = 0.3, delay = 0):
+  _animate(object, 'modulate:a', object.modulate.a, 0, duration, delay)
 
 # ------------------------------------------------------------------------------
 
