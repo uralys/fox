@@ -14,8 +14,7 @@ var currentScene = null
 
 # ------------------------------------------------------------------------------
 
-var CURTAIN_DURATION = 0.7 #s
-
+var CURTAIN_DURATION = 0.7
 var isCurtainOpen = true
 
 var curtain
@@ -90,13 +89,34 @@ func getLoadedResource(path):
 
 func closeCurtain():
   isCurtainOpen = false
-  Animate.to(leftCurtain, 'anchor_right', 0.66, CURTAIN_DURATION)
-  Animate.to(rightCurtain, 'anchor_left', 0.33, CURTAIN_DURATION)
+
+  Animate.to(leftCurtain, {
+    propertyPath = 'anchor_right',
+    toValue = 0.66,
+    duration = CURTAIN_DURATION
+  })
+
+  Animate.to(rightCurtain, {
+    propertyPath = 'anchor_left',
+    toValue = 0.33,
+    duration = CURTAIN_DURATION
+  })
 
 func openCurtain():
   isCurtainOpen = true
   if(curtain.has_node('decoration')):
     curtain.remove_child(curtain.get_node('decoration'))
 
-  Animate.to(leftCurtain, 'anchor_right', 0, CURTAIN_DURATION, 0, Tween.EASE_IN)
-  Animate.to(rightCurtain, 'anchor_left', 1, CURTAIN_DURATION, 0, Tween.EASE_IN)
+  Animate.to(leftCurtain, {
+    propertyPath = 'anchor_right',
+    toValue = 0,
+    duration = CURTAIN_DURATION,
+    easing = Tween.EASE_IN
+  })
+
+  Animate.to(rightCurtain, {
+    propertyPath = 'anchor_left',
+    toValue = 1,
+    duration = CURTAIN_DURATION,
+    easing = Tween.EASE_IN
+  })
