@@ -130,6 +130,13 @@ static func _animate(object, propertyPath, fromValue, toValue, duration = 0.75, 
   var tween = Tween.new()
   object.add_child(tween)
 
+  prints('interpolate', {
+  property=property,
+    fromValue=fromValue, toValue=toValue,
+    duration=duration,
+    easing=easing
+  })
+
   tween.interpolate_property(
     nestedToAnimate,
     property,
