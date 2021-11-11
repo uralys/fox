@@ -6,6 +6,10 @@ extends Node
 
 class_name Animate
 
+# ------------------------------------------------------------------------------
+
+const ANIMATION_DONE = 'animationDone'
+
 # ==============================================================================
 
 static func bounce(object):
@@ -28,7 +32,7 @@ static func from(object, _options):
   options.toValue = __.Get(propertyPath, object)
 
   _animate(object, options)
-  yield(object, 'animationDone')
+  yield(object, ANIMATION_DONE)
 
 # ------------------------------------------------------------------------------
 
@@ -37,7 +41,7 @@ static func to(object, _options):
 
   options.fromValue = __.Get(options.propertyPath, object)
   _animate(object, options)
-  yield(object, 'animationDone')
+  yield(object, ANIMATION_DONE)
 
 # ------------------------------------------------------------------------------
 
@@ -193,8 +197,6 @@ static func swing(object, _options):
   swing(object, _options)
 
 # ------------------------------------------------------------------------------
-
-const ANIMATION_DONE = 'animationDone'
 
 static func _animate(object, options):
   var propertyPath = options.propertyPath
