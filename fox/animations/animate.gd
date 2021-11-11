@@ -19,7 +19,8 @@ static func bounce(object):
 # ------------------------------------------------------------------------------
 
 static func from(object, _options):
-  var options = _options
+  var options = _options.duplicate()
+
   var propertyPath = _options.propertyPath
   var fromValue = _options.fromValue
 
@@ -27,13 +28,16 @@ static func from(object, _options):
   options.toValue = __.Get(propertyPath, object)
 
   _animate(object, options)
+  yield(object, 'animationDone')
 
 # ------------------------------------------------------------------------------
 
 static func to(object, _options):
-  var options = _options
+  var options = _options.duplicate()
+
   options.fromValue = __.Get(options.propertyPath, object)
   _animate(object, options)
+  yield(object, 'animationDone')
 
 # ------------------------------------------------------------------------------
 
@@ -150,35 +154,49 @@ static func _stoppedSwinging(object):
   return object.get('swinging') != null and not object.swinging
 
 static func swing(object, _options):
+  var options = _options.duplicate()
+
   if(_stoppedSwinging(object)):
     return
 
-  var options = _options
+  # --------
+  # swing forth
+
   options.fromValue = __.Get(options.propertyPath, object)
+  options.signalToWait = 'swing1Done'
 
   _animate(object, options)
-
-  var _timer = Wait.start(object, options.duration + options.delay)
-  yield(_timer, 'timeout')
+  yield(object, 'swing1Done')
 
   if(_stoppedSwinging(object)):
     return
 
+  # --------
+  # swing back
+
+  var currentToValue = options.toValue
+  var currentFromValue = options.fromValue
+  options.fromValue = currentToValue
+  options.toValue = currentFromValue
   options.delay = 0
-  _animate(object, options)
+  options.signalToWait = 'swing2Done'
 
-  var _timerBack = Wait.start(object, options.duration)
-  yield(_timerBack, 'timeout')
+  _animate(object, options)
+  yield(object, 'swing2Done')
 
   if(_stoppedSwinging(object)):
     return
 
-  swing(object, options)
+  # --------
+  # loop
+
+  swing(object, _options)
 
 # ------------------------------------------------------------------------------
 
+const ANIMATION_DONE = 'animationDone'
+
 static func _animate(object, options):
-  prints({options=options})
   var propertyPath = options.propertyPath
   var fromValue = options.get('fromValue')
   var toValue = options.get('toValue')
@@ -188,6 +206,11 @@ static func _animate(object, options):
 
   var easing = options.easing if options.get('easing') else Tween.EASE_OUT
   var transition = options.transition if options.get('transition') else Tween.TRANS_QUAD
+
+  var SIGNAL_ON_DONE = options.signalToWait if options.get('signalToWait') else ANIMATION_DONE
+
+  if(not object.has_signal(SIGNAL_ON_DONE)):
+    object.add_user_signal(SIGNAL_ON_DONE)
 
   # --------
 
@@ -214,13 +237,6 @@ static func _animate(object, options):
 
   # --------
 
-  prints('interpolate', {
-  property=property,
-    fromValue=fromValue, toValue=toValue,
-    duration=duration,
-    transition=transition, easing=easing
-  })
-
   tween.interpolate_property(
     nestedToAnimate,
     property,
@@ -236,3 +252,5 @@ static func _animate(object, options):
   yield(tween, 'tween_completed')
   object.remove_child(tween)
   tween.queue_free()
+
+  object.emit_signal(SIGNAL_ON_DONE)
