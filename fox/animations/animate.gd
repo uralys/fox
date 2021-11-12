@@ -194,6 +194,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
 static func _stoppedSwinging(object):
   return object.get('swinging') != null and not object.swinging
 
+## mandatory options: {propertyPath, toValue}
 static func swing(object, _options):
   var options = _options.duplicate()
 
