@@ -90,7 +90,8 @@ static func appear(object, delay):
     toValue =  object.scale,
     duration = 0.2,
     transition = Tween.TRANS_LINEAR,
-    easing = Tween.EASE_OUT
+    easing = Tween.EASE_OUT,
+    signalToWait = 'appeared' # the elastic on y is only smoothing, 'appear' is visually done at this point
   })
 
   _animate(object, {
@@ -99,14 +100,12 @@ static func appear(object, delay):
     toValue = aimY,
     duration = 1.2,
     transition = Tween.TRANS_ELASTIC,
-    easing = Tween.EASE_OUT
+    easing = Tween.EASE_OUT,
   })
 
-  timer = Wait.start(object, 1.2)
-  yield(timer, 'timeout')
-
-  if(object.has_method('onSpawn')):
-    object.onSpawn()
+  yield(object, 'appeared')
+  if(object.has_method('onAppear')):
+    object.onAppear()
 
 # ==============================================================================
 
