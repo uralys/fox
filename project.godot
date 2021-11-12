@@ -10,11 +10,29 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "Node",
+"class": "Animate",
+"language": "GDScript",
+"path": "res://fox/animations/animate.gd"
+}, {
+"base": "Node",
+"class": "Wait",
+"language": "GDScript",
+"path": "res://fox/libs/wait.gd"
+}, {
+"base": "Node",
+"class": "__",
+"language": "GDScript",
+"path": "res://fox/libs/underscore.gd"
+}, {
+"base": "Node",
 "class": "generateUID",
 "language": "GDScript",
 "path": "res://fox/libs/generate-uid.gd"
 } ]
 _global_script_class_icons={
+"Animate": "",
+"Wait": "",
+"__": "",
 "generateUID": ""
 }
 

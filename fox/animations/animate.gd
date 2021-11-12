@@ -67,7 +67,8 @@ static func hide(object, duration = 0.3, delay = 0):
 
 # ------------------------------------------------------------------------------
 
-static func appear(object, delay):
+# maybe too specific to Lockey Land
+static func appear(object, delay = 0):
   var aimY = object.position.y
   object.modulate.a = 0
   object.position.y += 30
@@ -87,7 +88,7 @@ static func appear(object, delay):
   _animate(object, {
     propertyPath = 'scale',
     fromValue = Vector2(0.01,0.01),
-    toValue =  object.scale,
+    toValue = object.scale,
     duration = 0.2,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
@@ -106,6 +107,43 @@ static func appear(object, delay):
   yield(object, 'appeared')
   if(object.has_method('onAppear')):
     object.onAppear()
+
+# --------
+
+# maybe too specific to Lockey Land
+static func disappear(object, delay = 0):
+  var timer = Wait.start(object, delay)
+  yield(timer, 'timeout')
+
+  _animate(object, {
+    propertyPath = 'modulate:a',
+    fromValue = 1,
+    toValue = 0,
+    delay = 0.5,
+    duration = 0.3,
+    transition = Tween.TRANS_LINEAR,
+    easing = Tween.EASE_OUT
+  })
+
+  _animate(object, {
+    propertyPath = 'scale',
+    fromValue = object.scale,
+    toValue = Vector2(0.01,0.01),
+    delay = 0.3,
+    duration = 0.3,
+    transition = Tween.TRANS_QUAD,
+    easing = Tween.EASE_OUT,
+    signalToWait = 'disappeared'
+  })
+
+  _animate(object, {
+    propertyPath = 'position:y',
+    fromValue = object.position.y,
+    toValue = object.position.y + 10,
+    duration = 0.8,
+    transition = Tween.TRANS_ELASTIC,
+    easing = Tween.EASE_OUT,
+  })
 
 # ==============================================================================
 
