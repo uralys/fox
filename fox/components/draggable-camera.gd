@@ -14,6 +14,7 @@ var startPressingTime = 0
 # ------------------------------------------------------------------------------
 
 export(float) var pan_smooth := -5
+export(float) var drag_delay := 120
 
 # ------------------------------------------------------------------------------
 
@@ -41,7 +42,7 @@ func _input(event):
   elif event is InputEventMouseMotion:
     if(startPressingTime > 0):
       var now = OS.get_ticks_msec()
-      if(now - startPressingTime > 120):
+      if(now - startPressingTime > drag_delay):
         if(not dragging):
           dragging = true
           mouse_start_pos = event.position
