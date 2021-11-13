@@ -54,6 +54,7 @@ static func to(object, _options):
 # ------------------------------------------------------------------------------
 
 static func show(object, duration = 0.3, delay = 0):
+  object.visible = true
   _animate(object, {
     propertyPath = 'modulate:a',
     fromValue = object.modulate.a,
@@ -73,12 +74,16 @@ static func hide(object, duration = 0.3, delay = 0):
     delay = delay
   })
 
+  yield(object, ANIMATION_DONE)
+  object.visible = false
+
 # ------------------------------------------------------------------------------
 
 # maybe too specific to Lockey Land
 static func appear(object, delay = 0):
   var scaleProperty = _scaleProperty(object)
   var positionProperty = _positionProperty(object)
+  var initialScale = _getInitialValue(object, scaleProperty);
   var aimY = object[positionProperty].y
 
   object.modulate.a = 0
@@ -96,11 +101,10 @@ static func appear(object, delay = 0):
     easing = Tween.EASE_OUT
   })
 
-
   _animate(object, {
     propertyPath = scaleProperty,
     fromValue = Vector2(0.01,0.01),
-    toValue = object[scaleProperty],
+    toValue = initialScale,
     duration = 0.2,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
@@ -126,6 +130,7 @@ static func appear(object, delay = 0):
 static func disappear(object, delay = 0):
   var scaleProperty = _scaleProperty(object)
   var positionProperty = _positionProperty(object)
+  var initialScale = _getInitialValue(object, scaleProperty);
 
   _animate(object, {
     propertyPath = 'modulate:a',
@@ -134,18 +139,18 @@ static func disappear(object, delay = 0):
     delay = delay + 0.2,
     duration = 0.3,
     transition = Tween.TRANS_LINEAR,
-    easing = Tween.EASE_OUT
+    easing = Tween.EASE_OUT,
+    signalToWait = 'disappeared'
   })
 
   _animate(object, {
     propertyPath = scaleProperty,
-    fromValue = object[scaleProperty],
+    fromValue = initialScale,
     toValue = Vector2(0.01,0.01),
     delay = delay + 0.3,
     duration = 0.3,
     transition = Tween.TRANS_QUAD,
-    easing = Tween.EASE_OUT,
-    signalToWait = 'disappeared'
+    easing = Tween.EASE_OUT
   })
 
   _animate(object, {

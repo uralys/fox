@@ -41,7 +41,7 @@ func _input(event):
   elif event is InputEventMouseMotion:
     if(startPressingTime > 0):
       var now = OS.get_ticks_msec()
-      if(now - startPressingTime > 200):
+      if(now - startPressingTime > 120):
         if(not dragging):
           dragging = true
           mouse_start_pos = event.position
