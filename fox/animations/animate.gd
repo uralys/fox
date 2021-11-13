@@ -12,13 +12,21 @@ const ANIMATION_DONE = 'animationDone'
 
 # ==============================================================================
 
-static func bounce(object):
-  if(object.get('scale')):
-    _bounceProperty(object, 'scale')
-  elif(object.get('rect_scale')):
-    _bounceProperty(object, 'rect_scale')
+static func _scaleProperty(object):
+  if(object.get('scale') != null):
+    return 'scale'
+  elif(object.get('rect_scale') != null):
+    return 'rect_scale'
   else:
-    prints('❌ scale/rect_scale not found on this object; cannot bounce.')
+    prints('❌ scale/rect_scale not found on this object;', object)
+
+static func _positionProperty(object):
+  if(object.get('position') != null):
+    return 'position'
+  elif(object.get('rect_position') != null):
+    return 'rect_position'
+  else:
+    prints('❌ position/rect_position not found on this object;', object)
 
 # ------------------------------------------------------------------------------
 
@@ -69,9 +77,12 @@ static func hide(object, duration = 0.3, delay = 0):
 
 # maybe too specific to Lockey Land
 static func appear(object, delay = 0):
-  var aimY = object.position.y
+  var scaleProperty = _scaleProperty(object)
+  var positionProperty = _positionProperty(object)
+  var aimY = object[positionProperty].y
+
   object.modulate.a = 0
-  object.position.y += 30
+  object[positionProperty].y += 30
 
   var timer = Wait.start(object, delay)
   yield(timer, 'timeout')
@@ -85,10 +96,11 @@ static func appear(object, delay = 0):
     easing = Tween.EASE_OUT
   })
 
+
   _animate(object, {
-    propertyPath = 'scale',
+    propertyPath = scaleProperty,
     fromValue = Vector2(0.01,0.01),
-    toValue = object.scale,
+    toValue = object[scaleProperty],
     duration = 0.2,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
@@ -96,9 +108,9 @@ static func appear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = 'position:y',
-    fromValue = object.position.y,
-    toValue = aimY,
+    propertyPath = positionProperty,
+    fromValue = object[positionProperty],
+    toValue = Vector2(object[positionProperty].x, aimY),
     duration = 1.2,
     transition = Tween.TRANS_ELASTIC,
     easing = Tween.EASE_OUT,
@@ -112,24 +124,24 @@ static func appear(object, delay = 0):
 
 # maybe too specific to Lockey Land
 static func disappear(object, delay = 0):
-  var timer = Wait.start(object, delay)
-  yield(timer, 'timeout')
+  var scaleProperty = _scaleProperty(object)
+  var positionProperty = _positionProperty(object)
 
   _animate(object, {
     propertyPath = 'modulate:a',
     fromValue = 1,
     toValue = 0,
-    delay = 0.5,
+    delay = delay + 0.2,
     duration = 0.3,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT
   })
 
   _animate(object, {
-    propertyPath = 'scale',
-    fromValue = object.scale,
+    propertyPath = scaleProperty,
+    fromValue = object[scaleProperty],
     toValue = Vector2(0.01,0.01),
-    delay = 0.3,
+    delay = delay + 0.3,
     duration = 0.3,
     transition = Tween.TRANS_QUAD,
     easing = Tween.EASE_OUT,
@@ -137,13 +149,18 @@ static func disappear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = 'position:y',
-    fromValue = object.position.y,
-    toValue = object.position.y + 10,
-    duration = 0.8,
+    propertyPath = positionProperty,
+    fromValue = object[positionProperty],
+    toValue =  object[positionProperty] + Vector2(0, 10),
+    delay = delay,
+    duration = 0.6,
     transition = Tween.TRANS_ELASTIC,
     easing = Tween.EASE_OUT,
   })
+
+  yield(object, 'disappeared')
+  if(object.has_method('onDisappear')):
+    object.onDisappear()
 
 # ==============================================================================
 
@@ -159,7 +176,8 @@ static func _getInitialValue(object, property):
 
 # ------------------------------------------------------------------------------
 
-static func _bounceProperty(object, property):
+static func bounce(object):
+  var property = _scaleProperty(object)
   var initialScale = _getInitialValue(object, property);
   _bounce(object, initialScale, 0.05, 0.2, property)
 
