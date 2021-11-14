@@ -56,13 +56,20 @@ static func to(object, _options):
 # ------------------------------------------------------------------------------
 
 static func show(object, duration = 0.3, delay = 0):
+  object.modulate.a = 0
+  object.visible = false
+
+  if(delay > 0):
+    var _timer = Wait.start(object, delay)
+    yield(_timer, 'timeout')
+
   object.visible = true
+
   _animate(object, {
     propertyPath = 'modulate:a',
     fromValue = object.modulate.a,
     toValue = 1,
-    duration = duration,
-    delay = delay
+    duration = duration
   })
 
 # ------------------------------------------------------------------------------
