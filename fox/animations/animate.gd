@@ -36,8 +36,8 @@ static func from(object, _options):
   var propertyPath = options.propertyPath
   var fromValue = options.fromValue
 
-  __.Set(fromValue, propertyPath, object)
   options.toValue = __.Get(propertyPath, object)
+  __.Set(fromValue, propertyPath, object)
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
@@ -301,6 +301,9 @@ static func _animate(object, options):
   object.add_child(tween)
 
   # --------
+
+  # prints({property=property,
+  #   fromValue=fromValue, toValue=toValue})
 
   tween.interpolate_property(
     nestedToAnimate,
