@@ -33,23 +33,25 @@ static func _positionProperty(object):
 static func from(object, _options):
   var options = _options.duplicate()
 
-  var propertyPath = _options.propertyPath
-  var fromValue = _options.fromValue
+  var propertyPath = options.propertyPath
+  var fromValue = options.fromValue
 
   __.Set(fromValue, propertyPath, object)
   options.toValue = __.Get(propertyPath, object)
+  if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
-  yield(object, ANIMATION_DONE)
+  yield(object, options.signalToWait)
 
 # ------------------------------------------------------------------------------
 
 static func to(object, _options):
   var options = _options.duplicate()
-
   options.fromValue = __.Get(options.propertyPath, object)
+  if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
+
   _animate(object, options)
-  yield(object, ANIMATION_DONE)
+  yield(object, options.signalToWait)
 
 # ------------------------------------------------------------------------------
 
@@ -136,7 +138,7 @@ static func disappear(object, delay = 0):
     propertyPath = 'modulate:a',
     fromValue = 1,
     toValue = 0,
-    delay = delay + 0.2,
+    delay = delay + 0.6,
     duration = 0.3,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
@@ -146,7 +148,7 @@ static func disappear(object, delay = 0):
   _animate(object, {
     propertyPath = scaleProperty,
     fromValue = initialScale,
-    toValue = Vector2(0.01,0.01),
+    toValue = Vector2(0.001,0.001),
     delay = delay + 0.3,
     duration = 0.3,
     transition = Tween.TRANS_QUAD,
@@ -158,7 +160,7 @@ static func disappear(object, delay = 0):
     fromValue = object[positionProperty],
     toValue =  object[positionProperty] + Vector2(0, 10),
     delay = delay,
-    duration = 0.6,
+    duration = 1.2,
     transition = Tween.TRANS_ELASTIC,
     easing = Tween.EASE_OUT,
   })
