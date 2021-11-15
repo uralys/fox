@@ -14,7 +14,7 @@ func _gui_input(event):
     var now = OS.get_ticks_msec()
     var elapsedTime = now - lastPress
 
-    if(int(elapsedTime) < MIN_MS_BETWEEN_PRESS):
+    if(nbPressed > 0 and int(elapsedTime) < MIN_MS_BETWEEN_PRESS):
       return
 
     lastPress = now
