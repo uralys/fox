@@ -9,11 +9,15 @@ extends Camera2D
 # ------------------------------------------------------------------------------
 
 var tween
+var boundaries
+
 var mouse_start_pos
 var screen_start_position
 
 var tweening = false
+var pressing = false
 var dragging = false
+var smoothing = false
 var moving = false
 var startPressingTime = 0
 
@@ -33,6 +37,9 @@ func _ready():
   tween = Tween.new()
   add_child(tween)
 
+  if(get_parent().has_node('boundaries')):
+    boundaries = get_parent().get_node('boundaries')
+
 # ------------------------------------------------------------------------------
 
 func _input(event):
@@ -40,10 +47,19 @@ func _input(event):
     if event.is_pressed():
       var now = OS.get_ticks_msec()
       startPressingTime = now
+      tween.stop(self, 'position')
+      tweening = false
+      smoothing = false
+      pressing = true
 
     else:
+      pressing = false
       dragging = false
       startPressingTime = 0
+
+      var outOfBoundaries = checkBoundaries({reposition=true})
+      if(not outOfBoundaries):
+        smoothing = true
 
   elif event is InputEventMouseMotion:
     if(startPressingTime > 0):
@@ -64,13 +80,17 @@ func _process(delta):
 
   if dragging:
     update_vel(delta)
-  else:
+  elif smoothing:
     smooth(delta)
 
-  var diff= _last_cam_pos - self.position
-  moving = diff.length() > 1
-
+  var diff = _last_cam_pos - self.position
+  moving = diff.length() > 5
   _last_cam_pos = self.position
+
+  if(not moving and not pressing):
+    smoothing = false
+    tweening = false
+    checkBoundaries({reposition=true})
 
 # ------------------------------------------------------------------------------
 
@@ -83,16 +103,24 @@ func update_vel(delta : float):
 
 # ------------------------------------------------------------------------------
 
-func toPosition(from: Vector2, to : Vector2):
+func toPosition(from: Vector2, to : Vector2, duration = 1):
+  if(smoothing or tweening or dragging):
+    return
+
+  tweening = true
   tween.interpolate_property(
     self,
     'position',
     from, to,
-    1,
+    duration,
     Tween.TRANS_QUAD, Tween.EASE_OUT
   )
 
   tween.start()
+
+
+  yield(tween, 'tween_completed')
+  tweening = false
 
 # ------------------------------------------------------------------------------
 
@@ -100,7 +128,50 @@ func smooth(delta : float):
   if(tweening):
     return
 
+  # cancel smoothing if going out of boundaries
+  if(boundaries):
+    var outOfBoundaries = checkBoundaries({offset=400})
+    if(outOfBoundaries):
+      smoothing = false
+      return
+
   var l = draggingVelocity.length()
   var move_frame = 10 * exp(pan_smooth * ((log(l/10) / pan_smooth)+delta))
   draggingVelocity = draggingVelocity.normalized() * move_frame
   self.position -= draggingVelocity * delta
+
+# ------------------------------------------------------------------------------
+
+func checkBoundaries(options = {}):
+  var reposition = options.reposition if options.has('reposition') else false
+  var offset = options.offset if options.has('offset') else 0
+
+  var boundariesLeft = boundaries.rect_position.x - offset
+  var boundariesRight = boundaries.rect_position.x + boundaries.rect_size[0] + offset
+  var boundariesTop = boundaries.rect_position.y - offset
+  var boundariesBottom = boundaries.rect_position.y + boundaries.rect_size[1] + offset
+
+  var outOnLeft = position.x < boundariesLeft
+  var outOnRight = position.x > boundariesRight
+  var outOnTop = position.y < boundariesTop
+  var outOnBottom = position.y > boundariesBottom
+
+  if outOnLeft or outOnRight or outOnBottom or outOnTop:
+    if(reposition):
+      var newX = position.x
+      var newY = position.y
+      var innerMargin = 10 # not to have accurate equalities
+
+      if outOnLeft:
+        newX = boundariesLeft + innerMargin
+      if outOnRight:
+        newX = boundariesRight - innerMargin
+      if outOnTop:
+        newY = boundariesTop + innerMargin
+      if outOnBottom:
+        newY = boundariesBottom - innerMargin
+
+      if(newX != position.x or newY != position.y):
+        toPosition(position, Vector2(newX, newY), 0.5)
+
+    return true
