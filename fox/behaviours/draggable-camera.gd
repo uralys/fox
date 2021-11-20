@@ -57,9 +57,10 @@ func _input(event):
       dragging = false
       startPressingTime = 0
 
-      var outOfBoundaries = checkBoundaries({reposition=true})
-      if(not outOfBoundaries):
-        smoothing = true
+      if(boundaries):
+        var outOfBoundaries = checkBoundaries({reposition=true})
+        if(not outOfBoundaries):
+          smoothing = true
 
   elif event is InputEventMouseMotion:
     if(startPressingTime > 0):
@@ -90,7 +91,9 @@ func _process(delta):
   if(not moving and not pressing):
     smoothing = false
     tweening = false
-    checkBoundaries({reposition=true})
+
+    if(boundaries):
+      checkBoundaries({reposition=true})
 
 # ------------------------------------------------------------------------------
 

@@ -45,6 +45,7 @@ static func from(object, _options):
 
 # ------------------------------------------------------------------------------
 
+# mandatory options = {propertyPath, toValue}
 static func to(object, _options):
   var options = _options.duplicate()
   options.fromValue = __.Get(options.propertyPath, object)
