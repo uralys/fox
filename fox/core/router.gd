@@ -17,16 +17,11 @@ var currentScene = null
 var CURTAIN_DURATION = 0.7
 var isCurtainOpen = true
 
-var curtain
-var leftCurtain
-var rightCurtain
-
 # ------------------------------------------------------------------------------
 
-func _ready():
-  curtain = $'/root/app/curtain'
-  leftCurtain = $'/root/app/curtain/left'
-  rightCurtain = $'/root/app/curtain/right'
+onready var curtain = $'/root/app/curtain'
+onready var leftCurtain = $'/root/app/curtain/left'
+onready var rightCurtain = $'/root/app/curtain/right'
 
 # ------------------------------------------------------------------------------
 

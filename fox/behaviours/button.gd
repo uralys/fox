@@ -25,5 +25,9 @@ func _gui_input(event):
 
     emit_signal("onPress")
 
+    if $'/root/app/sounds'.has_node('effects/onButtonPress'):
+      prints('play onpress');
+      $'/root/app/sounds/effects/onButtonPress'.play(12)
+
   if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
     emit_signal("onRelease")
