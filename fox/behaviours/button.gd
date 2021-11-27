@@ -24,7 +24,7 @@ func _gui_input(event):
       return
 
     emit_signal('onPress')
-    Sound.play('onButtonPress')
+    Sound.play(Sound.BUTTON_PRESS)
 
   if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
     emit_signal('onRelease')
