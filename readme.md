@@ -79,6 +79,15 @@ func play(soundName):
 
 Now you can call `Sound.play('music')` anywhere
 
+#### note on loop behaviour
+
+`.ogg` files will loop by default.
+
+- Select them on the `FileSystem`,
+- go to the `Import` tab next to the `Scene` tab
+- unselect `loop`
+- click on `Reimport`
+
 #### default sound list
 
 - `onButtonPress`
