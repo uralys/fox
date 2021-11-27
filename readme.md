@@ -46,3 +46,39 @@ watch files and restart `Godot` using:
 ```sh
 > node fox/scripts/run.js
 ```
+
+### Sound
+
+This core feature adds an `AudioStreamPlayer`
+
+#### setup
+
+create a `src/core/sound.gd`
+
+```gdscript
+extends 'res://fox/core/sound.gd'
+```
+
+and add it as `Autoload`
+
+then you can implement the `play` like this:
+
+```gdscript
+var OGG = {
+  onButtonPress = "res://path/to/your-sound.ogg",
+  music = "res://path/to/your-music.ogg",
+}
+
+func play(soundName):
+  var assetPath =__.Get(soundName, OGG)
+  if(assetPath):
+    .play(assetPath)
+```
+
+#### usage
+
+Now you can call `Sound.play('music')` anywhere
+
+#### default sound list
+
+- `onButtonPress`
