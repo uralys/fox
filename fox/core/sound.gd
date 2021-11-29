@@ -20,11 +20,14 @@ func _ready():
 
 func play(path):
   var sound = AudioStreamPlayer.new()
+  sound.pause_mode = PAUSE_MODE_PROCESS
+
   var stream = load(path)
   sound.stream = stream
   SOUNDS.add_child(sound)
 
   sound.play()
+
   return sound
 
 # ------------------------------------------------------------------------------
