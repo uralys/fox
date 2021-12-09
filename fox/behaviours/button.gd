@@ -1,4 +1,4 @@
-extends TextureRect
+extends Node
 
 signal onPress
 signal onRelease
