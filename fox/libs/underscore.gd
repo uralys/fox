@@ -28,6 +28,12 @@ static func Get(path, obj):
 
 # ------------------------------------------------------------------------------
 
+static func GetOr(defaultValue, path, obj):
+  var res = Get(path, obj)
+  return res if res else defaultValue
+
+# ------------------------------------------------------------------------------
+
 static func Set(value, path, obj):
   if(not path):
     return obj

@@ -56,6 +56,32 @@ static func to(object, _options):
 
 # ------------------------------------------------------------------------------
 
+# mandatory options = {propertyPath, toValue}
+static func toAndBack(object, _options):
+  var options = _options.duplicate()
+  var propertyPath = options.propertyPath
+
+  var totalDuration = __.GetOr(0.5, 'duration', options)
+  var duration = float(totalDuration)/2
+  var fromValue = object[propertyPath]
+
+  to(object, {
+    propertyPath = propertyPath,
+    toValue = options.toValue,
+    duration = duration
+  })
+
+  var _timer = Wait.start(object, duration)
+  yield(_timer, 'timeout')
+
+  to(object, {
+    propertyPath = propertyPath,
+    toValue = fromValue,
+    duration = duration
+  })
+
+# ------------------------------------------------------------------------------
+
 static func show(object, duration = 0.3, delay = 0):
   object.modulate.a = 0
   object.visible = false
@@ -146,7 +172,7 @@ static func disappear(object, delay = 0):
     propertyPath = 'modulate:a',
     fromValue = 1,
     toValue = 0,
-    delay = delay + 0.6,
+    delay = delay + 0.35,
     duration = 0.3,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
@@ -156,21 +182,17 @@ static func disappear(object, delay = 0):
   _animate(object, {
     propertyPath = scaleProperty,
     fromValue = initialScale,
-    toValue = Vector2(0.001,0.001),
+    toValue = Vector2(0.01,0.01),
     delay = delay + 0.3,
     duration = 0.3,
     transition = Tween.TRANS_QUAD,
     easing = Tween.EASE_OUT
   })
 
-  _animate(object, {
+  toAndBack(object, {
     propertyPath = positionProperty,
-    fromValue = object[positionProperty],
-    toValue =  object[positionProperty] + Vector2(0, 10),
-    delay = delay,
-    duration = 1.2,
-    transition = Tween.TRANS_ELASTIC,
-    easing = Tween.EASE_OUT,
+    toValue = object[positionProperty] + Vector2(0, 10),
+    duration = 0.3
   })
 
   yield(object, 'disappeared')
@@ -274,7 +296,7 @@ static func _animate(object, options):
   var fromValue = options.get('fromValue')
   var toValue = options.get('toValue')
 
-  var delay = options.delay if options.get('delay') else 0
+  var delay = __.GetOr(0, 'delay', options)
   var duration = options.duration if options.get('duration') else 0.75
 
   var easing = options.easing if options.get('easing') else Tween.EASE_OUT
