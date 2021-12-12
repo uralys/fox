@@ -30,6 +30,7 @@ static func _positionProperty(object):
 
 # ------------------------------------------------------------------------------
 
+# mandatory options = {propertyPath, fromValue}
 static func from(object, _options):
   var options = _options.duplicate()
 
@@ -65,20 +66,14 @@ static func toAndBack(object, _options):
   var duration = float(totalDuration)/2
   var fromValue = object[propertyPath]
 
-  to(object, {
-    propertyPath = propertyPath,
-    toValue = options.toValue,
-    duration = duration
-  })
+  options.duration = duration
+  to(object, options)
 
   var _timer = Wait.start(object, duration)
   yield(_timer, 'timeout')
 
-  to(object, {
-    propertyPath = propertyPath,
-    toValue = fromValue,
-    duration = duration
-  })
+  options.toValue = fromValue
+  to(object, options)
 
 # ------------------------------------------------------------------------------
 
