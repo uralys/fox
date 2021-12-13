@@ -179,15 +179,17 @@ static func disappear(object, delay = 0):
     fromValue = initialScale,
     toValue = Vector2(0.01,0.01),
     delay = delay + 0.3,
-    duration = 0.3,
+    duration = 0.15,
     transition = Tween.TRANS_QUAD,
-    easing = Tween.EASE_OUT
+    easing = Tween.EASE_IN
   })
 
   toAndBack(object, {
     propertyPath = positionProperty,
     toValue = object[positionProperty] + Vector2(0, 10),
-    duration = 0.3
+    duration = 2,
+    transition = Tween.TRANS_ELASTIC,
+    delay = delay
   })
 
   yield(object, 'disappeared')
