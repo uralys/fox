@@ -46,6 +46,13 @@ func play(soundName, delay = 0, volume = 0):
 
 # ------------------------------------------------------------------------------
 
+func stopMusic():
+  CURRENT_MUSIC.stop()
+  ___node.remove_child(CURRENT_MUSIC)
+  CURRENT_MUSIC.queue_free()
+
+# ------------------------------------------------------------------------------
+
 func _refreshMusicVolume():
   var volume = 0 if(MUSIC_ON) else -100
   CURRENT_MUSIC.set_volume_db(volume)
