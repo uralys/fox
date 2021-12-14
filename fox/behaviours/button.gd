@@ -4,6 +4,7 @@ signal onPress
 signal onRelease
 
 export(bool) var onlyOnce = true
+export(bool) var sound = true
 export(int) var MIN_MS_BETWEEN_PRESS = 700
 
 var nbPressed = 0
@@ -24,7 +25,9 @@ func _gui_input(event):
       return
 
     emit_signal('onPress')
-    Sound.play(Sound.BUTTON_PRESS)
+
+    if(sound):
+      Sound.play(Sound.BUTTON_PRESS)
 
   if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
     emit_signal('onRelease')
