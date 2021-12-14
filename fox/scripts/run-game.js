@@ -11,10 +11,10 @@ const restart = () => {
   console.log('----------------------------');
   console.log('🦊 restarting Godot');
   currentInstance = shelljs.exec(
-    // '/Applications/Apps/Godot.app/Contents/MacOS/Godot --position 3200,70',
-    '/Applications/Apps/Godot.app/Contents/MacOS/Godot --position 1120,20',
+    '/Applications/Apps/Godot.app/Contents/MacOS/Godot --position 3200,70',
+    // '/Applications/Apps/Godot.app/Contents/MacOS/Godot --position 1120,20',
     {
-      async: true,
+      async: true
     }
   );
   console.log('----------------------------');

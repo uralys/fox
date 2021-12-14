@@ -35,7 +35,7 @@ func useSettings(oggFiles, musicOn = true, soundsOn = true):
 # ------------------------------------------------------------------------------
 
 func playMusic(musicName, delay = 0):
-  CURRENT_MUSIC = _play(musicName, delay)
+  CURRENT_MUSIC = _play(musicName, delay, -5)
   _refreshMusicVolume()
 
 # ------------------------------------------------------------------------------
