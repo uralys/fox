@@ -7,10 +7,9 @@ func _ready():
   prints('window:', OS.get_window_size())
   print('-------------------------------')
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
+  startSplashAnimation()
 
+func startSplashAnimation():
   var splashScreen = load('res://fox/animations/splash-animation.tscn')
   Master.splashScreen = splashScreen.instance()
   add_child(Master.splashScreen)
-
-  prints('> splashScreen');
-  print('-------------------------------')
