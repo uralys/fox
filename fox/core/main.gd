@@ -1,5 +1,7 @@
 extends Node
 
+var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
+
 func _ready():
   print('-------------------------------')
   print('[🦊 1.0]')
@@ -10,6 +12,5 @@ func _ready():
   startSplashAnimation()
 
 func startSplashAnimation():
-  var splashScreen = load('res://fox/animations/splash-animation.tscn')
-  Master.splashScreen = splashScreen.instance()
+  Master.splashScreen = SplashAnimation.instance()
   add_child(Master.splashScreen)

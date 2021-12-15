@@ -41,10 +41,16 @@ and add it as `Autoload`
 
 ## run
 
-watch files and restart `Godot` using:
+Watch files and restart your game `Godot` using:
 
 ```sh
-> node fox/scripts/run.js
+> node fox/scripts/run-game.js
+```
+
+Open and sync your `Godot Editor` using:
+
+```sh
+> ./fox/scripts/run-editor.sh
 ```
 
 ### Sound
