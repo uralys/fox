@@ -294,9 +294,9 @@ static func _animate(object, options):
   var toValue = options.get('toValue')
 
   var delay = __.GetOr(0, 'delay', options)
-  var duration = options.duration if options.get('duration') else 0.75
+  var duration = __.GetOr(0.75, 'duration', options)
+  var easing = __.GetOr(Tween.EASE_OUT, 'easing', options)
 
-  var easing = options.easing if options.get('easing') else Tween.EASE_OUT
   var transition = options.transition if options.get('transition') else Tween.TRANS_QUAD
 
   var SIGNAL_ON_DONE = options.signalToWait if options.get('signalToWait') else ANIMATION_DONE

@@ -1,0 +1,68 @@
+[gd_scene load_steps=10 format=2]
+
+[ext_resource path="res://assets/sprites/splash/u.png" type="Texture" id=1]
+[ext_resource path="res://fox/animations/splash-animation.gd" type="Script" id=2]
+[ext_resource path="res://assets/sprites/splash/splash.png" type="Texture" id=3]
+[ext_resource path="res://assets/sprites/splash/l.png" type="Texture" id=4]
+[ext_resource path="res://assets/sprites/splash/y.png" type="Texture" id=5]
+[ext_resource path="res://assets/sprites/splash/dot.png" type="Texture" id=6]
+[ext_resource path="res://assets/sprites/splash/s.png" type="Texture" id=7]
+[ext_resource path="res://assets/sprites/splash/a.png" type="Texture" id=8]
+[ext_resource path="res://assets/sprites/splash/r.png" type="Texture" id=9]
+
+[node name="splashScreen" type="CanvasLayer"]
+script = ExtResource( 2 )
+
+[node name="bg" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color( 0.0941176, 0.0941176, 0.0941176, 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="boot-to-hide" type="TextureRect" parent="."]
+visible = false
+self_modulate = Color( 0.639216, 0, 1, 1 )
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+margin_left = -743.616
+margin_top = -80.0
+margin_right = 746.384
+margin_bottom = 80.0
+texture = ExtResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="u" type="Sprite" parent="."]
+position = Vector2( 316.902, 542.403 )
+texture = ExtResource( 1 )
+
+[node name="r" type="Sprite" parent="."]
+position = Vector2( 574.525, 539.533 )
+texture = ExtResource( 9 )
+
+[node name="a" type="Sprite" parent="."]
+position = Vector2( 829.045, 539.501 )
+scale = Vector2( 0.271117, 0.271117 )
+texture = ExtResource( 8 )
+
+[node name="l" type="Sprite" parent="."]
+position = Vector2( 1065.19, 539.614 )
+scale = Vector2( 0.991379, 1 )
+texture = ExtResource( 4 )
+
+[node name="y" type="Sprite" parent="."]
+position = Vector2( 1266.86, 539.588 )
+texture = ExtResource( 5 )
+
+[node name="s" type="Sprite" parent="."]
+position = Vector2( 1506.54, 540.062 )
+texture = ExtResource( 7 )
+
+[node name="dot" type="Sprite" parent="."]
+position = Vector2( 1678.28, 592.886 )
+texture = ExtResource( 6 )

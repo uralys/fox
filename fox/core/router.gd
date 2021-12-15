@@ -3,7 +3,6 @@
 extends Node
 
 # ------------------------------------------------------------------------------
-
 var loader
 var _loadedResources = {}
 signal loaded

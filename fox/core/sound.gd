@@ -47,9 +47,13 @@ func play(soundName, delay = 0, volume = 0):
 # ------------------------------------------------------------------------------
 
 func stopMusic():
+  if(not CURRENT_MUSIC):
+    return
+
   CURRENT_MUSIC.stop()
   ___node.remove_child(CURRENT_MUSIC)
   CURRENT_MUSIC.queue_free()
+  CURRENT_MUSIC = null
 
 # ------------------------------------------------------------------------------
 
