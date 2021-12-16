@@ -2,7 +2,7 @@
 
 [ext_resource path="res://assets/sprites/splash/u.png" type="Texture" id=1]
 [ext_resource path="res://fox/animations/splash-animation.gd" type="Script" id=2]
-[ext_resource path="res://assets/sprites/splash/splash.png" type="Texture" id=3]
+[ext_resource path="res://assets/sprites/splash/boot-empty.png" type="Texture" id=3]
 [ext_resource path="res://assets/sprites/splash/l.png" type="Texture" id=4]
 [ext_resource path="res://assets/sprites/splash/y.png" type="Texture" id=5]
 [ext_resource path="res://assets/sprites/splash/dot.png" type="Texture" id=6]
@@ -12,14 +12,6 @@
 
 [node name="splashScreen" type="CanvasLayer"]
 script = ExtResource( 2 )
-
-[node name="bg" type="ColorRect" parent="."]
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color( 0.0941176, 0.0941176, 0.0941176, 1 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="letters" type="ReferenceRect" parent="."]
 anchor_left = 0.5
@@ -35,7 +27,6 @@ __meta__ = {
 }
 
 [node name="boot-to-hide" type="TextureRect" parent="letters"]
-visible = false
 self_modulate = Color( 0.639216, 0, 1, 1 )
 anchor_left = 0.5
 anchor_top = 0.5

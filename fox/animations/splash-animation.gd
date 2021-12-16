@@ -6,7 +6,7 @@ signal splashFinished
 
 # ------------------------------------------------------------------------------
 
-const STEP_DURATION = 2
+const STEP_DURATION = .75
 
 # ------------------------------------------------------------------------------
 
@@ -28,6 +28,20 @@ func _ready():
 
   prints('> splashScreen');
   prints('-------------------------------')
+  var appearDuration = 1.5
+  var appearDelay = 0.75
+
+  Animate.show(U, appearDuration, appearDelay)
+  Animate.show(R, appearDuration, appearDelay)
+  Animate.show(A, appearDuration, appearDelay)
+  Animate.show(L, appearDuration, appearDelay)
+  Animate.show(Y, appearDuration, appearDelay)
+  Animate.show(S, appearDuration, appearDelay)
+  Animate.show(DOT, appearDuration, appearDelay)
+
+  var timer = Wait.start(self, appearDuration + appearDelay + 0.1)
+  yield(timer, 'timeout')
+
   # ------------------- UR
 
   Animate.hide(U, STEP_DURATION, 1.6)
@@ -63,9 +77,9 @@ func _ready():
   Animate.hide(DOT, STEP_DURATION, 2.8)
 
   yield(A, 'scaled')
-  Animate.hide(A, 1.5, 0.5)
+  Animate.hide(A, 1, 0.5)
 
-  exitSplashAnimation(2)
+  exitSplashAnimation(1.5)
 
 # ------------------------------------------------------------------------------
 
