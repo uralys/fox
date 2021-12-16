@@ -13,6 +13,11 @@
 > ./fox/scripts/generate-icons.sh
 ```
 
+### notes
+
+- `assets/icons/` should have a `.gdignore`
+- `assets/icons/generated` should be added to `.gitignore`
+
 ## \_build folder
 
 `/_build` should be added to `.gitignore` and have a `.gdignore`
