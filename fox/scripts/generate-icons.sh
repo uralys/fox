@@ -45,6 +45,7 @@ convert "$inputFile" -resize '120x120'    -unsharp 1x4 "$outputPath/icon-120x120
 convert "$inputFile" -resize '152x152'    -unsharp 1x4 "$outputPath/icon-152x152.png"
 convert "$inputFile" -resize '167x167'    -unsharp 1x4 "$outputPath/icon-167x167.png"
 convert "$inputFile" -resize '180x180'    -unsharp 1x4 "$outputPath/icon-180x180.png"
+convert "$inputFile" -resize '512x512'    -unsharp 1x4 "$outputPath/icon-512x512.png"
 convert "$inputFile" -resize '1024x1024'  -unsharp 1x4 "$outputPath/icon-1024x1024.png"
 
 echo '✅ done!'
