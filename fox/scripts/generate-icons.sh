@@ -8,8 +8,8 @@
 ################################################################################
 
 #!/bin/sh
-inputFile=$PWD/assets/icons/icon-square-1200x1200.png
-outputPath=$PWD/assets/icons/generated
+inputFile=$PWD/_release/images/icon-square-1200x1200.png
+outputPath=$PWD/_release/generated
 
 echo '----------------------------'
 echo '🦊 starting Icons generation'
