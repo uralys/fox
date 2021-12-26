@@ -6,8 +6,12 @@
   "license": "MIT",
   "homepage": "https://github.com/uralys/fox#readme",
   "devDependencies": {
+    "chalk": "^4.1.2",
     "chokidar": "^3.5.2",
     "shelljs": "^0.8.4",
     "yargs": "^17.3.1"
+  },
+  "bin": {
+    "fox": "./fox/cli.js"
   }
 }

@@ -1,13 +1,54 @@
 # 🦊 Fox
 
-Godot extension to share between apps.
+Fox provides many tools to help develop with Godot Engine
 
-## install
+- Godot components and libs to use directly in your game.
+- a NodeJS CLI to:
+  - watch your files and allow to live reload your game.
+  - to build your debug and production bundles.
+  - to generate your release icons and screenshots.
+
+## Install
+
+clone this repo next to your games folders
+
+```sh
+git clone https://github.com/uralys/fox
+```
+
+```sh
+└── your-gamedev
+  ├── fox
+  ├── your-game1
+  └── your-game2
+```
+
+Install the dev dependencies
+
+```sh
+npm install
+```
+
+To use the CLI, link the `fox` executable:
+
+```sh
+npm link
+```
+
+You can now execute fox commands from your terminal
+
+```sh
+fox
+
+🦊 Fox CLI vx.x.x
+Documentation: https://github.com/uralys/fox
+```
 
 To keep same paths and `res://`, symlink like this:
 
 ```sh
-> ln -s ../fox/fox fox
+cd /path/to/your-game
+ln -s ../fox/fox fox
 ```
 
 ## prepare core elements
