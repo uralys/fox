@@ -34,7 +34,7 @@ const SIZES = [
 // -----------------------------------------------------------------------------
 
 const generateIcons = () => {
-  console.log(chalk.green('generating icons...'));
+  console.log(chalk.green('🦊 generating icons...'));
 
   // ---------
   const projectPath = path.resolve(process.cwd(), './');
@@ -50,7 +50,7 @@ const generateIcons = () => {
   });
 
   // ---------
-  console.log(`Created ${SIZES.length} icons successfully.`);
+  console.log(`Created ${chalk.green(SIZES.length)} icons successfully.`);
 };
 
 // -----------------------------------------------------------------------------

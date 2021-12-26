@@ -9,12 +9,14 @@ const pkg = require('../package.json');
 // -----------------------------------------------------------------------------
 
 const generateIcons = require('./_commands/generate-icons');
+const generateSplashscreens = require('./_commands/generate-splashscreens');
 
 // -----------------------------------------------------------------------------
 
 const GENERATE_ICONS = 'generate-icons';
+const GENERATE_SPLASHSCREENS = 'generate-splashscreens';
 
-const commands = [GENERATE_ICONS];
+const commands = [GENERATE_ICONS, GENERATE_SPLASHSCREENS];
 const commandMessage = `choose one command: [${commands}]`;
 
 // -----------------------------------------------------------------------------
@@ -31,6 +33,10 @@ const foxCLI = (args) => {
       generateIcons();
       break;
     }
+    case GENERATE_SPLASHSCREENS: {
+      generateSplashscreens();
+      break;
+    }
     default: {
       console.log(command);
       console.log('🔴 not handled');
@@ -42,7 +48,11 @@ const foxCLI = (args) => {
 
 const argv = yargs(process.argv.slice(2))
   .usage('🦊 Usage: fox <command> [options]')
-  .command(GENERATE_ICONS, 'generate icons for the release')
+  .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
+  .command(
+    GENERATE_SPLASHSCREENS,
+    'generate splashscreens, extending a background color from a centered base image'
+  )
   .demandCommand(1, 1, commandMessage, commandMessage)
   .help('h')
   .version(pkg.version)
