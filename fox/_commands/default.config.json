@@ -1,0 +1,6 @@
+{
+  "generate:splashscreens": {
+    "inputFile": "_release/images/base-splashscreen.png",
+    "ouputPath": "_release/generated"
+  }
+}

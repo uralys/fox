@@ -8,7 +8,6 @@
 // -----------------------------------------------------------------------------
 
 const chalk = require('chalk');
-const path = require('path');
 const shell = require('shelljs');
 
 // -----------------------------------------------------------------------------
@@ -33,24 +32,15 @@ const SIZES = [
 
 // -----------------------------------------------------------------------------
 
-const generateIcons = () => {
-  console.log(chalk.green('🦊 generating icons...'));
-
-  // ---------
-  const projectPath = path.resolve(process.cwd(), './');
-  const inputFile = `${projectPath}/_release/images/icon-square-1200x1200.png`;
-  const outputPath = `${projectPath}/_release/generated`;
-
-  console.log({inputFile, outputPath});
+const generateIcons = (input, output) => {
+  console.log(`---> generating ${chalk.blue.bold('icons')}...`);
 
   SIZES.forEach((size) => {
-    shell.exec(
-      `convert ${inputFile} -resize '${size}' -unsharp 1x4 "${outputPath}/icon-${size}.png"`
-    );
+    console.log(` > ${chalk.magenta.italic(size)}`);
+    shell.exec(`convert ${input} -resize '${size}' -unsharp 1x4 "${output}/icon-${size}.png"`);
   });
 
-  // ---------
-  console.log(`Created ${chalk.green(SIZES.length)} icons successfully.`);
+  console.log(`\n Created ${chalk.green(SIZES.length)} icons ${chalk.green('successfully')}.`);
 };
 
 // -----------------------------------------------------------------------------

@@ -6,7 +6,6 @@
 // -----------------------------------------------------------------------------
 
 const chalk = require('chalk');
-const path = require('path');
 const shell = require('shelljs');
 
 // -----------------------------------------------------------------------------
@@ -25,38 +24,29 @@ const PORTRAIT_SIZES = [
 
 // -----------------------------------------------------------------------------
 
-const convert = (inputFile, color, outputPath) => (size) => {
+const convert = (inputFile, backgroundColor, outputPath) => (size) => {
   shell.exec(
-    `convert ${inputFile} -gravity center -background '${color}' -extent ${size} "${outputPath}/splashscreen-${size}.png"`
+    `convert ${inputFile} -gravity center -background '${backgroundColor}' -extent ${size} "${outputPath}/splashscreen-${size}.png"`
   );
 };
 
 // -----------------------------------------------------------------------------
 
-const generateSplashscreens = () => {
-  console.log(chalk.green('🦊 generating splashscreens...'));
+const generateSplashscreens = (input, output, backgroundColor = '#181818') => {
+  console.log(`---> generating ${chalk.blue.bold('splashscreens')}...`);
 
-  // ---------
-  const projectPath = path.resolve(process.cwd(), './');
-  const inputFile = `${projectPath}/_release/images/base-splashscreen.png`;
-  const outputPath = `${projectPath}/_release/generated`;
-  const color = '#181818';
+  const applyConversion = convert(input, backgroundColor, output);
 
-  console.log({inputFile, outputPath});
-
-  const applyConversion = convert(inputFile, color, outputPath);
-
-  console.log('> creating landscape launch screens...');
+  console.log(` > creating ${chalk.magenta.italic('landscape')} launch screens...`);
   LANDSCAPE_SIZES.forEach(applyConversion);
 
-  console.log('> creating portrait launch screens...');
+  console.log(` > creating ${chalk.magenta.italic('portrait')}  launch screens...`);
   PORTRAIT_SIZES.forEach(applyConversion);
 
-  // ---------
   console.log(
-    `Created ${chalk.green(
+    `\nCreated ${chalk.green(
       LANDSCAPE_SIZES.length + PORTRAIT_SIZES.length
-    )} splashscreens successfully.`
+    )} splashscreens ${chalk.green('successfully')}.`
   );
 };
 
