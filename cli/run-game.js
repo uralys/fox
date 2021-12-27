@@ -12,7 +12,7 @@ let currentInstance;
 
 const restart = (config) => {
   console.log('----------------------------');
-  console.log('🦊 restarting Godot');
+  console.log(`🦊 ${chalk.italic('restarting Godot')}`);
   var {godotPath, position} = config;
 
   currentInstance = shelljs.exec(`${godotPath} --position ${position}`, {
@@ -23,7 +23,8 @@ const restart = (config) => {
 
 // -----------------------------------------------------------------------------
 
-const runGodot = (config) => {
+const runGame = (config) => {
+  console.log(`---> running ${chalk.blue.bold('game')}...`);
   const watcher = chokidar.watch(['**/*.gd', '**/*.tscn']);
 
   watcher.on('ready', (event, path) => {
@@ -39,13 +40,6 @@ const runGodot = (config) => {
 
     restart(config);
   });
-};
-
-// -----------------------------------------------------------------------------
-
-const runGame = (config) => {
-  console.log(`---> running ${chalk.blue.bold('game')}...`);
-  runGodot(config);
 };
 
 // -----------------------------------------------------------------------------
