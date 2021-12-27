@@ -25,6 +25,7 @@ const PORTRAIT_SIZES = [
 // -----------------------------------------------------------------------------
 
 const convert = (inputFile, backgroundColor, outputPath) => (size) => {
+  console.log(`   ${chalk.magenta.italic(size)}`);
   shell.exec(
     `convert ${inputFile} -gravity center -background '${backgroundColor}' -extent ${size} "${outputPath}/splashscreen-${size}.png"`
   );
