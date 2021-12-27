@@ -1,3 +1,6 @@
+// -----------------------------------------------------------------------------
+
+const chalk = require('chalk');
 const chokidar = require('chokidar');
 const shelljs = require('shelljs');
 
@@ -7,26 +10,24 @@ let currentInstance;
 
 // -----------------------------------------------------------------------------
 
-const restart = () => {
+const restart = (config) => {
   console.log('----------------------------');
   console.log('🦊 restarting Godot');
-  currentInstance = shelljs.exec(
-    // '/Applications/Apps/Godot.app/Contents/MacOS/Godot --position 3200,70',
-    '/Applications/Apps/Godot.app/Contents/MacOS/Godot --position 1120,20',
-    {
-      async: true
-    }
-  );
+  var {godotPath, position} = config;
+
+  currentInstance = shelljs.exec(`${godotPath} --position ${position}`, {
+    async: true
+  });
   console.log('----------------------------');
 };
 
 // -----------------------------------------------------------------------------
 
-const runGodot = () => {
+const runGodot = (config) => {
   const watcher = chokidar.watch(['**/*.gd', '**/*.tscn']);
 
   watcher.on('ready', (event, path) => {
-    restart();
+    restart(config);
   });
 
   watcher.on('change', (event, path) => {
@@ -36,10 +37,17 @@ const runGodot = () => {
       shelljs.exec(`kill -9 ${currentInstance.pid}`);
     }
 
-    restart();
+    restart(config);
   });
 };
 
 // -----------------------------------------------------------------------------
 
-runGodot();
+const runGame = (config) => {
+  console.log(`---> running ${chalk.blue.bold('game')}...`);
+  runGodot(config);
+};
+
+// -----------------------------------------------------------------------------
+
+module.exports = runGame;

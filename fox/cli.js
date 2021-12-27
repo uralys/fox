@@ -14,6 +14,7 @@ const pkg = require('../package.json');
 const generateIcons = require('./_commands/generate-icons');
 const generateSplashscreens = require('./_commands/generate-splashscreens');
 const generateScreenshots = require('./_commands/generate-screenshots');
+const runGame = require('./_commands/run-game');
 
 // -----------------------------------------------------------------------------
 
@@ -22,10 +23,17 @@ const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
 
 const RUN_EDITOR = 'run:editor';
+const RUN_GAME = 'run:game';
 
 // -----------------------------------------------------------------------------
 
-const commands = [GENERATE_ICONS, GENERATE_SCREENSHOTS, GENERATE_SPLASHSCREENS, RUN_EDITOR];
+const commands = [
+  GENERATE_ICONS,
+  GENERATE_SCREENSHOTS,
+  GENERATE_SPLASHSCREENS,
+  RUN_EDITOR,
+  RUN_GAME
+];
 const commandMessage = `choose a command above, example:\n${chalk.italic(`fox ${RUN_EDITOR}`)}`;
 
 // -----------------------------------------------------------------------------
@@ -57,8 +65,12 @@ const getConfig = (command) => {
     const configPath = path.resolve(process.cwd(), `./${CONFIG_FILE}`);
     console.log(`---> using ${chalk.blue.bold(CONFIG_FILE)}`);
     config = require(configPath);
+
+    if (!config[command]) {
+      console.log(chalk.yellow(`No config for "${command}" was found\nUsing default config.`));
+      config = defaultConfig;
+    }
   } catch (e) {
-    console.log(chalk.yellow(`No file "${CONFIG_FILE}" was found\nUsing default config.`));
     config = defaultConfig;
   }
 
@@ -110,8 +122,25 @@ const cli = (args) => {
     return;
   }
 
-  console.log(chalk.cyan('🦊 running', command));
+  console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
   var config = getConfig(command);
+
+  // -------- Godot commands
+
+  switch (command) {
+    case RUN_EDITOR: {
+      var {godotPath, resolution, position} = config;
+      shell.exec(`${godotPath} -e --windowed --resolution ${resolution} --position ${position}`);
+      return;
+    }
+    case RUN_GAME: {
+      runGame(config);
+      return;
+    }
+  }
+
+  // -------- IO commands
+
   var {input, output} = checkIO(config, defaultConfig[command]);
 
   switch (command) {
@@ -132,6 +161,8 @@ const cli = (args) => {
       console.log(chalk.red.bold('🔴 not handled'));
     }
   }
+
+  return true;
 };
 
 // -----------------------------------------------------------------------------
@@ -147,6 +178,8 @@ const argv = yargs(process.argv.splice(2))
     GENERATE_SCREENSHOTS,
     'resize all images in a folder to 2560x1600, to match store requirements'
   )
+  .command(RUN_EDITOR, 'open Godot Editor')
+  .command(RUN_GAME, 'start your game to debug')
   .demandCommand(1, 1, commandMessage, commandMessage)
   .help('h')
   .version(pkg.version)
@@ -157,7 +190,11 @@ const argv = yargs(process.argv.splice(2))
 // -----------------------------------------------------------------------------
 
 try {
-  cli(argv);
+  var result = cli(argv);
+  if (result) {
+    console.log(`🦊 ${chalk.italic('done.')}`);
+  }
 } catch (e) {
+  console.log(e);
   console.log(chalk.red.bold('🔴 failed'));
 }
