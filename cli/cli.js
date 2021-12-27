@@ -11,10 +11,10 @@ const pkg = require('../package.json');
 
 // -----------------------------------------------------------------------------
 
-const generateIcons = require('./_commands/generate-icons');
-const generateSplashscreens = require('./_commands/generate-splashscreens');
-const generateScreenshots = require('./_commands/generate-screenshots');
-const runGame = require('./_commands/run-game');
+const generateIcons = require('./generate-icons');
+const generateSplashscreens = require('./generate-splashscreens');
+const generateScreenshots = require('./generate-screenshots');
+const runGame = require('./run-game');
 
 // -----------------------------------------------------------------------------
 
@@ -38,10 +38,10 @@ const commandMessage = `choose a command above, example:\n${chalk.italic(`fox ${
 
 // -----------------------------------------------------------------------------
 
-const DEFAULT_CONFIG_FILE = 'fox/_commands/default.config.json';
+const DEFAULT_CONFIG_FILE = 'fox/default.config.json';
 const CONFIG_FILE = 'fox.config.json';
 
-const defaultConfigPath = path.resolve(process.cwd(), `./${DEFAULT_CONFIG_FILE}`);
+const defaultConfigPath = path.resolve(process.cwd(), `${DEFAULT_CONFIG_FILE}`);
 
 let defaultConfig;
 
@@ -122,6 +122,7 @@ const cli = (args) => {
     return;
   }
 
+  console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
   console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
   var config = getConfig(command);
 
