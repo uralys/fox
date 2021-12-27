@@ -70,7 +70,6 @@ const getConfig = (command) => {
 
 const checkIO = (subconfig, defaultSubconfig) => {
   const requirements = Object.keys(defaultSubconfig);
-  console.log({requirements});
 
   requirements.forEach((requirement) => {
     const value = subconfig[requirement];
@@ -95,7 +94,7 @@ const checkIO = (subconfig, defaultSubconfig) => {
   }
 
   if (!fs.existsSync(output)) {
-    shell.mkdir(output);
+    shell.mkdir('-p', output);
     console.log('✅ created output.');
   }
 
