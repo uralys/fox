@@ -170,6 +170,8 @@ const cli = (args) => {
 
 const argv = yargs(process.argv.splice(2))
   .usage('Usage: fox <command> [options]')
+  .command(RUN_EDITOR, 'open Godot Editor')
+  .command(RUN_GAME, 'start your game to debug')
   .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
   .command(
     GENERATE_SPLASHSCREENS,
@@ -179,8 +181,6 @@ const argv = yargs(process.argv.splice(2))
     GENERATE_SCREENSHOTS,
     'resize all images in a folder to 2560x1600, to match store requirements'
   )
-  .command(RUN_EDITOR, 'open Godot Editor')
-  .command(RUN_GAME, 'start your game to debug')
   .demandCommand(1, 1, commandMessage, commandMessage)
   .help('h')
   .version(pkg.version)

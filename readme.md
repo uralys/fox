@@ -52,13 +52,13 @@ ln -s ../fox/fox fox
 Usage: fox <command> [options]
 
 Commands:
+  fox run:editor              open Godot Editor
+  fox run:game                start your game to debug
   fox generate:icons          generate icons, using a base 1200x1200 image
   fox generate:splashscreens  generate splashscreens, extending a background
                               color from a centered base image
   fox generate:screenshots    resize all images in a folder to 2560x1600, to
                               match store requirements
-  fox run:editor              open Godot Editor
-  fox run:game                start your game to debug
 ```
 
 ## 🤖 Godot elements
