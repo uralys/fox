@@ -1,7 +1,4 @@
-# 🦊 Fox
-
-[![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license)
-[![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
+# 🦊 Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
 
 Fox provides many tools to help develop with Godot Engine
 
