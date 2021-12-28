@@ -1,4 +1,6 @@
-# 🦊 Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
+<p align="center"><a href="https://thenounproject.com/icon/fox-1486570/"> <img title="fox icon by Alina Oleynik from NounProject.com" height="180px"  src="./assets/logo.png"></a></p>
+
+# Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
 
 Fox provides many tools to help develop with Godot Engine
 
@@ -8,7 +10,7 @@ Fox provides many tools to help develop with Godot Engine
   - to build your debug and production bundles.
   - to generate your release icons and screenshots.
 
-## Install
+## 📦 Install
 
 clone this repo next to your game folders
 
@@ -44,7 +46,7 @@ cd /path/to/your-game
 ln -s ../fox/fox fox
 ```
 
-## CLI
+## 🦊 CLI
 
 ```sh
 Usage: fox <command> [options]
@@ -59,7 +61,7 @@ Commands:
   fox run:game                start your game to debug
 ```
 
-## Godot elements
+## 🤖 Godot elements
 
 You can use any elements from the `/fox` folder symlinked in your game:
 
