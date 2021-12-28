@@ -1,5 +1,8 @@
 # 🦊 Fox
 
+[![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license)
+[![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
+
 Fox provides many tools to help develop with Godot Engine
 
 - Godot components and libs to use directly in your game.
@@ -10,7 +13,7 @@ Fox provides many tools to help develop with Godot Engine
 
 ## Install
 
-clone this repo next to your games folders
+clone this repo next to your game folders
 
 ```sh
 git clone https://github.com/uralys/fox
@@ -37,104 +40,35 @@ npm link
 
 You can now execute fox commands from your terminal
 
-```sh
-fox
-
-🦊 Fox CLI vx.x.x
-Documentation: https://github.com/uralys/fox
-```
-
-To keep same paths and `res://`, symlink like this:
+To keep same paths and `res://`, symlink godot elements in the `/fox` folder like this:
 
 ```sh
 cd /path/to/your-game
 ln -s ../fox/fox fox
 ```
 
-## prepare core elements
-
-### Main
-
-create a Main scene, attach `main.gd`
-
-```gdscript
-extends 'res://fox/core/main.gd'
-```
-
-Default start screen is `Home`, you can override `startScreen()`
-
-```gdscript
-extends 'res://fox/core/main.gd'
-
-func startScreen():
-  Router.openYourCustomScreen()
-```
-
-### Router
-
-create a `src/core/router.gd`
-
-```gdscript
-extends 'res://fox/core/router.gd'
-```
-
-and add it as `Autoload`
-
-## run
-
-Watch files and restart your game `Godot` using:
+## CLI
 
 ```sh
-> node fox/scripts/run-game.js
+Usage: fox <command> [options]
+
+Commands:
+  fox generate:icons          generate icons, using a base 1200x1200 image
+  fox generate:splashscreens  generate splashscreens, extending a background
+                              color from a centered base image
+  fox generate:screenshots    resize all images in a folder to 2560x1600, to
+                              match store requirements
+  fox run:editor              open Godot Editor
+  fox run:game                start your game to debug
 ```
 
-Open and sync your `Godot Editor` using:
+## Godot elements
 
-```sh
-> ./fox/scripts/run-editor.sh
-```
+You can use any elements from the `/fox` folder symlinked in your game:
 
-### Sound
+- a router to move between your screens
+- sounds (`Sound.play`)
+- animations (`Animate.show`, `Animate.to` ...)
+- static libs (`Wait`, `__.Get`, `__.Set`...)
 
-This core feature adds an `AudioStreamPlayer`
-
-#### setup
-
-create a `src/core/sound.gd`
-
-```gdscript
-extends 'res://fox/core/sound.gd'
-```
-
-and add it as `Autoload`
-
-then you can implement the `play` like this:
-
-```gdscript
-var OGG = {
-  onButtonPress = "res://path/to/your-sound.ogg",
-  music = "res://path/to/your-music.ogg",
-}
-
-func play(soundName):
-  var assetPath =__.Get(soundName, OGG)
-  if(assetPath):
-    .play(assetPath)
-```
-
-#### usage
-
-Now you can call `Sound.play('music')` anywhere
-
-#### note on loop behaviour
-
-`.ogg` files will loop by default.
-
-- Select them on the `FileSystem`,
-- go to the `Import` tab next to the `Scene` tab
-- unselect `loop`
-- click on `Reimport`
-
-#### default sound list
-
-- `onButtonPress`
+you'll find documentation [here](./docs/godot-elements.md)
