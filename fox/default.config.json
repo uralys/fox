@@ -1,11 +1,11 @@
 {
   "generate:icons": {
     "input": "_release/images/icon-square-1200x1200.png",
-    "output": "_release/generated/icons"
+    "output": "assets/generated/icons"
   },
   "generate:splashscreens": {
     "input": "_release/images/base-splashscreen.png",
-    "output": "_release/generated/splashscreens"
+    "output": "assets/generated/splashscreens"
   },
   "generate:screenshots": {
     "input": "_release/raw-shots",

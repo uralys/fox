@@ -25,7 +25,7 @@ const restart = (config) => {
 
 const runGame = (config) => {
   console.log(`---> running ${chalk.blue.bold('game')}...`);
-  const watcher = chokidar.watch(['**/*.gd', '**/*.tscn']);
+  const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg']);
 
   watcher.on('ready', (event, path) => {
     restart(config);
