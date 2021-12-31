@@ -130,8 +130,10 @@ const cli = (args) => {
 
   switch (command) {
     case RUN_EDITOR: {
+      console.log('----------------------------');
+      console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
       var {godotPath, resolution, position} = config;
-      shell.exec(`${godotPath} -e --windowed --resolution ${resolution} --position ${position}`);
+      shell.exec(`${godotPath} -e -v --windowed --resolution ${resolution} --position ${position}`);
       return;
     }
     case RUN_GAME: {
