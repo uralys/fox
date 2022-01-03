@@ -9,13 +9,13 @@ class_name Bundle
 # ------------------------------------------------------------------------------
 
 static func getPlatform():
-  var platform = ProjectSettings.get_setting('app/platform')
+  var platform = ProjectSettings.get_setting('bundle/platform')
   return platform
 
 # ------------------------------------------------------------------------------
 
-static func getStoreUrl(bundleBuildSettings):
+static func getStoreUrl(bundle):
   var platform = getPlatform()
-  return bundleBuildSettings[platform].storeUrl
+  return bundle[platform].storeUrl
 
 # ------------------------------------------------------------------------------

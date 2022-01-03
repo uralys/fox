@@ -34,6 +34,7 @@ const commands = [
   RUN_EDITOR,
   RUN_GAME
 ];
+
 const commandMessage = `choose a command above, example:\n${chalk.italic(`fox ${RUN_EDITOR}`)}`;
 
 // -----------------------------------------------------------------------------
@@ -80,37 +81,28 @@ const getConfig = (command) => {
 
 // -----------------------------------------------------------------------------
 
-const checkIO = (subconfig, defaultSubconfig) => {
-  const requirements = Object.keys(defaultSubconfig);
+const verifyConfig = (config, defaultConfig) => {
+  const requirements = Object.keys(defaultConfig);
 
   requirements.forEach((requirement) => {
-    const value = subconfig[requirement];
+    const value = config[requirement];
     if (!value) {
-      console.log(`${chalk.red.bold(`${requirement} not provided`)} in your config.`);
-      return null;
+      const message = `${chalk.red.bold(`${requirement} not provided`)} in your config.`;
+      console.log(message);
+      throw new Error(message);
     }
   });
 
   const projectPath = path.resolve(process.cwd(), './');
-  const input = `${projectPath}/${subconfig.input}`;
-  const output = `${projectPath}/${subconfig.output}`;
+  const output = `${projectPath}/${config.output}`;
 
-  console.log(`---> ${chalk.blue.bold('IO')}`);
-  console.log({input, output});
-
-  if (!fs.existsSync(input)) {
-    console.log(
-      `${chalk.bold('input')} path ${chalk.red.bold('does not exist')}, please check your config`
-    );
-    return null;
-  }
+  console.log(`---> ${chalk.blue.bold('verifying output path')}`);
+  console.log({output});
 
   if (!fs.existsSync(output)) {
     shell.mkdir('-p', output);
     console.log('✅ created output.');
   }
-
-  return {input, output};
 };
 
 // -----------------------------------------------------------------------------
@@ -124,7 +116,7 @@ const cli = (args) => {
 
   console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
   console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
-  var config = getConfig(command);
+  const config = getConfig(command);
 
   // -------- Godot commands
 
@@ -132,7 +124,7 @@ const cli = (args) => {
     case RUN_EDITOR: {
       console.log('----------------------------');
       console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
-      var {godotPath, resolution, position} = config;
+      const {godotPath, resolution, position} = config;
       shell.exec(`${godotPath} -e -v --windowed --resolution ${resolution} --position ${position}`);
       return;
     }
@@ -144,19 +136,19 @@ const cli = (args) => {
 
   // -------- IO commands
 
-  var {input, output} = checkIO(config, defaultConfig[command]);
+  verifyConfig(config, defaultConfig[command]);
 
   switch (command) {
     case GENERATE_ICONS: {
-      generateIcons(input, output);
+      generateIcons(config);
       break;
     }
     case GENERATE_SPLASHSCREENS: {
-      generateSplashscreens(input, output, config.backgroundColor);
+      generateSplashscreens(config);
       break;
     }
     case GENERATE_SCREENSHOTS: {
-      generateScreenshots(input, output);
+      generateScreenshots(config);
       break;
     }
     default: {
@@ -193,7 +185,7 @@ const argv = yargs(process.argv.splice(2))
 // -----------------------------------------------------------------------------
 
 try {
-  var result = cli(argv);
+  const result = cli(argv);
   if (result) {
     console.log(`🦊 ${chalk.italic('done.')}`);
   }
