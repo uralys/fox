@@ -10,10 +10,10 @@ let currentInstance;
 
 // -----------------------------------------------------------------------------
 
-const restart = (config) => {
+const restart = (godotPath, config) => {
   console.log('----------------------------');
   console.log(`🦊 ${chalk.italic('restarting Godot')}`);
-  var {godotPath, position} = config;
+  var {position} = config;
 
   currentInstance = shelljs.exec(`${godotPath} --position ${position}`, {
     async: true
@@ -23,12 +23,12 @@ const restart = (config) => {
 
 // -----------------------------------------------------------------------------
 
-const runGame = (config) => {
-  console.log(`---> running ${chalk.blue.bold('game')}...`);
+const runGame = (godotPath, config) => {
+  console.log(`⚙️  running ${chalk.blue.bold('game')}...`);
   const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg']);
 
   watcher.on('ready', (event, path) => {
-    restart(config);
+    restart(godotPath, config);
   });
 
   watcher.on('change', (event, path) => {
@@ -38,7 +38,7 @@ const runGame = (config) => {
       shelljs.exec(`kill -9 ${currentInstance.pid}`);
     }
 
-    restart(config);
+    restart(godotPath, config);
   });
 };
 

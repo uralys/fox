@@ -1,4 +1,8 @@
 {
+  "core": {
+    "applicationName": "Your Game",
+    "godot": "/Applications/Apps/Godot.app/Contents/MacOS/Godot"
+  },
   "generate:icons": {
     "input": "_release/images/",
     "output": "assets/generated/icons",
@@ -16,12 +20,15 @@
     "output": "_release/generated/screenshots"
   },
   "run:editor": {
-    "godotPath": "/Applications/Apps/Godot.app/Contents/MacOS/Godot",
     "resolution": "2980x2220",
     "position": "0,0"
   },
   "run:game": {
-    "godotPath": "/Applications/Apps/Godot.app/Contents/MacOS/Godot",
     "position": "1120,20"
+  },
+  "bundles": {
+    "yourApp": {
+      "uid": "com.your.app.id"
+    }
   }
 }

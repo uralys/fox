@@ -12,8 +12,9 @@ const shell = require('shelljs');
 
 // -----------------------------------------------------------------------------
 
-const generateScreenshots = (input, output) => {
-  console.log(`---> resizing ${chalk.blue.bold('screenshots')}...`);
+const generateScreenshots = (config) => {
+  const {input, output} = config;
+  console.log(`⚙️  resizing ${chalk.blue.bold('screenshots')}...`);
 
   const files = fs.readdirSync(input);
   const size = '2560x1600';

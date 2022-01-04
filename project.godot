@@ -40,7 +40,6 @@ _global_script_class_icons={
 
 config/name="Fox"
 run/main_scene="res://run-script-from-yourgame-not-from-fox"
-config/icon="res://extension/assets/icon.png"
 
 [debug]
 

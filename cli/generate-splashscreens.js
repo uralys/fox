@@ -33,7 +33,8 @@ const convert = (inputFile, backgroundColor, outputPath) => (size) => {
 
 // -----------------------------------------------------------------------------
 
-const generateSplashscreens = (input, output, backgroundColor = '#181818') => {
+const generateSplashscreens = (config) => {
+  const {input, output, backgroundColor = '#181818'} = config;
   console.log(`---> generating ${chalk.blue.bold('splashscreens')}...`);
 
   const applyConversion = convert(input, backgroundColor, output);

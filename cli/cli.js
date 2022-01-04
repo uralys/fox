@@ -14,10 +14,12 @@ const pkg = require('../package.json');
 const generateIcons = require('./generate-icons');
 const generateSplashscreens = require('./generate-splashscreens');
 const generateScreenshots = require('./generate-screenshots');
+const exportBundle = require('./export-bundle');
 const runGame = require('./run-game');
 
 // -----------------------------------------------------------------------------
 
+const EXPORT = 'export';
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
@@ -28,6 +30,7 @@ const RUN_GAME = 'run:game';
 // -----------------------------------------------------------------------------
 
 const commands = [
+  EXPORT,
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
@@ -59,15 +62,15 @@ try {
 
 // -----------------------------------------------------------------------------
 
-const getConfig = (command) => {
+const getSettings = (command) => {
   let config;
 
   try {
     const configPath = path.resolve(process.cwd(), `./${CONFIG_FILE}`);
-    console.log(`---> using ${chalk.blue.bold(CONFIG_FILE)}`);
+    console.log(`⚙️  using ${chalk.blue.bold(CONFIG_FILE)}`);
     config = require(configPath);
 
-    if (!config[command]) {
+    if (!config[command] && defaultConfig[command]) {
       console.log(chalk.yellow(`No config for "${command}" was found\nUsing default config.`));
       config = defaultConfig;
     }
@@ -75,8 +78,11 @@ const getConfig = (command) => {
     config = defaultConfig;
   }
 
-  console.log({[command]: config[command]});
-  return config[command];
+  return {
+    config: config[command],
+    core: config.core,
+    bundles: config.bundles
+  };
 };
 
 // -----------------------------------------------------------------------------
@@ -96,8 +102,7 @@ const verifyConfig = (config, defaultConfig) => {
   const projectPath = path.resolve(process.cwd(), './');
   const output = `${projectPath}/${config.output}`;
 
-  console.log(`---> ${chalk.blue.bold('verifying output path')}`);
-  console.log({output});
+  console.log(`⚙️  ${chalk.blue.bold('verifying output path')}`);
 
   if (!fs.existsSync(output)) {
     shell.mkdir('-p', output);
@@ -116,7 +121,7 @@ const cli = (args) => {
 
   console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
   console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
-  const config = getConfig(command);
+  const {core, config, bundles} = getSettings(command);
 
   // -------- Godot commands
 
@@ -124,12 +129,18 @@ const cli = (args) => {
     case RUN_EDITOR: {
       console.log('----------------------------');
       console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
-      const {godotPath, resolution, position} = config;
-      shell.exec(`${godotPath} -e -v --windowed --resolution ${resolution} --position ${position}`);
+      const {resolution, position} = config;
+      shell.exec(
+        `${core.godot} -e -v --windowed --resolution ${resolution} --position ${position}`
+      );
       return;
     }
     case RUN_GAME: {
-      runGame(config);
+      runGame(core.godot, config);
+      return;
+    }
+    case EXPORT: {
+      exportBundle(bundles);
       return;
     }
   }
@@ -166,6 +177,7 @@ const argv = yargs(process.argv.splice(2))
   .usage('Usage: fox <command> [options]')
   .command(RUN_EDITOR, 'open Godot Editor')
   .command(RUN_GAME, 'start your game to debug')
+  .command(EXPORT, 'export a bundle')
   .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
   .command(
     GENERATE_SPLASHSCREENS,

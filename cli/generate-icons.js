@@ -38,7 +38,7 @@ const SIZES = [
 // -----------------------------------------------------------------------------
 
 const generateIcons = (config) => {
-  console.log(`---> generating ${chalk.blue.bold('icons')}...`);
+  console.log(`⚙️  generating ${chalk.blue.bold('icons')}...`);
   const {input, output, base, background, foreground, desktop} = config;
 
   if (!fs.existsSync(`${input}/${base}`)) {
@@ -55,17 +55,17 @@ const generateIcons = (config) => {
     );
   });
 
-  console.log(`\n > copying ${chalk.blue.bold('base')} icon`);
+  console.log(`\n> copying ${chalk.blue.bold('base')} icon`);
   shell.cp(`${input}/${base}`, `${output}/${base}`);
 
   if (background) {
-    console.log(`\n > copying ${chalk.blue.bold('android adaptive')} elements`);
+    console.log(`> copying ${chalk.blue.bold('android adaptive')} elements`);
     shell.cp(`${input}/${background}`, `${output}/${background}`);
     shell.cp(`${input}/${foreground}`, `${output}/${foreground}`);
   }
 
   if (desktop) {
-    console.log(`\n > copying ${chalk.blue.bold('desktop')} icon`);
+    console.log(`> copying ${chalk.blue.bold('desktop')} icon`);
     shell.cp(`${input}/${desktop}`, `${output}/${desktop}`);
   }
 
