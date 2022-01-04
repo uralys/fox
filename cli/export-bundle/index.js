@@ -13,13 +13,20 @@ const updatePreset = require('./update-preset');
 // -----------------------------------------------------------------------------
 
 const PRESETS_FILE = 'export_presets.cfg';
+const SEMVER = ['patch', 'minor', 'major'];
 
 // -----------------------------------------------------------------------------
 
 const inquireParams = async (bundles, _presets) => {
   const presets = _presets.preset;
+  const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 
   const questions = [
+    {
+      name: 'versionLevel',
+      type: 'list',
+      choices: [`${packageJSON.version}`, ...SEMVER]
+    },
     {
       name: 'presetNum',
       type: 'list',
@@ -42,11 +49,11 @@ const inquireParams = async (bundles, _presets) => {
   }
 
   const answers = await inquirer.prompt(questions);
-  const {bundleId = singleBundleId, presetNum} = answers;
+  const {bundleId = singleBundleId, presetNum, versionLevel} = answers;
   const preset = presets[presetNum];
   const bundle = bundles[bundleId];
 
-  return {bundleId, bundle, preset};
+  return {bundleId, bundle, preset, versionLevel};
 };
 
 // -----------------------------------------------------------------------------
@@ -62,10 +69,18 @@ const exportBundle = async (coreConfig, bundles) => {
   }
 
   const presets = ini.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
-  const {bundleId, bundle, preset} = await inquireParams(bundles, presets);
+  const {bundleId, bundle, preset, versionLevel} = await inquireParams(bundles, presets);
 
-  console.log(`⚙️  Ready to bundle ${bundleId} for ${preset.name}`);
-  updatePreset(bundleId, coreConfig, preset, bundle);
+  let newVersion = versionLevel;
+  if (SEMVER.includes(versionLevel)) {
+    console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
+    const result = shelljs.exec(`npm version ${versionLevel}`);
+    newVersion = /v(.+)\n/g.exec(result.stdout)[1];
+  }
+
+  console.log(`⚙️  Ready to bundle ${bundleId} (${newVersion}) for ${preset.name}`);
+
+  updatePreset(bundleId, coreConfig, preset, bundle, newVersion);
   fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
 };
 

@@ -19,37 +19,43 @@ const updateIcons = (preset, bundleId) => {
 
 // -----------------------------------------------------------------------------
 
-const updateAndroidPreset = (preset, bundle, bundleId, applicationName) => {
+const updateAndroidPreset = (preset, bundle, bundleId, applicationName, newVersion) => {
   preset.options['package/name'] = applicationName;
 
   const packageUIDKey = 'package/unique_name';
   preset.options[packageUIDKey] = (bundle[ANDROID] && bundle[ANDROID][packageUIDKey]) || bundle.uid;
 
-  const keystoreUserKey =
-    preset.options['keystore/release_user'].length > 0
-      ? 'keystore/release_user'
-      : 'keystore/debug_user';
-
-  preset.options[keystoreUserKey] =
-    (bundle[ANDROID] && bundle[ANDROID][keystoreUserKey]) || bundle.uid;
+  if (bundle[ANDROID]['keystore/release_user']) {
+    preset.options['keystore/release_user'] = bundle[ANDROID]['keystore/release_user'];
+  }
 
   updateIcons(preset, bundleId);
+
+  if (newVersion) {
+    preset.options['version/code'] = newVersion;
+    preset.options['version/name'] = newVersion;
+  }
 };
 
 // -----------------------------------------------------------------------------
 
-const updateIOSPreset = (preset, bundle, bundleId, applicationName) => {
+const updateIOSPreset = (preset, bundle, bundleId, applicationName, newVersion) => {
   preset.options['application/name'] = applicationName;
 
   const packageUIDKey = 'application/identifier';
   preset.options[packageUIDKey] = (bundle[IOS] && bundle[IOS][packageUIDKey]) || bundle.uid;
 
   updateIcons(preset, bundleId);
+
+  if (newVersion) {
+    preset.options['application/short_version'] = newVersion;
+    preset.options['application/version'] = newVersion;
+  }
 };
 
 // -----------------------------------------------------------------------------
 
-const updateMacOSPreset = (preset, bundle, bundleId, applicationName) => {
+const updateMacOSPreset = (preset, bundle, bundleId, applicationName, newVersion) => {
   preset.options['application/name'] = applicationName;
 
   const packageUIDKey = 'application/identifier';
@@ -59,13 +65,18 @@ const updateMacOSPreset = (preset, bundle, bundleId, applicationName) => {
     /generated\/.+\/icons/g,
     `generated/${bundleId}/icons`
   );
+
+  if (newVersion) {
+    preset.options['application/short_version'] = newVersion;
+    preset.options['application/version'] = newVersion;
+  }
 };
 
 // -----------------------------------------------------------------------------
 
-const updatePreset = (bundleId, coreConfig, preset, bundle) => {
+const updatePreset = (bundleId, coreConfig, preset, bundle, newVersion) => {
   const {platform} = preset;
-  console.log('updatePreset with bundle settings:', {bundle});
+  console.log('⚙️  updating the preset...');
   const {subtitle} = bundle;
 
   const applicationName = subtitle
@@ -74,13 +85,13 @@ const updatePreset = (bundleId, coreConfig, preset, bundle) => {
 
   switch (platform) {
     case ANDROID:
-      updateAndroidPreset(preset, bundle, bundleId, applicationName);
+      updateAndroidPreset(preset, bundle, bundleId, applicationName, newVersion);
       break;
     case IOS:
-      updateIOSPreset(preset, bundle, bundleId, applicationName);
+      updateIOSPreset(preset, bundle, bundleId, applicationName, newVersion);
       break;
     case MAC_OSX:
-      updateMacOSPreset(preset, bundle, bundleId, applicationName);
+      updateMacOSPreset(preset, bundle, bundleId, applicationName, newVersion);
       break;
   }
 };
