@@ -140,7 +140,7 @@ const cli = (args) => {
       return;
     }
     case EXPORT: {
-      exportBundle(bundles);
+      exportBundle(core, bundles);
       return;
     }
   }

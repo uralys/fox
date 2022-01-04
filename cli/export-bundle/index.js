@@ -5,7 +5,10 @@ const fs = require('fs');
 const inquirer = require('inquirer');
 const shelljs = require('shelljs');
 
+// -----------------------------------------------------------------------------
+
 const ini = require('./ini');
+const updatePreset = require('./update-preset');
 
 // -----------------------------------------------------------------------------
 
@@ -43,26 +46,13 @@ const inquireParams = async (bundles, _presets) => {
   const preset = presets[presetNum];
   const bundle = bundles[bundleId];
 
-  console.log(`⚙️  Ready to bundle ${bundleId} for ${preset.name}`);
-  return {bundle, preset};
-};
-
-// -----------------------------------------------------------------------------
-
-const updatePreset = (presets, preset, bundle) => {
-  console.log('updatePreset', bundle.uid);
-
-  preset.uid = bundle.uid;
-  // console.log({p: presets.preset['0']});
-  // console.log({s: ini.stringify(presets)});
-
-  fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
+  return {bundleId, bundle, preset};
 };
 
 // -----------------------------------------------------------------------------
 
 // -- great example for https://github.com/yargs/yargs/issues/1476
-const exportBundle = async (bundles) => {
+const exportBundle = async (coreConfig, bundles) => {
   console.log(`⚙️  exporting a ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -72,9 +62,11 @@ const exportBundle = async (bundles) => {
   }
 
   const presets = ini.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
-  const {bundle, preset} = await inquireParams(bundles, presets);
+  const {bundleId, bundle, preset} = await inquireParams(bundles, presets);
 
-  updatePreset(presets, preset, bundle);
+  console.log(`⚙️  Ready to bundle ${bundleId} for ${preset.name}`);
+  updatePreset(bundleId, coreConfig, preset, bundle);
+  fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
 };
 
 // -----------------------------------------------------------------------------
