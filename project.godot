@@ -15,6 +15,11 @@ _global_script_classes=[ {
 "path": "res://fox/animations/animate.gd"
 }, {
 "base": "Node",
+"class": "Bundle",
+"language": "GDScript",
+"path": "res://fox/libs/bundle.gd"
+}, {
+"base": "Node",
 "class": "Wait",
 "language": "GDScript",
 "path": "res://fox/libs/wait.gd"
@@ -31,6 +36,7 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "Animate": "",
+"Bundle": "",
 "Wait": "",
 "__": "",
 "generateUID": ""

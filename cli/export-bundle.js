@@ -1,14 +1,21 @@
 // -----------------------------------------------------------------------------
 
 const chalk = require('chalk');
-const ini = require('ini');
 const fs = require('fs');
 const inquirer = require('inquirer');
 const shelljs = require('shelljs');
 
+const ini = require('./ini');
+
 // -----------------------------------------------------------------------------
 
-const inquireParams = async (bundles, presets) => {
+const PRESETS_FILE = 'export_presets.cfg';
+
+// -----------------------------------------------------------------------------
+
+const inquireParams = async (bundles, _presets) => {
+  const presets = _presets.preset;
+
   const questions = [
     {
       name: 'presetNum',
@@ -34,13 +41,23 @@ const inquireParams = async (bundles, presets) => {
   const answers = await inquirer.prompt(questions);
   const {bundleId = singleBundleId, presetNum} = answers;
   const preset = presets[presetNum];
+  const bundle = bundles[bundleId];
 
-  return {bundleId, preset};
+  console.log(`⚙️  Ready to bundle ${bundleId} for ${preset.name}`);
+  return {bundle, preset};
 };
 
 // -----------------------------------------------------------------------------
 
-const updatePreset = (bundles, bundleId, preset) => {};
+const updatePreset = (presets, preset, bundle) => {
+  console.log('updatePreset', bundle.uid);
+
+  preset.uid = bundle.uid;
+  // console.log({p: presets.preset['0']});
+  // console.log({s: ini.stringify(presets)});
+
+  fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
+};
 
 // -----------------------------------------------------------------------------
 
@@ -54,12 +71,10 @@ const exportBundle = async (bundles) => {
     return;
   }
 
-  const presets = ini.parse(fs.readFileSync('export_presets.cfg', 'utf-8')).preset;
-  const {bundleId, preset} = await inquireParams(bundles, presets);
+  const presets = ini.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+  const {bundle, preset} = await inquireParams(bundles, presets);
 
-  updatePreset(bundles, presets, bundleId, preset);
-
-  console.log(`Bundling ${bundleId} for ${preset.name}`);
+  updatePreset(presets, preset, bundle);
 };
 
 // -----------------------------------------------------------------------------

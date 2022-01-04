@@ -175,9 +175,9 @@ const cli = (args) => {
 
 const argv = yargs(process.argv.splice(2))
   .usage('Usage: fox <command> [options]')
-  .command(RUN_EDITOR, 'open Godot Editor')
+  .command(RUN_EDITOR, 'open Godot Editor with your main scene')
   .command(RUN_GAME, 'start your game to debug')
-  .command(EXPORT, 'export a bundle')
+  .command(EXPORT, 'export a bundle for one of your presets')
   .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
   .command(
     GENERATE_SPLASHSCREENS,
