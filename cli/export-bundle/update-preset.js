@@ -1,5 +1,9 @@
 // -----------------------------------------------------------------------------
 
+const toVersionNumber = require('./version-number');
+
+// -----------------------------------------------------------------------------
+
 const MAC_OSX = 'Mac OSX';
 const IOS = 'iOS';
 const ANDROID = 'Android';
@@ -32,7 +36,7 @@ const updateAndroidPreset = (preset, bundle, bundleId, applicationName, newVersi
   updateIcons(preset, bundleId);
 
   if (newVersion) {
-    preset.options['version/code'] = newVersion;
+    preset.options['version/code'] = toVersionNumber(newVersion);
     preset.options['version/name'] = newVersion;
   }
 };
