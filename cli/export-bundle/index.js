@@ -113,6 +113,8 @@ const exportBundle = async (coreConfig, bundles) => {
     return;
   }
 
+  // ---------
+
   let newVersion = versionLevel;
   if (SEMVER.includes(versionLevel)) {
     console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
@@ -120,22 +122,43 @@ const exportBundle = async (coreConfig, bundles) => {
     newVersion = /v(.+)\n/g.exec(result.stdout)[1];
   }
 
-  console.log(
-    `\n⚙️  Ready to bundle ${chalk.blue.bold(bundleId)} (${chalk.blue.bold(
-      newVersion
-    )}) for ${chalk.blue.bold(preset.name)}`
-  );
+  const bundleInfo = `${chalk.blue.bold(bundleId)} (${chalk.blue.bold(
+    newVersion
+  )}) for ${chalk.blue.bold(preset.name)}`;
+
+  // ---------
+
+  console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
 
   updatePreset(bundleId, env, coreConfig, preset, bundle, newVersion);
   fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
 
-  console.log('⚙️  Exporting...');
+  // ---------
 
-  spawn(
+  console.log('\n⚙️  Exporting...');
+
+  const bundler = spawn(
     coreConfig.godot,
     [`--export${env === 'debug' ? '-debug' : ''}`, preset.name, '--no-window'],
     {stdio: [process.stdin, process.stdout, process.stderr]}
   );
+
+  bundler.on('close', () => {
+    console.log(`\n✅ Exported your ${bundleInfo} successfully!`);
+
+    if (preset.platform === 'iOS') {
+      console.log(
+        `\n${chalk.yellow(
+          'Note for iOS:'
+        )} Exporting for iOS may fail on the archive creation, but it's not on the Godot part`
+      );
+      console.log(
+        `The ${chalk.blue.bold(
+          '.xcodeproj'
+        )} has been properly exported, use it with XCode to fix errors.`
+      );
+    }
+  });
 };
 
 // -----------------------------------------------------------------------------
