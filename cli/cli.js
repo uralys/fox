@@ -16,7 +16,6 @@ const generateSplashscreens = require('./generate-splashscreens');
 const generateScreenshots = require('./generate-screenshots');
 const exportBundle = require('./export-bundle');
 const runGame = require('./run-game');
-const toVersionNumber = require('./export-bundle/version-number');
 
 // -----------------------------------------------------------------------------
 
