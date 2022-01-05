@@ -33,20 +33,20 @@ const updateIcons = (preset, bundleId) => {
 
 // -----------------------------------------------------------------------------
 
-const updateAndroidPreset = (preset, bundle, bundleId, applicationName, newVersion) => {
+const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
   updateOptions(preset, 'package/name', applicationName);
 
   const packageUIDKey = 'package/unique_name';
   const packageUID = (bundle[ANDROID] && bundle[ANDROID][packageUIDKey]) || bundle.uid;
   updateOptions(preset, packageUIDKey, packageUID);
 
-  if (bundle[ANDROID]['keystore/release_user']) {
+  if (env === 'production' && bundle[ANDROID]['keystore/release_user']) {
     updateOptions(preset, 'keystore/release_user', bundle[ANDROID]['keystore/release_user']);
   }
 
   if (newVersion) {
     updateOptions(preset, 'version/code', toVersionNumber(newVersion));
-    updateOptions(preset, 'version/code', newVersion);
+    updateOptions(preset, 'version/name', newVersion);
   }
 
   updateIcons(preset, bundleId);
@@ -54,7 +54,7 @@ const updateAndroidPreset = (preset, bundle, bundleId, applicationName, newVersi
 
 // -----------------------------------------------------------------------------
 
-const updateIOSPreset = (preset, bundle, bundleId, applicationName, newVersion) => {
+const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
   updateOptions(preset, 'application/name', applicationName);
 
   const packageUIDKey = 'application/identifier';
@@ -71,7 +71,7 @@ const updateIOSPreset = (preset, bundle, bundleId, applicationName, newVersion) 
 
 // -----------------------------------------------------------------------------
 
-const updateMacOSPreset = (preset, bundle, bundleId, applicationName, newVersion) => {
+const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
   updateOptions(preset, 'application/name', applicationName);
 
   const packageUIDKey = 'application/identifier';
@@ -88,7 +88,7 @@ const updateMacOSPreset = (preset, bundle, bundleId, applicationName, newVersion
 
 // -----------------------------------------------------------------------------
 
-const updatePreset = (bundleId, coreConfig, preset, bundle, newVersion) => {
+const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => {
   const {platform} = preset;
   console.log('⚙️  updating the preset:');
   const {subtitle} = bundle;
@@ -99,18 +99,21 @@ const updatePreset = (bundleId, coreConfig, preset, bundle, newVersion) => {
 
   switch (platform) {
     case ANDROID:
-      updateAndroidPreset(preset, bundle, bundleId, applicationName, newVersion);
+      updateAndroidPreset(env, preset, bundle, bundleId, applicationName, newVersion);
       break;
     case IOS:
-      updateIOSPreset(preset, bundle, bundleId, applicationName, newVersion);
+      updateIOSPreset(env, preset, bundle, bundleId, applicationName, newVersion);
       break;
     case MAC_OSX:
-      updateMacOSPreset(preset, bundle, bundleId, applicationName, newVersion);
+      updateMacOSPreset(env, preset, bundle, bundleId, applicationName, newVersion);
       break;
     default:
       console.log(`\nplatform ${platform} is not handled.`);
       console.log(chalk.red.bold('🔴 failed'));
+      return;
   }
+
+  console.log('✅ preset successfully updated.');
 };
 
 // -----------------------------------------------------------------------------

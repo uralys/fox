@@ -3,7 +3,8 @@
 const chalk = require('chalk');
 const fs = require('fs');
 const inquirer = require('inquirer');
-const shelljs = require('shelljs');
+const shell = require('shelljs');
+const {spawn} = require('child_process');
 
 // -----------------------------------------------------------------------------
 
@@ -14,6 +15,28 @@ const updatePreset = require('./update-preset');
 
 const PRESETS_FILE = 'export_presets.cfg';
 const SEMVER = ['patch', 'minor', 'major'];
+const ENV = ['debug', 'production'];
+
+// -----------------------------------------------------------------------------
+
+const extractEnv = (preset) => {
+  const _env = preset.custom_features.split(',').find((feature) => feature.includes('env:'));
+
+  if (!_env) {
+    console.warn(`\nmissing env in custom_features: "${preset.custom_features}"`);
+    console.warn('add "env:debug" or "env:production" within the custom_features list');
+    return;
+  }
+
+  const env = _env.split('env:')[1];
+
+  if (!ENV.includes(env)) {
+    console.warn(`env:${chalk.yellow(env)} is not supported, use one of [${ENV}]`);
+    return;
+  }
+
+  return env;
+};
 
 // -----------------------------------------------------------------------------
 
@@ -23,11 +46,13 @@ const inquireParams = async (bundles, _presets) => {
 
   const questions = [
     {
+      message: 'version',
       name: 'versionLevel',
       type: 'list',
       choices: [`${packageJSON.version}`, ...SEMVER]
     },
     {
+      message: 'preset',
       name: 'presetNum',
       type: 'list',
       choices: Object.keys(presets).map((num) => ({
@@ -42,6 +67,7 @@ const inquireParams = async (bundles, _presets) => {
 
   if (!singleBundleId) {
     questions.push({
+      message: 'bundle',
       name: 'bundleId',
       type: 'list',
       choices: bundleIds
@@ -80,19 +106,36 @@ const exportBundle = async (coreConfig, bundles) => {
 
   const {bundleId, bundle, preset, versionLevel} = await inquireParams(bundles, presets);
 
+  const env = extractEnv(preset);
+
+  if (!env) {
+    console.log(chalk.red.bold('🔴 failed'));
+    return;
+  }
+
   let newVersion = versionLevel;
   if (SEMVER.includes(versionLevel)) {
     console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
-    const result = shelljs.exec(`npm version ${versionLevel}`);
+    const result = shell.exec(`npm version ${versionLevel}`);
     newVersion = /v(.+)\n/g.exec(result.stdout)[1];
   }
 
-  console.log(`⚙️  Ready to bundle ${bundleId} (${newVersion}) for ${preset.name}`);
+  console.log(
+    `\n⚙️  Ready to bundle ${chalk.blue.bold(bundleId)} (${chalk.blue.bold(
+      newVersion
+    )}) for ${chalk.blue.bold(preset.name)}`
+  );
 
-  updatePreset(bundleId, coreConfig, preset, bundle, newVersion);
+  updatePreset(bundleId, env, coreConfig, preset, bundle, newVersion);
   fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
 
-  // > /Applications/Apps/Godot.app/Contents/MacOS/Godot --export-debug "Android Debug" --no-window
+  console.log('⚙️  Exporting...');
+
+  spawn(
+    coreConfig.godot,
+    [`--export${env === 'debug' ? '-debug' : ''}`, preset.name, '--no-window'],
+    {stdio: [process.stdin, process.stdout, process.stderr]}
+  );
 };
 
 // -----------------------------------------------------------------------------
