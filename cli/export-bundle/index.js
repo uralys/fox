@@ -68,7 +68,16 @@ const exportBundle = async (coreConfig, bundles) => {
     return;
   }
 
-  const presets = ini.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+  let presets;
+
+  try {
+    presets = ini.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+  } catch (e) {
+    console.log(`\nCould not open ${PRESETS_FILE}`);
+    console.log(chalk.red.bold('🔴 failed'));
+    return;
+  }
+
   const {bundleId, bundle, preset, versionLevel} = await inquireParams(bundles, presets);
 
   let newVersion = versionLevel;
@@ -82,6 +91,8 @@ const exportBundle = async (coreConfig, bundles) => {
 
   updatePreset(bundleId, coreConfig, preset, bundle, newVersion);
   fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
+
+  // > /Applications/Apps/Godot.app/Contents/MacOS/Godot --export-debug "Android Debug" --no-window
 };
 
 // -----------------------------------------------------------------------------
