@@ -13,7 +13,9 @@ const updatePreset = require('./update-preset');
 
 // -----------------------------------------------------------------------------
 
-const PRESETS_FILE = 'export_presets.cfg';
+const PRESETS_CFG = 'export_presets.cfg';
+const OVERRIDE_CFG = 'override.cfg';
+
 const SEMVER = ['patch', 'minor', 'major'];
 const ENV = ['debug', 'production'];
 
@@ -97,9 +99,9 @@ const exportBundle = async (coreConfig, bundles) => {
   let presets;
 
   try {
-    presets = ini.parse(fs.readFileSync(PRESETS_FILE, 'utf8'));
+    presets = ini.parse(fs.readFileSync(PRESETS_CFG, 'utf8'));
   } catch (e) {
-    console.log(`\nCould not open ${PRESETS_FILE}`);
+    console.log(`\nCould not open ${PRESETS_CFG}`);
     console.log(chalk.red.bold('🔴 failed'));
     return;
   }
@@ -112,6 +114,24 @@ const exportBundle = async (coreConfig, bundles) => {
     console.log(chalk.red.bold('🔴 failed'));
     return;
   }
+
+  // ---------
+
+  let override;
+
+  try {
+    override = ini.parse(fs.readFileSync(OVERRIDE_CFG, 'utf8'));
+    if (!override.bundle) override.bundle = {};
+  } catch (e) {
+    shell.touch(OVERRIDE_CFG);
+    override = {bundle: {}};
+    console.log(`\nCould not open ${OVERRIDE_CFG}. Created the file.`);
+  }
+
+  override.bundle.id = bundleId;
+  override.bundle.platform = preset.platform;
+
+  fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
   // ---------
 
@@ -131,7 +151,7 @@ const exportBundle = async (coreConfig, bundles) => {
   console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
 
   updatePreset(bundleId, env, coreConfig, preset, bundle, newVersion);
-  fs.writeFileSync(PRESETS_FILE, ini.stringify(presets));
+  fs.writeFileSync(PRESETS_CFG, ini.stringify(presets));
 
   // ---------
 

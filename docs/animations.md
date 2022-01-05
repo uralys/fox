@@ -2,7 +2,7 @@
 
 ## Animate API
 
-You can use `Animate.xxx ` functions anywhere.
+You can use `Animate.xxx` functions anywhere.
 
 Example:
 
