@@ -10,12 +10,11 @@ const {spawn} = require('child_process');
 
 const ini = require('./ini');
 const updatePreset = require('./update-preset');
+const switchBundle = require('./switch');
 
 // -----------------------------------------------------------------------------
 
 const PRESETS_CFG = 'export_presets.cfg';
-const OVERRIDE_CFG = 'override.cfg';
-
 const SEMVER = ['patch', 'minor', 'major'];
 const ENV = ['debug', 'production'];
 
@@ -42,8 +41,7 @@ const extractEnv = (preset) => {
 
 // -----------------------------------------------------------------------------
 
-const inquireParams = async (bundles, _presets) => {
-  const presets = _presets.preset;
+const inquireVersioning = async () => {
   const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 
   const questions = [
@@ -52,41 +50,16 @@ const inquireParams = async (bundles, _presets) => {
       name: 'versionLevel',
       type: 'list',
       choices: [`${packageJSON.version}`, ...SEMVER]
-    },
-    {
-      message: 'preset',
-      name: 'presetNum',
-      type: 'list',
-      choices: Object.keys(presets).map((num) => ({
-        name: presets[num].name,
-        value: num
-      }))
     }
   ];
 
-  const bundleIds = Object.keys(bundles);
-  const singleBundleId = bundleIds.length > 1 ? null : bundleIds[0];
-
-  if (!singleBundleId) {
-    questions.push({
-      message: 'bundle',
-      name: 'bundleId',
-      type: 'list',
-      choices: bundleIds
-    });
-  }
-
   const answers = await inquirer.prompt(questions);
-  const {bundleId = singleBundleId, presetNum, versionLevel} = answers;
-  const preset = presets[presetNum];
-  const bundle = bundles[bundleId];
-
-  return {bundleId, bundle, preset, versionLevel};
+  const {versionLevel} = answers;
+  return {versionLevel};
 };
 
 // -----------------------------------------------------------------------------
 
-// -- great example for https://github.com/yargs/yargs/issues/1476
 const exportBundle = async (coreConfig, bundles) => {
   console.log(`⚙️  exporting a ${chalk.blue.bold('bundle')}...`);
 
@@ -96,17 +69,8 @@ const exportBundle = async (coreConfig, bundles) => {
     return;
   }
 
-  let presets;
-
-  try {
-    presets = ini.parse(fs.readFileSync(PRESETS_CFG, 'utf8'));
-  } catch (e) {
-    console.log(`\nCould not open ${PRESETS_CFG}`);
-    console.log(chalk.red.bold('🔴 failed'));
-    return;
-  }
-
-  const {bundleId, bundle, preset, versionLevel} = await inquireParams(bundles, presets);
+  const {bundleId, preset, presets} = await switchBundle(bundles);
+  const {versionLevel} = await inquireVersioning();
 
   const env = extractEnv(preset);
 
@@ -114,24 +78,6 @@ const exportBundle = async (coreConfig, bundles) => {
     console.log(chalk.red.bold('🔴 failed'));
     return;
   }
-
-  // ---------
-
-  let override;
-
-  try {
-    override = ini.parse(fs.readFileSync(OVERRIDE_CFG, 'utf8'));
-    if (!override.bundle) override.bundle = {};
-  } catch (e) {
-    shell.touch(OVERRIDE_CFG);
-    override = {bundle: {}};
-    console.log(`\nCould not open ${OVERRIDE_CFG}. Created the file.`);
-  }
-
-  override.bundle.id = bundleId;
-  override.bundle.platform = preset.platform;
-
-  fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
   // ---------
 
@@ -150,7 +96,7 @@ const exportBundle = async (coreConfig, bundles) => {
 
   console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
 
-  updatePreset(bundleId, env, coreConfig, preset, bundle, newVersion);
+  updatePreset(bundleId, env, coreConfig, preset, bundles[bundleId], newVersion);
   fs.writeFileSync(PRESETS_CFG, ini.stringify(presets));
 
   // ---------

@@ -14,12 +14,15 @@ const pkg = require('../package.json');
 const generateIcons = require('./generate-icons');
 const generateSplashscreens = require('./generate-splashscreens');
 const generateScreenshots = require('./generate-screenshots');
-const exportBundle = require('./export-bundle');
+const exportBundle = require('./bundler/export');
+const switchBundle = require('./bundler/switch');
 const runGame = require('./run-game');
 
 // -----------------------------------------------------------------------------
 
 const EXPORT = 'export';
+const SWITCH = 'switch';
+
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
@@ -31,6 +34,7 @@ const RUN_GAME = 'run:game';
 
 const commands = [
   EXPORT,
+  SWITCH,
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
@@ -112,7 +116,7 @@ const verifyConfig = (config, defaultConfig) => {
 
 // -----------------------------------------------------------------------------
 
-const cli = (args) => {
+const cli = (argv) => {
   const command = argv._[0];
   if (!commands.includes(command)) {
     yargs.showHelp();
@@ -141,6 +145,10 @@ const cli = (args) => {
     }
     case EXPORT: {
       exportBundle(core, bundles);
+      return;
+    }
+    case SWITCH: {
+      switchBundle(bundles);
       return;
     }
   }
@@ -178,6 +186,7 @@ const argv = yargs(process.argv.splice(2))
   .command(RUN_EDITOR, 'open Godot Editor with your main scene')
   .command(RUN_GAME, 'start your game to debug')
   .command(EXPORT, 'export a bundle for one of your presets')
+  .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
   .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
   .command(
     GENERATE_SPLASHSCREENS,
