@@ -2,15 +2,23 @@
 
 # Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
 
-Fox provides many tools to help develop with Godot Engine
+🦊 Fox provides many tools to help develop with Godot Engine
 
-The documentation is still very early, I'll add more on the way
+## Godot `functions` and `libs`
 
-## 🦊
+You can use elements from the `/fox` folder:
 
-### Godot `functions` and `libs`
+- generic static libs (`Wait`, `__.Get`, `__.Set`...)
+- behaviours (`button` behaviour to use signal `onPress`, `draggableCamera` for a 2D camera to be...draggable)
+- tween animations for your objects (`Animate.show`, `Animate.to` ...)
+- handle sounds anywhere easily (`Sound.play`)
 
-to use directly in your game.
+Few documentation links:
+
+- [general](./docs/godot-elements.md)
+- [animation](./docs/animations.md)
+
+### Example
 
 ```gd
 # showing the car smoothly
@@ -28,7 +36,7 @@ Animate.to(car, {
 })
 ```
 
-### a NodeJS CLI
+## NodeJS CLI
 
 - to watch your files and allow to `live reload` your game.
 - to `export` your debug and production bundles.
@@ -57,21 +65,6 @@ To keep same paths and `res://`, symlink godot elements in the `/fox` folder lik
 cd /path/to/your-game
 ln -s ../fox/fox fox
 ```
-
-## 🤖 Godot elements
-
-You can use any elements from the `/fox` folder symlinked in your game:
-
-- a router to move between your screens
-- sounds (`Sound.play`)
-- animations (`Animate.show`, `Animate.to` ...)
-- behaviours (`button` behaviour to use signal `onPress`, `draggableCamera` for a 2D camera to be...draggable)
-- generic static libs (`Wait`, `__.Get`, `__.Set`...)
-
-Few documentation links:
-
-- [general](./docs/godot-elements.md)
-- [animation](./docs/animations.md)
 
 ## 🔋 CLI
 
