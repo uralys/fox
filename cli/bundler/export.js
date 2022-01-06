@@ -123,16 +123,7 @@ const exportBundle = async (coreConfig, bundles) => {
     console.log(`\n✅ Exported your ${bundleInfo} successfully!`);
 
     if (preset.platform === 'iOS') {
-      console.log(
-        `\n${chalk.yellow(
-          'Note for iOS:'
-        )} Exporting for iOS may fail on the archive creation, but it's not on the Godot part`
-      );
-      console.log(
-        `The ${chalk.blue.bold(
-          '.xcodeproj'
-        )} has been properly exported, use it with XCode to fix errors.`
-      );
+      console.log(`The ${chalk.blue.bold('.xcodeproj')} is ready on _build/ios`);
     }
   });
 };
