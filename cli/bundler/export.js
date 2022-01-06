@@ -41,15 +41,13 @@ const extractEnv = (preset) => {
 
 // -----------------------------------------------------------------------------
 
-const inquireVersioning = async () => {
-  const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
-
+const inquireVersioning = async (currentVersion) => {
   const questions = [
     {
       message: 'version',
       name: 'versionLevel',
       type: 'list',
-      choices: [`${packageJSON.version}`, ...SEMVER]
+      choices: [`${currentVersion}`, ...SEMVER]
     }
   ];
 
@@ -69,8 +67,29 @@ const exportBundle = async (coreConfig, bundles) => {
     return;
   }
 
-  const {bundleId, preset, presets} = await switchBundle(bundles);
-  const {versionLevel} = await inquireVersioning();
+  // ---------
+
+  const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+  const currentVersion = packageJSON.version;
+
+  const {versionLevel} = await inquireVersioning(currentVersion);
+
+  let newVersion = versionLevel;
+  if (SEMVER.includes(versionLevel)) {
+    console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
+    const result = shell.exec(`npm version ${versionLevel}`);
+
+    try {
+      newVersion = /v(.+)\n/g.exec(result.stdout)[1];
+    } catch (e) {
+      console.log(chalk.red.bold('🔴 failed during versioning, check "git status"'));
+      return;
+    }
+  }
+
+  // ---------
+
+  const {bundleId, preset, presets} = await switchBundle(newVersion, bundles);
 
   const env = extractEnv(preset);
 
@@ -81,18 +100,9 @@ const exportBundle = async (coreConfig, bundles) => {
 
   // ---------
 
-  let newVersion = versionLevel;
-  if (SEMVER.includes(versionLevel)) {
-    console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
-    const result = shell.exec(`npm version ${versionLevel}`);
-    newVersion = /v(.+)\n/g.exec(result.stdout)[1];
-  }
-
   const bundleInfo = `${chalk.blue.bold(bundleId)} (${chalk.blue.bold(
     newVersion
   )}) for ${chalk.blue.bold(preset.name)}`;
-
-  // ---------
 
   console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
 

@@ -148,7 +148,8 @@ const cli = (argv) => {
       return;
     }
     case SWITCH: {
-      switchBundle(bundles);
+      const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+      switchBundle(packageJSON.version, bundles);
       return;
     }
   }

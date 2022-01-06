@@ -8,6 +8,7 @@ const shell = require('shelljs');
 // -----------------------------------------------------------------------------
 
 const ini = require('./ini');
+const toVersionNumber = require('./version-number');
 
 // -----------------------------------------------------------------------------
 
@@ -52,7 +53,7 @@ const inquireParams = async (bundles, _presets) => {
 
 // -----------------------------------------------------------------------------
 
-const switchBundle = async (bundles) => {
+const switchBundle = async (bundleVersion, bundles) => {
   console.log(`⚙️  switching to another ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -80,13 +81,17 @@ const switchBundle = async (bundles) => {
   try {
     override = ini.parse(fs.readFileSync(OVERRIDE_CFG, 'utf8'));
     if (!override.bundle) override.bundle = {};
+    if (!override.fox) override.fox = {};
   } catch (e) {
     shell.touch(OVERRIDE_CFG);
-    override = {bundle: {}};
+    override = {bundle: {}, fox: {}};
     console.log(`\nCould not open ${OVERRIDE_CFG}. Created the file.`);
   }
 
+  override.fox.version = require('../../package.json').version;
   override.bundle.id = bundleId;
+  override.bundle.version = bundleVersion;
+  override.bundle.versionCode = toVersionNumber(bundleVersion);
   override.bundle.platform = preset.platform;
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
