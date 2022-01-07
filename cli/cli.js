@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const shell = require('shelljs');
+const {spawn} = require('child_process');
 const yargs = require('yargs');
 
 const pkg = require('../package.json');
@@ -134,9 +135,17 @@ const cli = (argv) => {
       console.log('----------------------------');
       console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
       const {resolution, position} = config;
-      shell.exec(
-        `${core.godot} -e -v --windowed --resolution ${resolution} --position ${position}`
+
+      const bundler = spawn(
+        core.godot,
+        ['-e', '--windowed', '--resolution', resolution, '--position', position],
+        {stdio: [process.stdin, process.stdout, process.stderr]}
       );
+
+      bundler.on('close', () => {
+        console.log(`🦊 ${chalk.italic('bye!')}`);
+      });
+
       return;
     }
     case RUN_GAME: {
