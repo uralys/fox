@@ -42,7 +42,7 @@ static func from(object, _options):
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
-  yield(object, options.signalToWait)
+  # yield(object, options.signalToWait)
 
 # ------------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ static func to(object, _options):
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
-  yield(object, options.signalToWait)
+  # yield(object, options.signalToWait)
 
 # ------------------------------------------------------------------------------
 
@@ -120,6 +120,9 @@ static func appear(object, delay = 0):
   object.modulate.a = 0
   object[positionProperty].y += 30
 
+  if(not object.has_signal(ANIMATION_DONE)):
+    object.add_user_signal(ANIMATION_DONE)
+
   var timer = Wait.start(object, delay)
   yield(timer, 'timeout')
 
@@ -154,6 +157,8 @@ static func appear(object, delay = 0):
   yield(object, 'appeared')
   if(object.has_method('onAppear')):
     object.onAppear()
+
+  object.emit_signal(ANIMATION_DONE)
 
 # --------
 
@@ -210,10 +215,10 @@ static func _getInitialValue(object, property):
 
 # ------------------------------------------------------------------------------
 
-static func bounce(object):
+static func bounce(object, stepDuration = 0.25, upScale = 0.05):
   var property = _scaleProperty(object)
   var initialScale = _getInitialValue(object, property);
-  _bounce(object, initialScale, 0.05, 0.2, property)
+  _bounce(object, initialScale, upScale, stepDuration, property)
 
 # ------------------------------------------------------------------------------
 
@@ -289,6 +294,14 @@ static func swing(object, _options):
 # ------------------------------------------------------------------------------
 
 static func _animate(object, options):
+  if(typeof(object) != TYPE_OBJECT):
+    prints(
+      '🔴 Animate is meant for TYPE_OBJECT, not',
+      typeof(object),
+      'https://docs.godotengine.org/en/stable/classes/class_%40globalscope.html#enum-globalscope-variant-type'
+    )
+    return
+
   var propertyPath = options.propertyPath
   var fromValue = options.get('fromValue')
   var toValue = options.get('toValue')
@@ -298,6 +311,8 @@ static func _animate(object, options):
   var easing = __.GetOr(Tween.EASE_OUT, 'easing', options)
 
   var transition = options.transition if options.get('transition') else Tween.TRANS_QUAD
+
+  # --------
 
   var SIGNAL_ON_DONE = options.signalToWait if options.get('signalToWait') else ANIMATION_DONE
 

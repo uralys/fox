@@ -58,6 +58,9 @@ func stopMusic():
 # ------------------------------------------------------------------------------
 
 func _refreshMusicVolume():
+  if(not CURRENT_MUSIC):
+    return
+
   var volume = 0 if(MUSIC_ON) else -100
   CURRENT_MUSIC.set_volume_db(volume)
 
