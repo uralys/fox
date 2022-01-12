@@ -15,10 +15,9 @@ const restart = (godotPath, config) => {
   console.log(`🦊 ${chalk.italic('restarting Godot')}`);
   var {position} = config;
 
-  currentInstance = shelljs.exec(`${godotPath} --position ${position}`, {
+  currentInstance = shelljs.exec(`${godotPath} local-fox-runner --position ${position}`, {
     async: true
   });
-  console.log('----------------------------');
 };
 
 // -----------------------------------------------------------------------------
