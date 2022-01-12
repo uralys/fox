@@ -14,6 +14,30 @@ const toVersionNumber = require('./version-number');
 
 const PRESETS_CFG = 'export_presets.cfg';
 const OVERRIDE_CFG = 'override.cfg';
+// -----------------------------------------------------------------------------
+
+const ENV = ['debug', 'production'];
+
+// -----------------------------------------------------------------------------
+
+const extractEnv = (preset) => {
+  const _env = preset.custom_features.split(',').find((feature) => feature.includes('env:'));
+
+  if (!_env) {
+    console.warn(`\nmissing env in custom_features: "${preset.custom_features}"`);
+    console.warn('add "env:debug" or "env:production" within the custom_features list');
+    return;
+  }
+
+  const env = _env.split('env:')[1];
+
+  if (!ENV.includes(env)) {
+    console.warn(`env:${chalk.yellow(env)} is not supported, use one of [${ENV}]`);
+    return;
+  }
+
+  return env;
+};
 
 // -----------------------------------------------------------------------------
 
@@ -76,6 +100,15 @@ const switchBundle = async (bundleVersion, bundles) => {
 
   // ---------
 
+  const env = extractEnv(preset);
+
+  if (!env) {
+    console.log(chalk.red.bold('🔴 failed'));
+    return;
+  }
+
+  // ---------
+
   let override;
 
   try {
@@ -93,10 +126,11 @@ const switchBundle = async (bundleVersion, bundles) => {
   override.bundle.version = bundleVersion;
   override.bundle.versionCode = toVersionNumber(bundleVersion);
   override.bundle.platform = preset.platform;
+  override.bundle.env = env;
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
-  return {bundleId, preset, presets};
+  return {bundleId, preset, presets, env};
 };
 
 // -----------------------------------------------------------------------------

@@ -16,28 +16,6 @@ const switchBundle = require('./switch');
 
 const PRESETS_CFG = 'export_presets.cfg';
 const SEMVER = ['patch', 'minor', 'major'];
-const ENV = ['debug', 'production'];
-
-// -----------------------------------------------------------------------------
-
-const extractEnv = (preset) => {
-  const _env = preset.custom_features.split(',').find((feature) => feature.includes('env:'));
-
-  if (!_env) {
-    console.warn(`\nmissing env in custom_features: "${preset.custom_features}"`);
-    console.warn('add "env:debug" or "env:production" within the custom_features list');
-    return;
-  }
-
-  const env = _env.split('env:')[1];
-
-  if (!ENV.includes(env)) {
-    console.warn(`env:${chalk.yellow(env)} is not supported, use one of [${ENV}]`);
-    return;
-  }
-
-  return env;
-};
 
 // -----------------------------------------------------------------------------
 
@@ -89,14 +67,7 @@ const exportBundle = async (coreConfig, bundles) => {
 
   // ---------
 
-  const {bundleId, preset, presets} = await switchBundle(newVersion, bundles);
-
-  const env = extractEnv(preset);
-
-  if (!env) {
-    console.log(chalk.red.bold('🔴 failed'));
-    return;
-  }
+  const {bundleId, preset, presets, env} = await switchBundle(newVersion, bundles);
 
   // ---------
 
