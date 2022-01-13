@@ -77,7 +77,15 @@ const exportBundle = async (coreConfig, bundles) => {
 
   console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
 
-  updatePreset(bundleId, env, coreConfig, preset, bundles[bundleId], newVersion);
+  const {applicationName} = updatePreset(
+    bundleId,
+    env,
+    coreConfig,
+    preset,
+    bundles[bundleId],
+    newVersion
+  );
+
   fs.writeFileSync(PRESETS_CFG, ini.stringify(presets));
 
   // ---------
@@ -91,10 +99,15 @@ const exportBundle = async (coreConfig, bundles) => {
   );
 
   bundler.on('close', () => {
-    console.log(`\n✅ Exported your ${bundleInfo} successfully!`);
+    console.log(`\n${chalk.green.bold(applicationName)}`);
+    console.log(`✅ Exported ${bundleInfo} successfully!`);
 
     if (preset.platform === 'iOS') {
       console.log(`The ${chalk.blue.bold('.xcodeproj')} is ready on _build/ios`);
+    }
+
+    if (preset.platform === 'Android') {
+      console.log(`The ${chalk.blue.bold('build')} is ready on _build/android`);
     }
   });
 };

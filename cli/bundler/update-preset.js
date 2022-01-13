@@ -114,6 +114,10 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => 
   }
 
   console.log('✅ preset successfully updated.');
+
+  return {
+    applicationName
+  };
 };
 
 // -----------------------------------------------------------------------------
