@@ -11,6 +11,7 @@ const DEBUG = 'debug'
 var BUNDLE_ID
 var BUNDLES
 var ENV
+var PLATFORM
 var VERSION
 var VERSION_CODE
 

@@ -14,11 +14,13 @@ func _ready():
 
   G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
   G.ENV = ProjectSettings.get_setting('bundle/env')
+  G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
   G.VERSION = ProjectSettings.get_setting('bundle/version')
   G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
 
   prints('bundle/id: ' + G.BUNDLE_ID)
   prints('bundle/env: ' + G.ENV)
+  prints('bundle/platform: ' + G.PLATFORM)
 
   if(G.ENV != 'production'):
     prints('⚠️👾 ENV='+G.ENV)
