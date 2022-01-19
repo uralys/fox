@@ -3,6 +3,7 @@
 extends Node
 
 # ------------------------------------------------------------------------------
+
 var loader
 var _loadedResources = {}
 signal loaded
@@ -10,17 +11,6 @@ signal loaded
 # ------------------------------------------------------------------------------
 
 var currentScene = null
-
-# ------------------------------------------------------------------------------
-
-var CURTAIN_DURATION = 0.7
-var isCurtainOpen = true
-
-# ------------------------------------------------------------------------------
-
-onready var curtain = $'/root/app/curtain'
-onready var leftCurtain = $'/root/app/curtain/left'
-onready var rightCurtain = $'/root/app/curtain/right'
 
 # ------------------------------------------------------------------------------
 
@@ -34,16 +24,20 @@ func openDefault():
 
 # ------------------------------------------------------------------------------
 
+func onOpenScene():
+  return null
+
+# ------------------------------------------------------------------------------
+
 func _openScene(scene):
   var previousSceneName = 'none'
 
   if(currentScene):
     previousSceneName = str(currentScene.name)
 
-    if(isCurtainOpen):
-      closeCurtain()
-      var _timer = Wait.start(leftCurtain, CURTAIN_DURATION)
-      yield(_timer, 'timeout')
+    var timerOnOpenScene = onOpenScene()
+    if(timerOnOpenScene):
+      yield(timerOnOpenScene, 'timeout')
 
     $'/root/app/scene'.remove_child(currentScene)
     currentScene.queue_free()
@@ -78,39 +72,3 @@ func getLoadedResource(path):
   if(_loadedResources.has(path)):
     return _loadedResources[path]
   return null
-
-# ------------------------------------------------------------------------------
-
-func closeCurtain():
-  isCurtainOpen = false
-
-  Animate.to(leftCurtain, {
-    propertyPath = 'anchor_right',
-    toValue = 0.66,
-    duration = CURTAIN_DURATION
-  })
-
-  Animate.to(rightCurtain, {
-    propertyPath = 'anchor_left',
-    toValue = 0.33,
-    duration = CURTAIN_DURATION
-  })
-
-func openCurtain():
-  isCurtainOpen = true
-  if(curtain.has_node('decoration')):
-    curtain.remove_child(curtain.get_node('decoration'))
-
-  Animate.to(leftCurtain, {
-    propertyPath = 'anchor_right',
-    toValue = 0,
-    duration = CURTAIN_DURATION,
-    easing = Tween.EASE_IN
-  })
-
-  Animate.to(rightCurtain, {
-    propertyPath = 'anchor_left',
-    toValue = 1,
-    duration = CURTAIN_DURATION,
-    easing = Tween.EASE_IN
-  })
