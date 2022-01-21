@@ -72,9 +72,9 @@ func _ready():
   # ------------------- LYS.
 
   Animate.hide(L, STEP_DURATION, 0.5)
-  Animate.hide(Y, STEP_DURATION, 2.1)
-  Animate.hide(S, STEP_DURATION, 1.2)
-  Animate.hide(DOT, STEP_DURATION, 2.8)
+  Animate.hide(Y, STEP_DURATION, 1.8)
+  Animate.hide(S, STEP_DURATION, 2.1)
+  Animate.hide(DOT, STEP_DURATION, 1.3)
 
   yield(A, 'scaled')
   Animate.hide(A, 1, 0.5)
