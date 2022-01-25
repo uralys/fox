@@ -7,7 +7,7 @@
     "input": "_release/images/",
     "output": "assets/generated/icons",
     "base": "icon-1200x1200.png",
-    "desktop": "icon-256x256.png",
+    "desktop": "icon-desktop-512x512.png",
     "background": "adaptive-background.png",
     "foreground": "adaptive-foreground.png"
   },
