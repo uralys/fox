@@ -1,5 +1,7 @@
 extends CanvasLayer
 
+export(float) var duration = 1
+
 func _ready():
   var opacityTween = Tween.new()
   add_child(opacityTween)
@@ -11,7 +13,7 @@ func _ready():
     $rect,
     'modulate:a',
     1, 0,
-    1,
+    duration,
     Tween.TRANS_LINEAR, Tween.EASE_OUT
   )
 

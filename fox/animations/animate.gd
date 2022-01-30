@@ -80,9 +80,10 @@ static func toAndBack(object, _options):
 
 # ------------------------------------------------------------------------------
 
-static func show(object, duration = 0.3, delay = 0):
+static func show(object, duration = 0.3, delay = 0, doNotHide = false):
   object.modulate.a = 0
-  object.visible = false
+  if(not doNotHide):
+    object.visible = false
 
   if(delay > 0):
     var _timer = Wait.start(object, delay)
