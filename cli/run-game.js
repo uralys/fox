@@ -25,9 +25,11 @@ const restart = (godotPath, config) => {
 
 const runGame = (godotPath, config) => {
   console.log(`⚙️  running ${chalk.blue.bold('game')}...`);
+
   const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg']);
 
   watcher.on('ready', (event, path) => {
+    // console.log({watchedfiles: watcher.getWatched()});
     restart(godotPath, config);
   });
 

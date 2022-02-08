@@ -81,6 +81,10 @@ static func toAndBack(object, _options):
 # ------------------------------------------------------------------------------
 
 static func show(object, duration = 0.3, delay = 0, doNotHide = false):
+  if(not object):
+    prints('warning: trying to Animate.show a Nil object')
+    return
+
   object.modulate.a = 0
   if(not doNotHide):
     object.visible = false
