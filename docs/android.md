@@ -63,3 +63,23 @@ aapt: aliased to ~/Library/Android/sdk/build-tools/32.0.0/aapt2
 > bundletool dump manifest --bundle _build/android/lockeyland.aab --xpath /manifest/@android:versionCode
 10000
 ```
+
+## install playstore on emulators
+
+all steps: <https://proandroiddev.com/install-google-play-store-in-an-android-emulator-82cd183fefed>
+
+1 - download `Phonesky.apk`
+2 - `emulator @pixel-api-21 -writable-system`
+3 - `adb remount`
+4 - `adb push ~/path/to/Phonesky.apk /system/priv-app/`
+5 - `adb shell stop && adb shell start`
+
+## intall apk on emulator
+
+1 - `emulator @pixel-api-21 -no-snapshot -writable-system`
+2 - `fox export` an android debug preset
+3 - `adb uninstall com.uralys.xxx`
+4- `adb install -r ~/path/to/your.apk`
+5 - `adb logcat -s godot`
+
+--> repeat from `2` to `5` on every test
