@@ -28,8 +28,8 @@ func _ready():
 
   prints('> splashScreen');
   prints('-------------------------------')
-  var appearDuration = 1.5
-  var appearDelay = 0.75
+  var appearDuration = 0.4
+  var appearDelay = 0.2
 
   Animate.show(U, appearDuration, appearDelay)
   Animate.show(R, appearDuration, appearDelay)

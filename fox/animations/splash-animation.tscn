@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=2]
+[gd_scene load_steps=10 format=2]
 
 [ext_resource path="res://assets/sprites/splash/u.png" type="Texture" id=1]
 [ext_resource path="res://fox/animations/splash-animation.gd" type="Script" id=2]
@@ -9,8 +9,20 @@
 [ext_resource path="res://assets/sprites/splash/a.png" type="Texture" id=8]
 [ext_resource path="res://assets/sprites/splash/r.png" type="Texture" id=9]
 
+[sub_resource type="StyleBoxFlat" id=1]
+bg_color = Color( 0.0823529, 0.0823529, 0.0823529, 1 )
+
 [node name="splashScreen" type="CanvasLayer"]
+layer = 128
 script = ExtResource( 2 )
+
+[node name="bg" type="Panel" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+custom_styles/panel = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="letters" type="ReferenceRect" parent="."]
 anchor_left = 0.5

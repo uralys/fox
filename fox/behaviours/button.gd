@@ -1,7 +1,6 @@
 extends Node
 
 signal onPress
-signal onRelease
 
 export(bool) var onlyOnce = true
 export(bool) var sound = true
@@ -28,6 +27,3 @@ func _gui_input(event):
 
     if(sound):
       Sound.play(Sound.BUTTON_PRESS)
-
-  if event is InputEventMouseButton and event.button_index == BUTTON_LEFT and not event.pressed:
-    emit_signal('onRelease')
