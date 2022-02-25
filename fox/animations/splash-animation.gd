@@ -6,7 +6,7 @@ signal splashFinished
 
 # ------------------------------------------------------------------------------
 
-const STEP_DURATION = .75
+const STEP_DURATION = 0.75
 
 # ------------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ func _ready():
   prints('> splashScreen');
   prints('-------------------------------')
   var appearDuration = 0.4
-  var appearDelay = 0.2
+  var appearDelay = 0.1
 
   Animate.show(U, appearDuration, appearDelay)
   Animate.show(R, appearDuration, appearDelay)
@@ -44,8 +44,8 @@ func _ready():
 
   # ------------------- UR
 
-  Animate.hide(U, STEP_DURATION, 1.6)
-  Animate.hide(R, STEP_DURATION, 1.2)
+  Animate.hide(U, STEP_DURATION, .6)
+  Animate.hide(R, STEP_DURATION, .2)
 
   # ------------------- A
 
@@ -55,7 +55,7 @@ func _ready():
       A.get_parent().rect_size.x * 0.5,
       A.get_parent().rect_size.y * 0.5
     ),
-    duration = STEP_DURATION + 2,
+    duration = STEP_DURATION + 1,
     easing = Tween.EASE_IN_OUT,
     delay = 0.3
   })
@@ -63,7 +63,7 @@ func _ready():
   Animate.to(A, {
     propertyPath = 'scale',
     toValue = A.scale * 3,
-    duration = STEP_DURATION + 2,
+    duration = STEP_DURATION + 1,
     easing = Tween.EASE_IN_OUT,
     delay = 0.3,
     signalToWait = 'scaled'
@@ -72,14 +72,14 @@ func _ready():
   # ------------------- LYS.
 
   Animate.hide(L, STEP_DURATION, 0.5)
-  Animate.hide(Y, STEP_DURATION, 1.8)
-  Animate.hide(S, STEP_DURATION, 2.1)
-  Animate.hide(DOT, STEP_DURATION, 1.3)
+  Animate.hide(Y, STEP_DURATION, .3)
+  Animate.hide(S, STEP_DURATION, 1.2)
+  Animate.hide(DOT, STEP_DURATION, .8)
 
   yield(A, 'scaled')
-  Animate.hide(A, 1, 0.5)
+  Animate.hide(A, 0.5, 0.25)
 
-  exitSplashAnimation(1.5)
+  exitSplashAnimation(1)
 
 # ------------------------------------------------------------------------------
 
