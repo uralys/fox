@@ -13,11 +13,10 @@ const shell = require('shelljs');
 // -----------------------------------------------------------------------------
 
 const generateScreenshots = (config) => {
-  const {input, output} = config;
+  const {input, output, sizes = ['2560x1600']} = config;
   console.log(`⚙️  resizing ${chalk.blue.bold('screenshots')}...`);
 
   const files = fs.readdirSync(input);
-  const size = '2560x1600';
 
   files.forEach((fileName) => {
     const extension = path.extname(fileName);
@@ -25,15 +24,17 @@ const generateScreenshots = (config) => {
       return;
     }
 
-    const outputFileName = `${fileName.split(extension)[0]}-${size}${extension}`;
-    console.log(` > ${chalk.magenta.italic(fileName)} --> ${output}/${outputFileName}`);
+    sizes.forEach((size) => {
+      const outputFileName = `${fileName.split(extension)[0]}-${size}${extension}`;
+      console.log(` > ${chalk.magenta.italic(fileName)} --> ${output}/${outputFileName}`);
 
-    shell.exec(
-      `convert ${input}/${fileName} -resize ${size}^ -gravity center -extent ${size} "${output}/${outputFileName}"`
-    );
+      shell.exec(
+        `convert ${input}/${fileName} -resize ${size}^ -gravity center -extent ${size} "${output}/${outputFileName}"`
+      );
+
+      console.log(`\n Resized images to ${size} ${chalk.green('successfully')}.`);
+    });
   });
-
-  console.log(`\n Resized images to ${size} ${chalk.green('successfully')}.`);
 };
 
 // -----------------------------------------------------------------------------
