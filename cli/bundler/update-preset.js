@@ -34,7 +34,8 @@ const updateIcons = (preset, bundleId) => {
 // -----------------------------------------------------------------------------
 
 const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
-  updateOptions(preset, 'package/name', applicationName);
+  const _applicationName = `${applicationName}${env === 'debug' ? '(debug)' : ''}`;
+  updateOptions(preset, 'package/name', _applicationName);
 
   const packageUIDKey = 'package/unique_name';
   const packageUID = (bundle[ANDROID] && bundle[ANDROID][packageUIDKey]) || bundle.uid;
