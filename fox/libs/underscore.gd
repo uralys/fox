@@ -9,21 +9,14 @@ class_name __
 # ------------------------------------------------------------------------------
 
 static func Get(path, obj):
-  if(not obj):
+  if(obj == null):
     return null
 
-  if(not path):
+  if(path == null):
     return obj
 
-  if(typeof(path) == TYPE_INT):
-    if(obj.has(path)):
-      return obj[path]
-    else:
-      prints('🔴 __.Get(path, obj): index not found:', path);
-      return null
-
   if(typeof(path) != TYPE_STRING):
-    prints('🔴 __.Get(path, obj): path must be either a TYPE_INT or a TYPE_STRING');
+    prints('🔴 __.Get(path, obj): path must be of TYPE_STRING');
     return null
 
   # ---
