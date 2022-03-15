@@ -30,6 +30,7 @@ const GENERATE_SCREENSHOTS = 'generate:screenshots';
 
 const RUN_EDITOR = 'run:editor';
 const RUN_GAME = 'run:game';
+const RUN_NO_WINDOW = 'run:no-window';
 
 // -----------------------------------------------------------------------------
 
@@ -40,7 +41,8 @@ const commands = [
   GENERATE_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
   RUN_EDITOR,
-  RUN_GAME
+  RUN_GAME,
+  RUN_NO_WINDOW
 ];
 
 const commandMessage = `choose a command above, example:\n${chalk.italic(`fox ${RUN_EDITOR}`)}`;
@@ -136,16 +138,26 @@ const cli = (argv) => {
       console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
       const {resolution, position} = config;
 
-      const bundler = spawn(
+      const editorProcess = spawn(
         core.godot,
         ['-e', '--windowed', '--resolution', resolution, '--position', position],
         {stdio: [process.stdin, process.stdout, process.stderr]}
       );
 
-      bundler.on('close', () => {
+      editorProcess.on('close', () => {
         console.log(`🦊 ${chalk.italic('bye!')}`);
       });
 
+      return;
+    }
+    case RUN_NO_WINDOW: {
+      {
+        console.log('----------------------------');
+        console.log(`🦊 ${chalk.italic('starting windowless Godot')}`);
+        spawn(core.godot, ['--no-window'], {
+          stdio: [process.stdin, process.stdout, process.stderr]
+        });
+      }
       return;
     }
     case RUN_GAME: {
@@ -194,7 +206,8 @@ const cli = (argv) => {
 const argv = yargs(process.argv.splice(2))
   .usage('Usage: fox <command> [options]')
   .command(RUN_EDITOR, 'open Godot Editor with your main scene')
-  .command(RUN_GAME, 'start your game to debug')
+  .command(RUN_GAME, 'start your game locally')
+  .command(RUN_NO_WINDOW, 'start your app without window')
   .command(EXPORT, 'export a bundle for one of your presets')
   .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
   .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
