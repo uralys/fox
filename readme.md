@@ -1,6 +1,6 @@
 <p align="center"><a href="https://thenounproject.com/icon/fox-1486570/"> <img title="fox icon by Alina Oleynik from NounProject.com" height="180px"  src="./assets/logo.png"></a></p>
 
-# Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![GitHub release](https://img.shields.io/github/release/uralys/fox.svg)](https://github.com/uralys/fox/releases)
+# Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![version](https://img.shields.io/github/package-json/v/uralys/fox)](https://github.com/uralys/fox/tags)
 
 🦊 Fox provides many tools to help develop with Godot Engine
 

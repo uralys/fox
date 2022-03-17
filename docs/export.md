@@ -12,9 +12,25 @@ This will ask which preset you want to use, update it if you need to change the 
 
 you can start from the samples provided in `./fox/export_presets.sample.cfg` or install templates from Godot.
 
+## export_path
+
+This path is mandatory to build properly. This is the `<path>` parameter in the headless command.
+
+```sh
+--export <preset> <path>
+```
+
+You need to set it in your preset:
+
+```ini
+export_path=_build/server.pck
+```
+
 ## env
 
-Define if your preset is for `debug` or `production` by setting it a `custom_features`
+Define if your preset is for `production`, `debug`, or `pck` by setting it a `custom_features`.
+
+When exporting, it will apply `--export`, `--export-debug`, or `--export-pack`
 
 example:
 
