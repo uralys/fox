@@ -71,10 +71,10 @@ try {
 
 const getSettings = (command) => {
   let config;
+  const configPath = path.resolve(process.cwd(), `./${CONFIG_FILE}`);
 
   try {
-    const configPath = path.resolve(process.cwd(), `./${CONFIG_FILE}`);
-    console.log(`⚙️  using ${chalk.blue.bold(CONFIG_FILE)}`);
+    console.log(`⚙️  reading ${chalk.blue.bold(CONFIG_FILE)}`);
     config = require(configPath);
 
     if (!config[command] && defaultConfig[command]) {
@@ -82,7 +82,8 @@ const getSettings = (command) => {
       config = defaultConfig;
     }
   } catch (e) {
-    config = defaultConfig;
+    console.log(chalk.red.bold('🔴 failed:'), CONFIG_FILE, 'is required');
+    return;
   }
 
   return {
@@ -128,7 +129,13 @@ const cli = (argv) => {
 
   console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
   console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
-  const {core, config, bundles} = getSettings(command);
+  const settings = getSettings(command);
+
+  if (!settings) {
+    return;
+  }
+
+  const {core, config, bundles} = settings;
 
   // -------- Godot commands
 

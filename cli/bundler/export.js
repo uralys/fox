@@ -2,6 +2,7 @@
 
 const chalk = require('chalk');
 const fs = require('fs');
+const path = require('path');
 const inquirer = require('inquirer');
 const shell = require('shelljs');
 const {spawn} = require('child_process');
@@ -36,6 +37,17 @@ const inquireVersioning = async (currentVersion) => {
 
 // -----------------------------------------------------------------------------
 
+const verifyBuildFolder = () => {
+  const buildFolder = path.resolve(process.cwd(), './_build');
+
+  if (!fs.existsSync(buildFolder)) {
+    shell.mkdir('-p', buildFolder);
+    console.log('✅ created _build folder');
+  }
+};
+
+// -----------------------------------------------------------------------------
+
 const exportBundle = async (coreConfig, bundles) => {
   console.log(`⚙️  exporting a ${chalk.blue.bold('bundle')}...`);
 
@@ -44,6 +56,10 @@ const exportBundle = async (coreConfig, bundles) => {
     console.log(chalk.red.bold('🔴 failed'));
     return;
   }
+
+  // ---------
+
+  verifyBuildFolder();
 
   // ---------
 
@@ -92,11 +108,17 @@ const exportBundle = async (coreConfig, bundles) => {
 
   console.log('\n⚙️  Exporting...');
 
-  const bundler = spawn(
-    coreConfig.godot,
-    [`--export${env === 'debug' ? '-debug' : ''}`, preset.name, '--no-window'],
-    {stdio: [process.stdin, process.stdout, process.stderr]}
-  );
+  let exportType = '--export';
+  if (env === 'debug') {
+    exportType += '-debug';
+  }
+  if (env === 'pck') {
+    exportType += '-pack';
+  }
+
+  const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--no-window'], {
+    stdio: [process.stdin, process.stdout, process.stderr]
+  });
 
   bundler.on('close', () => {
     console.log(`\n${chalk.green.bold(applicationName)}`);

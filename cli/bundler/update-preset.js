@@ -109,9 +109,9 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => 
       updateMacOSPreset(env, preset, bundle, bundleId, applicationName, newVersion);
       break;
     default:
-      console.log(`\nplatform ${platform} is not handled.`);
-      console.log(chalk.red.bold('🔴 failed'));
-      return;
+      console.log(`\n> platform ${platform} has no preset specificity.`);
+      console.log(`> applying default preset options:`);
+      updateOptions(preset, 'application/name', applicationName);
   }
 
   console.log('✅ preset successfully updated.');

@@ -16,7 +16,7 @@ const PRESETS_CFG = 'export_presets.cfg';
 const OVERRIDE_CFG = 'override.cfg';
 // -----------------------------------------------------------------------------
 
-const ENV = ['debug', 'production'];
+const ENV = ['debug', 'production', 'pck'];
 
 // -----------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ const extractEnv = (preset) => {
 
   if (!_env) {
     console.warn(`\nmissing env in custom_features: "${preset.custom_features}"`);
-    console.warn('add "env:debug" or "env:production" within the custom_features list');
+    console.warn('add "env:debug", "env:production" or "env:pck" within the custom_features list');
     return;
   }
 
