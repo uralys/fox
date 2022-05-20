@@ -6,12 +6,12 @@
   "license": "MIT",
   "homepage": "https://github.com/uralys/fox#readme",
   "devDependencies": {
-    "chalk": "4.1.2",
+    "chalk": "5.0.1",
     "chokidar": "^3.5.3",
-    "inquirer": "^8.2.0",
-    "npm-check-updates": "^12.1.0",
+    "inquirer": "^8.2.4",
+    "npm-check-updates": "^13.0.1",
     "shelljs": "^0.8.5",
-    "yargs": "^17.3.1"
+    "yargs": "^17.5.1"
   },
   "scripts": {
     "ncu": "npm-check-updates"
