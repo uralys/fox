@@ -16,7 +16,7 @@ const toVersionNumber = (semver) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = toVersionNumber;
+export default toVersionNumber;
 
 // -----------------------------------------------------------------------------
 /*

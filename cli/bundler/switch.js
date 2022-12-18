@@ -1,21 +1,19 @@
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const fs = require('fs');
-const inquirer = require('inquirer');
-const shell = require('shelljs');
+import chalk from 'chalk';
+import fs from 'fs';
+import inquirer from 'inquirer';
+import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
-const ini = require('./ini');
-const toVersionNumber = require('./version-number');
+import ini from './ini.js';
+import toVersionNumber from './version-number.js';
 
 // -----------------------------------------------------------------------------
 
 const PRESETS_CFG = 'export_presets.cfg';
 const OVERRIDE_CFG = 'override.cfg';
-// -----------------------------------------------------------------------------
-
 const ENV = ['debug', 'production', 'pck'];
 
 // -----------------------------------------------------------------------------
@@ -135,4 +133,4 @@ const switchBundle = async (bundleVersion, bundles) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = switchBundle;
+export default switchBundle;

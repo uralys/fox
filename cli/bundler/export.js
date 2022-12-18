@@ -1,17 +1,17 @@
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
-const inquirer = require('inquirer');
-const shell = require('shelljs');
-const {spawn} = require('child_process');
+import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
+import inquirer from 'inquirer';
+import shell from 'shelljs';
+import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
-const ini = require('./ini');
-const updatePreset = require('./update-preset');
-const switchBundle = require('./switch');
+import ini from './ini.js';
+import updatePreset from './update-preset.js';
+import switchBundle from './switch.js';
 
 // -----------------------------------------------------------------------------
 
@@ -136,4 +136,4 @@ const exportBundle = async (coreConfig, bundles) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = exportBundle;
+export default exportBundle;

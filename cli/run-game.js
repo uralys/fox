@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const chokidar = require('chokidar');
-const shelljs = require('shelljs');
+import chalk from 'chalk';
+import chokidar from 'chokidar';
+import shelljs from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
@@ -46,4 +46,4 @@ const runGame = (godotPath, config) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = runGame;
+export default runGame;

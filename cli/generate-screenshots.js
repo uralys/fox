@@ -5,10 +5,10 @@
 // OSX: brew install imagemagick
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const fs = require('fs');
-const path = require('path');
-const shell = require('shelljs');
+import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
+import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
@@ -39,4 +39,4 @@ const generateScreenshots = (config) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = generateScreenshots;
+export default generateScreenshots;

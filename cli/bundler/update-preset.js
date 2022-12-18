@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const toVersionNumber = require('./version-number');
+import chalk from 'chalk';
+import toVersionNumber from './version-number.js';
 
 // -----------------------------------------------------------------------------
 
@@ -123,4 +123,4 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => 
 
 // -----------------------------------------------------------------------------
 
-module.exports = updatePreset;
+export default updatePreset;
