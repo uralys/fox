@@ -7,9 +7,9 @@
 // based on 🍒 https://github.com/chrisdugne/cherry/blob/master/prepare-icons.sh
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const fs = require('fs');
-const shell = require('shelljs');
+import chalk from 'chalk';
+import fs from 'fs';
+import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
@@ -74,4 +74,4 @@ const generateIcons = (config) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = generateIcons;
+export default generateIcons;

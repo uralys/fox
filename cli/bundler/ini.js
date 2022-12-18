@@ -210,7 +210,7 @@ const unsafe = (val, doUnesc) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = {
+export default {
   parse: decode,
   decode,
   stringify: encode,

@@ -1,22 +1,26 @@
 {
   "name": "@uralys/fox",
   "version": "1.3.13",
+  "type": "module",
   "description": "🦊 Starter and Components for your Godot Engine app",
   "author": "chrisdugne",
   "license": "MIT",
   "homepage": "https://github.com/uralys/fox#readme",
   "devDependencies": {
-    "chalk": "^4.1.2",
+    "chalk": "4.1.2",
     "chokidar": "^3.5.3",
-    "inquirer": "^9.0.0",
-    "npm-check-updates": "^14.1.1",
+    "inquirer": "^9.1.3",
+    "npm-check-updates": "^16.3.11",
     "shelljs": "^0.8.5",
-    "yargs": "^17.5.1"
+    "yargs": "^17.6.0"
   },
   "scripts": {
     "ncu": "npm-check-updates"
   },
+  "engines": {
+    "node": "19.0.1"
+  },
   "bin": {
-    "fox": "./cli/cli.js"
+    "fox": "NODE_NO_WARNINGS=1 ./cli/cli.js"
   }
 }

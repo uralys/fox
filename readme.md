@@ -36,14 +36,6 @@ Animate.to(car, {
 })
 ```
 
-## NodeJS CLI
-
-- to watch your files and allow to `live reload` your game.
-- to `export` your debug and production bundles.
-- to `generate` your release icons and screenshots.
-
-<img title="exporting-illustration" height="270px"  src="./assets/docs/cli-export.png"/>
-
 ## 📦 Install
 
 clone this repo next to your game folders
@@ -66,7 +58,13 @@ cd /path/to/your-game
 ln -s ../fox/fox fox
 ```
 
-## 🔋 CLI
+## 🔋 experimental NodeJS CLI
+
+- to watch your files and allow to `live reload` your game.
+- to `export` your debug and production bundles.
+- to `generate` your release icons and screenshots.
+
+<img title="exporting-illustration" height="270px"  src="./assets/docs/cli-export.png"/>
 
 ### requirements
 
@@ -83,10 +81,18 @@ npm install
 link the `fox` executable:
 
 ```sh
-npm link
+ln -s ~/Projects/uralys/gamedev/fox/cli/cli.js /usr/local/bin/fox
 ```
 
-You can now execute fox commands from your terminal
+You may have to reload your termilnal to have `fox` in your path;
+
+You can now execute fox commands from your terminal:
+
+```
+fox
+```
+
+### usage
 
 ```ini
 Usage: fox <command> [options]
@@ -107,4 +113,4 @@ Commands:
                               match store requirements
 ```
 
-more details for exporting [here](./docs/export.md)
+- more details for exporting [here](./docs/export.md)

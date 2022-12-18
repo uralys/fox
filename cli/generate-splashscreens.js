@@ -5,8 +5,8 @@
 // OSX: brew install imagemagick
 // -----------------------------------------------------------------------------
 
-const chalk = require('chalk');
-const shell = require('shelljs');
+import chalk from 'chalk';
+import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
@@ -54,4 +54,4 @@ const generateSplashscreens = (config) => {
 
 // -----------------------------------------------------------------------------
 
-module.exports = generateSplashscreens;
+export default generateSplashscreens;
