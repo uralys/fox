@@ -22,7 +22,7 @@ var BUTTON_PRESS = "onButtonPress"
 
 func _ready():
   ___node = Node.new()
-  ___node.pause_mode = PAUSE_MODE_PROCESS
+  ___node.process_mode = PROCESS_MODE_ALWAYS
   $'/root/app'.add_child(___node)
 
 # ------------------------------------------------------------------------------
@@ -81,25 +81,25 @@ func isMusicOn():
 
 func _play(soundName, delay = 0, volume = 0):
   if(delay > 0):
-    var _timer = Wait.start(___node, delay)
-    yield(_timer, 'timeout')
+    var _timer = Wait.start(Callable(___node,delay))
+    await _timer.timeout
 
   if(DEBUG.SOUNDS):prints('🎵 playing', soundName, 'with delay', delay)
 
   var assetPath =__.Get(soundName, OGG)
   if(assetPath):
     if(DEBUG.SOUND_OFF):
-      prints('🎵 >> debug sound off [', soundName, ']');
+      prints('🎵 >> debug sound unchecked [', soundName, ']');
     else:
       return _playStream(assetPath, volume)
   else:
-    if(DEBUG.SOUNDS):prints('🎵 ❌ sound [', soundName, '] has no .ogg');
+    if(DEBUG.SOUNDS):prints('🎵 ❌ sound [', soundName, '] has no super.ogg');
 
 # ------------------------------------------------------------------------------
 
 func _playStream(path, volume = 0):
   var sound = AudioStreamPlayer.new()
-  sound.pause_mode = PAUSE_MODE_PROCESS
+  sound.process_mode = PROCESS_MODE_ALWAYS
 
   var stream = load(path)
   sound.stream = stream

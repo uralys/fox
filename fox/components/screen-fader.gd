@@ -1,13 +1,13 @@
 extends CanvasLayer
 
-export(float) var duration = 1
+@export var duration: float = 1
 
 func _ready():
   var opacityTween = Tween.new()
   add_child(opacityTween)
 
   $rect.visible = true
-  $rect.rect_size = get_viewport().get_visible_rect().size
+  $rect.size = get_viewport().get_visible_rect().size
 
   opacityTween.interpolate_property(
     $rect,

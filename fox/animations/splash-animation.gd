@@ -10,13 +10,13 @@ const STEP_DURATION = 0.75
 
 # ------------------------------------------------------------------------------
 
-onready var U = $letters/u
-onready var R = $letters/r
-onready var A = $letters/a
-onready var L = $letters/l
-onready var Y = $letters/y
-onready var S = $letters/s
-onready var DOT = $letters/dot
+@onready var U = $letters/u
+@onready var R = $letters/r
+@onready var A = $letters/a
+@onready var L = $letters/l
+@onready var Y = $letters/y
+@onready var S = $letters/s
+@onready var DOT = $letters/dot
 
 # ------------------------------------------------------------------------------
 
@@ -39,8 +39,8 @@ func _ready():
   Animate.show(S, appearDuration, appearDelay)
   Animate.show(DOT, appearDuration, appearDelay)
 
-  var timer = Wait.start(self, appearDuration + appearDelay + 0.1)
-  yield(timer, 'timeout')
+  var timer = Wait.start(Callable(self,appearDuration + appearDelay + 0.1))
+  await timer.timeout
 
   # ------------------- UR
 
@@ -52,8 +52,8 @@ func _ready():
   Animate.to(A, {
     propertyPath = 'position',
     toValue = Vector2(
-      A.get_parent().rect_size.x * 0.5,
-      A.get_parent().rect_size.y * 0.5
+      A.get_parent().size.x * 0.5,
+      A.get_parent().size.y * 0.5
     ),
     duration = STEP_DURATION + 1,
     easing = Tween.EASE_IN_OUT,
@@ -76,7 +76,7 @@ func _ready():
   Animate.hide(S, STEP_DURATION, 1.2)
   Animate.hide(DOT, STEP_DURATION, .8)
 
-  yield(A, 'scaled')
+  await A.scaled
   Animate.hide(A, 0.5, 0.25)
 
   exitSplashAnimation(1)
@@ -84,8 +84,8 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func exitSplashAnimation(delay):
-  var timer = Wait.start(self, delay)
-  yield(timer, 'timeout')
+  var timer = Wait.start(Callable(self,delay))
+  await timer.timeout
 
   emit_signal('splashFinished')
   get_parent().remove_child(self)

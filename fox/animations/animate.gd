@@ -18,18 +18,18 @@ const ANIMATION_DONE = 'animationDone'
 static func _scaleProperty(object):
   if(object.get('scale') != null):
     return 'scale'
-  elif(object.get('rect_scale') != null):
-    return 'rect_scale'
+  elif(object.get('scale') != null):
+    return 'scale'
   else:
-    prints('❌ scale/rect_scale not found on this object;', object)
+    prints('❌ scale/scale not found checked this object;', object)
 
 static func _positionProperty(object):
   if(object.get('position') != null):
     return 'position'
-  elif(object.get('rect_position') != null):
-    return 'rect_position'
+  elif(object.get('position') != null):
+    return 'position'
   else:
-    prints('❌ position/rect_position not found on this object;', object)
+    prints('❌ position/position not found checked this object;', object)
 
 # ------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ static func from(object, _options):
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
-  # yield(object, options.signalToWait)
+  # await object.options.signalToWait
 
 # ------------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ static func to(object, _options):
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
-  # yield(object, options.signalToWait)
+  # await object.options.signalToWait
 
 # ------------------------------------------------------------------------------
 
@@ -72,8 +72,8 @@ static func toAndBack(object, _options):
   options.duration = duration
   to(object, options)
 
-  var _timer = Wait.start(object, duration)
-  yield(_timer, 'timeout')
+  var _timer = Wait.start(Callable(object,duration))
+  await _timer.timeout
 
   options.toValue = fromValue
   to(object, options)
@@ -90,8 +90,8 @@ static func show(object, duration = 0.3, delay = 0, doNotHide = false):
     object.visible = false
 
   if(delay > 0):
-    var _timer = Wait.start(object, delay)
-    yield(_timer, 'timeout')
+    var _timer = Wait.start(Callable(object,delay))
+    await _timer.timeout
 
   object.visible = true
 
@@ -113,7 +113,7 @@ static func hide(object, duration = 0.3, delay = 0):
     delay = delay
   })
 
-  yield(object, ANIMATION_DONE)
+  await object.ANIMATION_DONE
   object.visible = false
 
 # ------------------------------------------------------------------------------
@@ -131,8 +131,8 @@ static func appear(object, delay = 0):
   if(not object.has_signal(ANIMATION_DONE)):
     object.add_user_signal(ANIMATION_DONE)
 
-  var timer = Wait.start(object, delay)
-  yield(timer, 'timeout')
+  var timer = Wait.start(Callable(object,delay))
+  await timer.timeout
 
   _animate(object, {
     propertyPath = 'modulate:a',
@@ -150,7 +150,7 @@ static func appear(object, delay = 0):
     duration = 0.2,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
-    signalToWait = 'appeared' # the elastic on y is only smoothing, 'appear' is visually done at this point
+    signalToWait = 'appeared' # the elastic checked y is only smoothing, 'appear' is visually done at this point
   })
 
   _animate(object, {
@@ -162,7 +162,7 @@ static func appear(object, delay = 0):
     easing = Tween.EASE_OUT,
   })
 
-  yield(object, 'appeared')
+  await object.appeared
   if(object.has_method('onAppear')):
     object.onAppear()
 
@@ -205,7 +205,7 @@ static func disappear(object, delay = 0):
     delay = delay
   })
 
-  yield(object, 'disappeared')
+  await object.disappeared
   if(object.has_method('onDisappear')):
     object.onDisappear()
 
@@ -239,8 +239,8 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
     duration = duration
   })
 
-  var _timer = Wait.start(object, duration)
-  yield(_timer, 'timeout')
+  var _timer = Wait.start(Callable(object,duration))
+  await _timer.timeout
 
   to(object, {
     propertyPath = property,
@@ -248,8 +248,8 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
     duration = duration
   })
 
-  _timer = Wait.start(object, duration)
-  yield(_timer, 'timeout')
+  _timer = Wait.start(Callable(object,duration))
+  await _timer.timeout
 
   if(times > 1):
     _bounce(object, fromScale, upScale, stepDuration, property, times - 1)
@@ -273,7 +273,7 @@ static func swing(object, _options):
   options.signalToWait = 'swing1Done'
 
   _animate(object, options)
-  yield(object, 'swing1Done')
+  await object.swing1Done
 
   if(_stoppedSwinging(object)):
     return
@@ -289,7 +289,7 @@ static func swing(object, _options):
   options.signalToWait = 'swing2Done'
 
   _animate(object, options)
-  yield(object, 'swing2Done')
+  await object.swing2Done
 
   if(_stoppedSwinging(object)):
     return
@@ -336,14 +336,14 @@ static func _animate(object, options):
 
   var nestedToAnimate = object
   if(fields.size() > 0):
-    var nestedPath = PoolStringArray(fields).join('.')
+    var nestedPath = '.'.join(PackedStringArray(fields))
     nestedToAnimate = __.Get(nestedPath, object)
 
   # --------
 
   if(delay > 0):
-    var _timer = Wait.start(object, delay)
-    yield(_timer, 'timeout')
+    var _timer = Wait.start(Callable(object,delay))
+    await _timer.timeout
 
   # --------
 
@@ -367,7 +367,7 @@ static func _animate(object, options):
 
   # --------
 
-  yield(tween, 'tween_completed')
+  await tween.finished
   object.remove_child(tween)
   tween.queue_free()
 

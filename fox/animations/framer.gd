@@ -7,7 +7,7 @@ var nextAnimation
 # ------------------------------------------------------------------------------
 
 func _ready():
-  connect('tween_completed', self, 'onAnimationfinished')
+  connect('finished',Callable(self,'onAnimationfinished'))
 
 # ------------------------------------------------------------------------------
 

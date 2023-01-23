@@ -19,7 +19,7 @@ static func Get(caller, options):
   caller.add_child(http)
 
   if(onComplete):
-    http.connect('request_completed', caller, onComplete)
+    http.connect('request_completed',Callable(caller,onComplete))
 
   http.request(
     url,

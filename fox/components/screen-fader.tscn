@@ -8,8 +8,8 @@ script = ExtResource( 1 )
 
 [node name="rect" type="ColorRect" parent="."]
 visible = false
-margin_right = 164.0
-margin_bottom = 128.0
+offset_right = 164.0
+offset_bottom = 128.0
 mouse_filter = 2
 color = Color( 0, 0, 0, 1 )
 __meta__ = {

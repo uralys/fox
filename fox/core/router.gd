@@ -20,7 +20,7 @@ func getCurrentScene():
 # ------------------------------------------------------------------------------
 
 func openDefault():
-  assert(0==1, 'openDefault() must be overriden to open your default screen')
+  assert(0==1) #,'openDefault() must be overriden to open your default screen')
 
 # ------------------------------------------------------------------------------
 
@@ -37,12 +37,12 @@ func _openScene(scene, options = {}):
 
     var timerOnOpenScene = onOpenScene()
     if(timerOnOpenScene):
-      yield(timerOnOpenScene, 'timeout')
+      await timerOnOpenScene.timeout
 
     $'/root/app/scene'.remove_child(currentScene)
     currentScene.queue_free()
 
-  currentScene = scene.instance()
+  currentScene = scene.instantiate()
   prints('[🦊 Router]>', previousSceneName, '>', str(currentScene.name))
   $'/root/app/scene'.add_child(currentScene)
 
@@ -52,7 +52,7 @@ func _openScene(scene, options = {}):
 # ------------------------------------------------------------------------------
 
 func startLoadingResource(path):
-  loader = ResourceLoader.load_interactive(path)
+  loader = ResourceLoader.load_threaded_request(path)
   _loadedResources.__loading = path
 
   if loader == null: # Check for errors.
