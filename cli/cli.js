@@ -81,7 +81,6 @@ const getSettings = async (command, defaultConfig) => {
 // -----------------------------------------------------------------------------
 
 const verifyConfig = (config, defaultConfig) => {
-  console.log('defaultConfig', {defaultConfig});
   const requirements = Object.keys(defaultConfig);
 
   requirements.forEach((requirement) => {
@@ -112,7 +111,7 @@ const cli = async (argv) => {
   let defaultConfig;
 
   try {
-    defaultConfig = (await import (defaultConfigPath, { assert: { type: "json" } })).default ;
+    defaultConfig = (await import (defaultConfigPath, { assert: { type: "json" } })).default;
   } catch (e) {
     console.log(
       chalk.red.bold('🔴 failed:'),
@@ -135,8 +134,6 @@ const cli = async (argv) => {
   console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
   console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
   const settings = await getSettings(command, defaultConfig);
-
-  console.log('settings', {settings, defaultConfig});
 
   if (!settings) {
     return;
@@ -191,7 +188,6 @@ const cli = async (argv) => {
 
   // -------- IO commands
 
-  console.log({defaultConfig});
   verifyConfig(config, defaultConfig[command]);
 
   switch (command) {

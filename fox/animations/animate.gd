@@ -113,7 +113,7 @@ static func hide(object, duration = 0.3, delay = 0):
     delay = delay
   })
 
-  await object.ANIMATION_DONE
+  await Signal(object, Animate.ANIMATION_DONE)
   object.visible = false
 
 # ------------------------------------------------------------------------------
@@ -273,7 +273,7 @@ static func swing(object, _options):
   options.signalToWait = 'swing1Done'
 
   _animate(object, options)
-  await object.swing1Done
+  await Signal(object, 'swing1Done')
 
   if(_stoppedSwinging(object)):
     return
@@ -289,7 +289,7 @@ static func swing(object, _options):
   options.signalToWait = 'swing2Done'
 
   _animate(object, options)
-  await object.swing2Done
+  await Signal(object, 'swing2Done')
 
   if(_stoppedSwinging(object)):
     return
@@ -347,28 +347,29 @@ static func _animate(object, options):
 
   # --------
 
-  var tween = Tween.new()
-  object.add_child(tween)
+  var tween = object.create_tween()
 
   # --------
 
   # prints({property=property,
   #   fromValue=fromValue, toValue=toValue})
 
-  tween.interpolate_property(
-    nestedToAnimate,
-    property,
-    fromValue, toValue,
-    duration,
-    transition, easing
-  )
+  # object[property] = fromValue
+  tween.tween_property(nestedToAnimate, property, toValue, duration).set_trans(transition).set_ease(easing)
+  # tween.interpolate_property(
+  #   nestedToAnimate,
+  #   property,
+  #   fromValue, toValue,
+  #   duration,
+  #   transition, easing
+  # )
 
-  tween.start()
+  # tween.start()
 
   # --------
 
-  await tween.finished
-  object.remove_child(tween)
-  tween.queue_free()
+  # await tween.finished
+  # object.remove_child(tween)
+  # tween.queue_free()
 
   object.emit_signal(SIGNAL_ON_DONE)
