@@ -35,7 +35,7 @@ func useSettings(oggFiles, musicOn = true, soundsOn = true):
 # ------------------------------------------------------------------------------
 
 func playMusic(musicName, delay = 0):
-  CURRENT_MUSIC = _play(musicName, delay, -5)
+  CURRENT_MUSIC = await _play(musicName, delay, -5)
   _refreshMusicVolume()
 
 # ------------------------------------------------------------------------------
@@ -81,7 +81,7 @@ func isMusicOn():
 
 func _play(soundName, delay = 0, volume = 0):
   if(delay > 0):
-    var _timer = Wait.start(Callable(___node,delay))
+    var _timer = Wait.start(___node, delay)
     await _timer.timeout
 
   if(DEBUG.SOUNDS):prints('🎵 playing', soundName, 'with delay', delay)

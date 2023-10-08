@@ -72,7 +72,7 @@ static func toAndBack(object, _options):
   options.duration = duration
   to(object, options)
 
-  var _timer = Wait.start(Callable(object,duration))
+  var _timer = Wait.start(object, duration)
   await _timer.timeout
 
   options.toValue = fromValue
@@ -90,7 +90,7 @@ static func show(object, duration = 0.3, delay = 0, doNotHide = false):
     object.visible = false
 
   if(delay > 0):
-    var _timer = Wait.start(Callable(object,delay))
+    var _timer = Wait.start(object, delay)
     await _timer.timeout
 
   object.visible = true
@@ -131,7 +131,7 @@ static func appear(object, delay = 0):
   if(not object.has_signal(ANIMATION_DONE)):
     object.add_user_signal(ANIMATION_DONE)
 
-  var timer = Wait.start(Callable(object,delay))
+  var timer = Wait.start(object, delay)
   await timer.timeout
 
   _animate(object, {
@@ -239,7 +239,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
     duration = duration
   })
 
-  var _timer = Wait.start(Callable(object,duration))
+  var _timer = Wait.start(object, duration)
   await _timer.timeout
 
   to(object, {
@@ -248,7 +248,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
     duration = duration
   })
 
-  _timer = Wait.start(Callable(object,duration))
+  _timer = Wait.start(object, duration)
   await _timer.timeout
 
   if(times > 1):
@@ -342,7 +342,7 @@ static func _animate(object, options):
   # --------
 
   if(delay > 0):
-    var _timer = Wait.start(Callable(object,delay))
+    var _timer = Wait.start(object, delay)
     await _timer.timeout
 
   # --------

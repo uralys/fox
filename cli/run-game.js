@@ -34,13 +34,14 @@ const runGame = (godotPath, config) => {
   });
 
   watcher.on('change', (event, path) => {
-    shelljs.exec('clear');
+    console.log('seen a change');
+    // shelljs.exec('clear');
 
-    if (currentInstance) {
-      shelljs.exec(`kill -9 ${currentInstance.pid}`);
-    }
+    // if (currentInstance) {
+    //   shelljs.exec(`kill -9 ${currentInstance.pid}`);
+    // }
 
-    restart(godotPath, config);
+    // restart(godotPath, config);
   });
 };
 

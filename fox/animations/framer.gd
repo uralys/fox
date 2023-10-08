@@ -62,22 +62,25 @@ func animateFrames(
     nextAnimation.totalDuration = _totalDuration
 
   # -----------
+  # 🏗️ note as of refacting with Godot4: Tween is no longer a Node
+  # get_parent() is irrelevant; there is surely a better way to do implement this frame animation
+  # unplugging this for now / lockey land is not working anymore with this update.
 
-  if(is_active()):
-    stop(get_parent(), 'frame')
+  # if(is_running()):
+  #   stop(get_parent(), 'frame')
 
-  # -----------
+  # # -----------
 
-  interpolate_property(
-    get_parent(),
-    'frame',
-    from, to,
-    duration,
-    Tween.TRANS_LINEAR, Tween.EASE_OUT,
-    delay
-  )
+  # interpolate_property(
+  #   get_parent(),
+  #   'frame',
+  #   from, to,
+  #   duration,
+  #   Tween.TRANS_LINEAR, Tween.EASE_OUT,
+  #   delay
+  # )
 
-  start()
+  play()
 
 # ------------------------------------------------------------------------------
 

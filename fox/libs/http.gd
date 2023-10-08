@@ -19,9 +19,11 @@ static func Get(caller, options):
   caller.add_child(http)
 
   if(onComplete):
-    http.connect('request_completed',Callable(caller,onComplete))
+    http.connect('request_completed', Callable(caller,onComplete))
+
+  var API_KEY = ProjectSettings.get_setting('api/key')
 
   http.request(
     url,
-    ['x-api-key:'+ProjectSettings.get_setting('api/key')]
+    ['x-api-key:' + API_KEY]
   )

@@ -12,6 +12,7 @@ var BUNDLE_ID
 var BUNDLES
 var ENV
 var PLATFORM
+var RECORD_PATH
 var VERSION
 var VERSION_CODE
 
@@ -19,8 +20,8 @@ var IS_FOX_RUNNER = false
 
 # ------------------------------------------------------------------------------
 
-var W = get_window().get_size()[0]
-var H = get_window().get_size()[1]
+var W = DisplayServer.window_get_size()[0]
+var H = DisplayServer.window_get_size()[1]
 
 # ------------------------------------------------------------------------------
 

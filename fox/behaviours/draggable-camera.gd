@@ -23,8 +23,8 @@ var startPressingTime = 0
 
 # ------------------------------------------------------------------------------
 
-@export var pan_smooth: float := -5
-@export var drag_delay: float := 120
+@export var pan_smooth: float = -5
+@export var drag_delay: float = 120
 
 # ------------------------------------------------------------------------------
 
