@@ -7,20 +7,17 @@
   "license": "MIT",
   "homepage": "https://github.com/uralys/fox#readme",
   "devDependencies": {
-    "chalk": "^5.2.0",
+    "chalk": "^5.3.0",
     "chokidar": "^3.5.3",
-    "inquirer": "^9.1.4",
-    "npm-check-updates": "^16.6.0",
+    "inquirer": "^9.2.11",
+    "npm-check-updates": "^16.14.5",
     "shelljs": "^0.8.5",
-    "yargs": "^17.6.2"
+    "yargs": "^17.7.2"
   },
   "scripts": {
     "ncu": "npm-check-updates"
   },
   "engines": {
     "node": "19.0.1"
-  },
-  "bin": {
-    "fox": "NODE_NO_WARNINGS=1 ./cli/cli.js"
   }
 }
