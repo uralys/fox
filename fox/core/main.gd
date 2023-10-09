@@ -47,4 +47,4 @@ func checkEnv():
       G.IS_FOX_RUNNER = true
 
   if(G.ENV == G.PRODUCTION and G.IS_FOX_RUNNER):
-    prints('⚠️👾 Fox runner checked production.')
+    prints('⚠️👾 Started with Fox and production settings.')

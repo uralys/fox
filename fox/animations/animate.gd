@@ -372,4 +372,8 @@ static func _animate(object, options):
   # object.remove_child(tween)
   # tween.queue_free()
 
-  object.emit_signal(SIGNAL_ON_DONE)
+
+  tween.connect("finished", func onFinished():
+    prints('emit', SIGNAL_ON_DONE);
+    object.emit_signal(SIGNAL_ON_DONE)
+  )
