@@ -13,6 +13,6 @@ static func withPrefix(prefix):
   if (prefix):
     _prefix = prefix + '-'
 
-  return _prefix + str(OS.get_unix_time()) + '-' + str(OS.get_ticks_msec()) + '-' + str(randi() % 900000 + 100000)
+  return _prefix + str(Time.get_unix_time_from_system()) + '-' + str(Time.get_ticks_msec()) + '-' + str(randi() % 900000 + 100000)
 
 # ------------------------------------------------------------------------------

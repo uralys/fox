@@ -14,9 +14,9 @@ const restart = (godotPath, config) => {
   console.log('\n============================================================');
   console.log(`🦊 ${chalk.italic('restarting Godot')}`);
   console.log('============================================================');
-  var {position} = config;
+  var {position, screen} = config;
 
-  currentInstance = shelljs.exec(`${godotPath} local-fox-runner --position ${position}`, {
+  currentInstance = shelljs.exec(`${godotPath} local-fox-runner ${screen ? `--screen ${screen}` : `--position ${position}`}`, {
     async: true
   });
 };
@@ -26,10 +26,11 @@ const restart = (godotPath, config) => {
 const runGame = (godotPath, config) => {
   console.log(`⚙️  running ${chalk.blue.bold('game')}...`);
 
-  const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg']);
+  const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg'], {
+    ignored: ['.godot/**']
+  });
 
   watcher.on('ready', (event, path) => {
-    // console.log({watchedfiles: watcher.getWatched()});
     restart(godotPath, config);
   });
 

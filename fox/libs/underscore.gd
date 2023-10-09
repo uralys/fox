@@ -49,6 +49,6 @@ static func Set(value, path, obj):
   if '.' in path:
     var fields = Array(path.split('.'))
     var first = fields.pop_front()
-    Set(value, String(fields), obj[first])
+    Set(value, ".".join(fields), obj[first])
   else:
     obj[path] = value

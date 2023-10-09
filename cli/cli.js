@@ -111,7 +111,7 @@ const cli = async (argv) => {
   let defaultConfig;
 
   try {
-    defaultConfig = await import (defaultConfigPath, { assert: { type: "json" } }) ;
+    defaultConfig = (await import (defaultConfigPath, { assert: { type: "json" } })).default;
   } catch (e) {
     console.log(
       chalk.red.bold('🔴 failed:'),

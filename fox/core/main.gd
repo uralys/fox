@@ -9,7 +9,7 @@ func _ready():
   prints('[🦊 Fox]', foxVersion)
   prints('-------------------------------')
   prints('viewport:', get_viewport().size)
-  prints('window:', OS.get_window_size())
+  prints('window:', get_window().get_size())
   prints('-------------------------------')
 
   G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
@@ -17,6 +17,8 @@ func _ready():
   G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
   G.VERSION = ProjectSettings.get_setting('bundle/version')
   G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
+
+  G.RECORD_PATH = 'user://saved-data-' + G.BUNDLE_ID + '.bin'
 
   prints('bundle/id: ' + G.BUNDLE_ID)
   prints('bundle/env: ' + G.ENV)
@@ -34,7 +36,7 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func startSplashAnimation():
-  Master.splashScreen = SplashAnimation.instance()
+  Master.splashScreen = SplashAnimation.instantiate()
   add_child(Master.splashScreen)
 
 # ------------------------------------------------------------------------------
@@ -45,4 +47,4 @@ func checkEnv():
       G.IS_FOX_RUNNER = true
 
   if(G.ENV == G.PRODUCTION and G.IS_FOX_RUNNER):
-    prints('⚠️👾 Fox runner on production.')
+    prints('⚠️👾 Started with Fox and production settings.')

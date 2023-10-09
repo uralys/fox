@@ -1,29 +1,29 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=3 format=3 uid="uid://7qqtdv7ky8f5"]
 
-[sub_resource type="Shader" id=1]
+[sub_resource type="Shader" id="1"]
 code = "shader_type canvas_item;
+
+uniform sampler2D screen_texture : hint_screen_texture;
 
 uniform float blur_amount : hint_range(-2.0, 10.0);
 uniform float mix_amount : hint_range(0.0, 1.0);
-uniform vec4 color_over : hint_color;
+uniform vec4 color_over : source_color;
 
 void fragment() {
-	vec4 blurred = textureLod(SCREEN_TEXTURE, SCREEN_UV, blur_amount);
-	vec4 fin = mix(blurred, color_over, mix_amount);
-	COLOR = fin;
+  vec4 blurred = textureLod(screen_texture, SCREEN_UV, blur_amount);
+  vec4 fin = mix(blurred, color_over, mix_amount);
+  COLOR = fin;
 }"
 
-[sub_resource type="ShaderMaterial" id=2]
-shader = SubResource( 1 )
-shader_param/blur_amount = 4.595
-shader_param/mix_amount = 0.128
-shader_param/color_over = Color( 0, 0, 0, 1 )
+[sub_resource type="ShaderMaterial" id="2"]
+shader = SubResource("1")
+shader_parameter/blur_amount = 4.595
+shader_parameter/mix_amount = 0.128
+shader_parameter/color_over = Color(0, 0, 0, 1)
 
 [node name="blur" type="ColorRect"]
-material = SubResource( 2 )
+material = SubResource("2")
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-__meta__ = {
-"_edit_use_anchors_": false
-}

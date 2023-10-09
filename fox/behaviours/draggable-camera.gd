@@ -23,8 +23,8 @@ var startPressingTime = 0
 
 # ------------------------------------------------------------------------------
 
-export(float) var pan_smooth := -5
-export(float) var drag_delay := 120
+@export var pan_smooth: float = -5
+@export var drag_delay: float = 120
 
 # ------------------------------------------------------------------------------
 
@@ -45,7 +45,7 @@ func _ready():
 func _input(event):
   if event is InputEventMouseButton:
     if event.is_pressed():
-      var now = OS.get_ticks_msec()
+      var now = Time.get_ticks_msec()
       startPressingTime = now
       tween.stop(self, 'position')
       tweening = false
@@ -64,7 +64,7 @@ func _input(event):
 
   elif event is InputEventMouseMotion:
     if(startPressingTime > 0):
-      var now = OS.get_ticks_msec()
+      var now = Time.get_ticks_msec()
       if(now - startPressingTime > drag_delay):
         if(not dragging):
           dragging = true
@@ -122,7 +122,7 @@ func toPosition(from: Vector2, to : Vector2, duration = 1):
   tween.start()
 
 
-  yield(tween, 'tween_completed')
+  await tween.finished
   tweening = false
 
 # ------------------------------------------------------------------------------
@@ -149,10 +149,10 @@ func checkBoundaries(options = {}):
   var reposition = options.reposition if options.has('reposition') else false
   var offset = options.offset if options.has('offset') else 0
 
-  var boundariesLeft = boundaries.rect_position.x - offset
-  var boundariesRight = boundaries.rect_position.x + boundaries.rect_size[0] + offset
-  var boundariesTop = boundaries.rect_position.y - offset
-  var boundariesBottom = boundaries.rect_position.y + boundaries.rect_size[1] + offset
+  var boundariesLeft = boundaries.position.x - offset
+  var boundariesRight = boundaries.position.x + boundaries.size[0] + offset
+  var boundariesTop = boundaries.position.y - offset
+  var boundariesBottom = boundaries.position.y + boundaries.size[1] + offset
 
   var outOnLeft = position.x < boundariesLeft
   var outOnRight = position.x > boundariesRight
