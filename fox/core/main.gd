@@ -36,8 +36,7 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func startSplashAnimation():
-  Master.splashScreen = SplashAnimation.instantiate()
-  add_child(Master.splashScreen)
+  SplashAnimation.instantiate()
 
 # ------------------------------------------------------------------------------
 
