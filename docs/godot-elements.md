@@ -1,31 +1,21 @@
 # Godot elements
 
-## Main
+## Root scene
 
-create a Main scene, attach `main.gd`
+create a root scene, attach `app.gd`
 
 ```gdscript
-extends 'res://fox/core/main.gd'
+extends 'res://fox/core/app.gd'
 ```
 
 Default start screen is `Home`, you can override `startScreen()`
 
 ```gdscript
-extends 'res://fox/core/main.gd'
+extends 'res://fox/core/app.gd'
 
 func startScreen():
   Router.openYourCustomScreen()
 ```
-
-## Router
-
-create a `src/core/router.gd`
-
-```gdscript
-extends 'res://fox/core/router.gd'
-```
-
-and add it as `Autoload`
 
 ## Sound
 

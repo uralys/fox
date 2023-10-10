@@ -4,18 +4,6 @@
 
 You can use `Animate.xxx` functions anywhere.
 
-Example:
-
-```gd
-Animate.to(yourObject, {
-  propertyPath = 'position',
-  toValue = Vector2(200, 200),
-  duration = 0.5,
-  easing = Tween.EASE_IN_OUT,
-  delay = 0.3
-})
-```
-
 ## doc WIP
 
 Read `/fox/animations/animate.gd` for details on options
@@ -39,3 +27,31 @@ Read `/fox/animations/animate.gd` for details on options
 - static func `bounce`(object):
 
 - static func `swing`(object, \_options):
+
+## Examples
+
+```gd
+Animate.to(yourObject, {
+  propertyPath = 'position',
+  toValue = Vector2(200, 200),
+  duration = 0.5,
+  easing = Tween.EASE_IN_OUT,
+  delay = 0.3
+})
+```
+
+```gd
+# showing the car smoothly
+Animate.show(car)
+
+# then wait for 2 seconds
+var timer = Wait.start(car, 2)
+await timer.timeout
+
+# then moving the car to (200, 200)
+Animate.to(car, {
+  propertyPath = 'position',
+  toValue = Vector2(200, 200),
+  duration = 0.5
+})
+```

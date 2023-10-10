@@ -25,5 +25,5 @@ func _gui_input(event):
 
     emit_signal('onPress')
 
-    if(sound):
-      Sound.play(Sound.BUTTON_PRESS)
+    # if(sound):
+    #   Sound.play(Sound.BUTTON_PRESS)

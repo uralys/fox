@@ -106,7 +106,7 @@ func update_vel(delta : float):
 
 # ------------------------------------------------------------------------------
 
-func toPosition(from: Vector2, to : Vector2, duration = 1):
+func toPosition(from: Vector2, to : Vector2, duration: float = 1):
   if(smoothing or tweening or dragging):
     return
 
@@ -147,12 +147,12 @@ func smooth(delta : float):
 
 func checkBoundaries(options = {}):
   var reposition = options.reposition if options.has('reposition') else false
-  var offset = options.offset if options.has('offset') else 0
+  var _offset = options.offset if options.has('offset') else 0
 
-  var boundariesLeft = boundaries.position.x - offset
-  var boundariesRight = boundaries.position.x + boundaries.size[0] + offset
-  var boundariesTop = boundaries.position.y - offset
-  var boundariesBottom = boundaries.position.y + boundaries.size[1] + offset
+  var boundariesLeft = boundaries.position.x - _offset
+  var boundariesRight = boundaries.position.x + boundaries.size[0] + _offset
+  var boundariesTop = boundaries.position.y - _offset
+  var boundariesBottom = boundaries.position.y + boundaries.size[1] + _offset
 
   var outOnLeft = position.x < boundariesLeft
   var outOnRight = position.x > boundariesRight

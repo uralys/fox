@@ -3,7 +3,7 @@ extends Node
 var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
 
 func _ready():
-  prints('-------------------------------')
+  prints('========================================')
   var foxVersion = ProjectSettings.get_setting('fox/version')
   foxVersion = foxVersion if foxVersion else ''
   prints('[🦊 Fox]', foxVersion)
@@ -27,7 +27,7 @@ func _ready():
   if(G.ENV != 'production'):
     prints('⚠️👾 ENV='+G.ENV)
 
-  # -----------------------------------
+  prints('========================================')
 
   checkEnv()
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
