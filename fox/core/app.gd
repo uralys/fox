@@ -24,25 +24,25 @@ func _ready():
   prints('bundle/env: ' + G.ENV)
   prints('bundle/platform: ' + G.PLATFORM)
 
-  if(G.ENV != 'production'):
-    prints('⚠️👾 ENV='+G.ENV)
+  checkEnv()
 
   prints('========================================')
 
-  checkEnv()
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
   startSplashAnimation()
 
 # ------------------------------------------------------------------------------
 
 func startSplashAnimation():
-  prints('startSplashAnimation');
   var splash = SplashAnimation.instantiate()
   add_child(splash)
 
 # ------------------------------------------------------------------------------
 
 func checkEnv():
+  if(G.ENV != 'production'):
+    prints('⚠️👾 ENV='+G.ENV)
+
   for cliOptions in OS.get_cmdline_args():
     if(cliOptions == 'local-fox-runner'):
       G.IS_FOX_RUNNER = true
