@@ -16,7 +16,9 @@ const restart = (godotPath, config) => {
   console.log('============================================================');
   var {position, screen} = config;
 
-  currentInstance = shelljs.exec(`${godotPath} local-fox-runner ${screen ? `--screen ${screen}` : `--position ${position}`}`, {
+  const command = `${godotPath} local-fox-runner ${screen ? `--screen ${screen}` : `--position ${position}`}`;
+
+  currentInstance = shelljs.exec(command, {
     async: true
   });
 };
