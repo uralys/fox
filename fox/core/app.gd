@@ -18,7 +18,7 @@ func _ready():
   G.VERSION = ProjectSettings.get_setting('bundle/version')
   G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
 
-  G.RECORD_PATH = 'user://saved-data-' + G.BUNDLE_ID + '.bin'
+  G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + '.bin'
 
   prints('bundle/id: ' + G.BUNDLE_ID)
   prints('bundle/env: ' + G.ENV)
@@ -36,7 +36,9 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func startSplashAnimation():
-  SplashAnimation.instantiate()
+  prints('startSplashAnimation');
+  var splash = SplashAnimation.instantiate()
+  add_child(splash)
 
 # ------------------------------------------------------------------------------
 

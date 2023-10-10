@@ -18,7 +18,7 @@ func animateFrames(
   maxNbFrames: int = 0,
   _totalDuration = 0.3,
   _duration = null,
-  delay = 0
+  # delay = 0
 ):
 
   nextAnimation = null

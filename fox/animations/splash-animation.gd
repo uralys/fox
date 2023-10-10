@@ -29,7 +29,7 @@ func _ready():
   prints('> splashScreen');
   prints('-------------------------------')
   var appearDuration = 0.4
-  var appearDelay = 0.1
+  var appearDelay = 0.5
 
   Animate.show(U, appearDuration, appearDelay)
   Animate.show(R, appearDuration, appearDelay)
@@ -76,7 +76,7 @@ func _ready():
   Animate.hide(S, STEP_DURATION, 1.2)
   Animate.hide(DOT, STEP_DURATION, .8)
 
-  await A.scaled
+  await Signal(A, 'scaled')
   Animate.hide(A, 0.5, 0.25)
 
   exitSplashAnimation(1)

@@ -104,7 +104,7 @@ static func show(object, duration = 0.3, delay = 0, doNotHide = false):
 
 # ------------------------------------------------------------------------------
 
-static func hide(object, duration = 0.3, delay = 0):
+static func hide(object:Variant, duration:float = 0.3, delay:float = 0):
   _animate(object, {
     propertyPath = 'modulate:a',
     fromValue = object.modulate.a,
@@ -311,7 +311,6 @@ static func _animate(object, options):
     return
 
   var propertyPath = options.propertyPath
-  var fromValue = options.get('fromValue')
   var toValue = options.get('toValue')
 
   var delay = __.GetOr(0, 'delay', options)
@@ -349,31 +348,8 @@ static func _animate(object, options):
 
   var tween = object.create_tween()
 
-  # --------
-
-  # prints({property=property,
-  #   fromValue=fromValue, toValue=toValue})
-
-  # object[property] = fromValue
   tween.tween_property(nestedToAnimate, property, toValue, duration).set_trans(transition).set_ease(easing)
-  # tween.interpolate_property(
-  #   nestedToAnimate,
-  #   property,
-  #   fromValue, toValue,
-  #   duration,
-  #   transition, easing
-  # )
-
-  # tween.start()
-
-  # --------
-
-  # await tween.finished
-  # object.remove_child(tween)
-  # tween.queue_free()
-
 
   tween.connect("finished", func onFinished():
-    prints('emit', SIGNAL_ON_DONE);
     object.emit_signal(SIGNAL_ON_DONE)
   )

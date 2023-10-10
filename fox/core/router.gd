@@ -20,7 +20,7 @@ func getCurrentScene():
 # ------------------------------------------------------------------------------
 
 func openDefault():
-  assert(0==1) #,'openDefault() must be overriden to open your default screen')
+  prints('openDefault() can be overriden to open your default screen when an error occurs.')
 
 # ------------------------------------------------------------------------------
 
