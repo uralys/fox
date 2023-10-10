@@ -112,12 +112,6 @@ and now let's start your editor and enjoy developing!
 fox run:editor
 ```
 
-### Note about the default splashscreen
-
-Note: at this point you will have warnings about missing assets, you can either implement your own splahscreen, or copy the ones from `fox/assets/sprites/splash` to `your-game/assets/sprites/splash`, then refresh your editor to import them with Godot.
-
-This behaviour is the default I share between my games and could be improved to a more generic splashscreen in the future.
-
 ## 🏹 extending default Fox Nodes
 
 To extend a Fox default Node, you can do like with did with the main scene: Extend the Node from you script.

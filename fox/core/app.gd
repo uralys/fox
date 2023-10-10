@@ -1,7 +1,5 @@
 extends Node
 
-var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
-
 func _ready():
   prints('========================================')
   var foxVersion = ProjectSettings.get_setting('fox/version')
@@ -29,13 +27,6 @@ func _ready():
   prints('========================================')
 
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
-  startSplashAnimation()
-
-# ------------------------------------------------------------------------------
-
-func startSplashAnimation():
-  var splash = SplashAnimation.instantiate()
-  add_child(splash)
 
 # ------------------------------------------------------------------------------
 
