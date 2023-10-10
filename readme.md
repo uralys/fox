@@ -1,8 +1,10 @@
 <p align="center"><img title="fox"  src="./assets/logo.jpg"></p>
 
-# Fox [![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![version](https://img.shields.io/github/package-json/v/uralys/fox)](https://github.com/uralys/fox/tags)
+# Fox
 
 🦊 Fox provides tooling while developing with Godot Engine
+
+[![License](https://img.shields.io/badge/License-MIT-green.svg?colorB=3cc712)](license) [![version](https://img.shields.io/github/package-json/v/uralys/fox)](https://github.com/uralys/fox/tags)
 
 ## Documentation
 
