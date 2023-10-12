@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env node --no-warnings
 // -----------------------------------------------------------------------------
 
 import chalk from 'chalk';
@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
 import {spawn} from 'child_process';
-import yargs from 'yargs';
+import yargsFactory from 'yargs';
 
 import pkg from '../package.json' assert { type: 'json' };
 
@@ -105,7 +105,7 @@ const verifyConfig = (config, defaultConfig) => {
 
 // -----------------------------------------------------------------------------
 
-const cli = async (argv) => {
+const cli = async (yargs) => {
   const defaultConfigPath = path.resolve(process.cwd(), `${DEFAULT_CONFIG_FILE}`);
 
   let defaultConfig;
@@ -123,7 +123,7 @@ const cli = async (argv) => {
 
   // --------
 
-  const command = argv._[0];
+  const command = yargs.argv._[0];
   if (!commands.includes(command)) {
     yargs.showHelp();
     return;
@@ -215,7 +215,7 @@ const cli = async (argv) => {
 // -----------------------------------------------------------------------------
 
 const execute = async () => {
-  const argv = yargs(process.argv.splice(2))
+  const yargs = yargsFactory(process.argv.splice(2))
     .usage('Usage: fox <command> [options]')
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
@@ -236,12 +236,12 @@ const execute = async () => {
     .version(pkg.version)
     .alias('version', 'v').epilog(`${chalk.bold.green(`🦊 Fox CLI v${pkg.version}`)}
       Documentation: https://github.com/uralys/fox
-      Icons, splashscreens and screenshots commands require ImageMagick https://imagemagick.org/index.php`).argv;
+      Icons, splashscreens and screenshots commands require ImageMagick https://imagemagick.org/index.php`);
 
   // -----------------------------------------------------------------------------
 
   try {
-    const result = cli(argv);
+    const result = await cli(yargs);
     if (result) {
       console.log(`🦊 ${chalk.italic('done.')}`);
     }
