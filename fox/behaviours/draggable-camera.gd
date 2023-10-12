@@ -8,7 +8,6 @@ extends Camera2D
 
 # ------------------------------------------------------------------------------
 
-var tween
 var boundaries
 
 var mouse_start_pos
@@ -23,8 +22,8 @@ var startPressingTime = 0
 
 # ------------------------------------------------------------------------------
 
-@export var pan_smooth: float = -5
-@export var drag_delay: float = 120
+@export var pan_smooth: float = -3
+@export var drag_delay: float = 70
 
 # ------------------------------------------------------------------------------
 
@@ -34,9 +33,6 @@ var _last_cam_pos := Vector2(0,0)
 # ------------------------------------------------------------------------------
 
 func _ready():
-  tween = Tween.new()
-  add_child(tween)
-
   if(get_parent().has_node('boundaries')):
     boundaries = get_parent().get_node('boundaries')
 
@@ -47,7 +43,7 @@ func _input(event):
     if event.is_pressed():
       var now = Time.get_ticks_msec()
       startPressingTime = now
-      tween.stop(self, 'position')
+      # tween.stop(self, 'position')
       tweening = false
       smoothing = false
       pressing = true
@@ -71,7 +67,7 @@ func _input(event):
           mouse_start_pos = event.position
           screen_start_position = position
 
-        position = zoom * (mouse_start_pos - event.position) + screen_start_position
+        position = (mouse_start_pos - event.position) / zoom + screen_start_position
 
 # ------------------------------------------------------------------------------
 
@@ -100,7 +96,8 @@ func _process(delta):
 func update_vel(delta : float):
   var move = _last_cam_pos - self.position
   var move_speed:Vector2 = move / delta
-  draggingVelocity = (draggingVelocity + move_speed) / 2.0
+
+  draggingVelocity = (draggingVelocity + move_speed  ) / 2.0
   draggingVelocity.x = clamp(draggingVelocity.x, -10000, 10000)
   draggingVelocity.y = clamp(draggingVelocity.y, -10000, 10000)
 
@@ -111,19 +108,13 @@ func toPosition(from: Vector2, to : Vector2, duration: float = 1):
     return
 
   tweening = true
-  tween.interpolate_property(
-    self,
-    'position',
-    from, to,
-    duration,
-    Tween.TRANS_QUAD, Tween.EASE_OUT
+
+  var tween = create_tween()
+
+  self.position = from
+  tween.tween_property(self, "position", to, duration).connect("finished", func():
+    tweening = false
   )
-
-  tween.start()
-
-
-  await tween.finished
-  tweening = false
 
 # ------------------------------------------------------------------------------
 

@@ -29,6 +29,9 @@ func onOpenScene():
 
 # ------------------------------------------------------------------------------
 
+func openScene(scene, options = {}):
+  call_deferred("_openScene", scene, options)
+
 func _openScene(scene, options = {}):
   var previousSceneName = 'none'
 
