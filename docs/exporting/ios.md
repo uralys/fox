@@ -31,3 +31,7 @@ from <https://stackoverflow.com/a/55963713/959219>
 ## create the archive
 
 @todo migrate screenshots here from <https://github.com/chrisdugne/thekeep/blob/master/uralys/projects/cherry/ios.md>
+
+## upload to appstore
+
+<https://github.com/DrMoriarty/nativelib/blob/main/MACAPPSTORE.md>

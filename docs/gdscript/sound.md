@@ -1,27 +1,8 @@
-# Godot elements
-
-## Root scene
-
-create a root scene, attach `app.gd`
-
-```gdscript
-extends 'res://fox/core/app.gd'
-```
-
-Default start screen is `Home`, you can override `startScreen()`
-
-```gdscript
-extends 'res://fox/core/app.gd'
-
-func startScreen():
-  Router.openYourCustomScreen()
-```
-
-## Sound
+# Sound
 
 This core feature adds an `AudioStreamPlayer`
 
-### setup
+## setup
 
 create a `src/core/sound.gd`
 
@@ -45,11 +26,11 @@ func play(soundName):
     .play(assetPath)
 ```
 
-### usage
+## usage
 
 Now you can call `Sound.play('music')` anywhere
 
-### note on loop behaviour
+## note on loop behaviour
 
 `.ogg` files will loop by default.
 
@@ -58,6 +39,6 @@ Now you can call `Sound.play('music')` anywhere
 - unselect `loop`
 - click on `Reimport`
 
-### default sound list
+## default sound list
 
 - `onButtonPress`

@@ -12,13 +12,13 @@ To allow your screens to be full screen:
 - use `Layout mode: Uncontrolled`
 - use `Anchors preset: Full Rect`
 
-<img title="nesting app/scene" width="250px" src="../assets/docs/router-tree.png"/>
+<img title="nesting app/scene" width="250px" src="../../assets/docs/router-tree.png"/>
 
 ---
 
 To illustrate `scene` layout:
 
-<img title="nesting app/scene" width="250px" src="../assets/docs/router-screen-layout.png"/>
+<img title="nesting app/scene" width="250px" src="../../assets/docs/router-screen-layout.png"/>
 
 ## Initial code
 
