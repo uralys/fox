@@ -7,6 +7,7 @@
 
 ## Godot scripts/examples
 
+- <https://www.gdquest.com/>
 - 13 addons: <https://www.youtube.com/watch?v=wDD7c7IEFTQ>
 - transitions: <https://github.com/Hamdiovish/zarbia-viewmanager>
 

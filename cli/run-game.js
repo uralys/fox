@@ -3,47 +3,82 @@
 import chalk from 'chalk';
 import chokidar from 'chokidar';
 import shelljs from 'shelljs';
+import {spawn} from 'child_process';
+
+import keypress from 'keypress';
 
 // -----------------------------------------------------------------------------
 
-let currentInstance;
+let childProcess = null;
 
 // -----------------------------------------------------------------------------
 
 const restart = (godotPath, config) => {
-  console.log('\n============================================================');
+  shelljs.exec('clear');
+
+  if (childProcess) {
+    childProcess.kill();
+  }
+
+  start(godotPath, config);
+}
+
+// -----------------------------------------------------------------------------
+
+const start = (godotPath, config) => {
+  console.log('============================================================');
   console.log(`🦊 ${chalk.italic('restarting Godot')}`);
+  console.log(`⚙️  running ${chalk.blue.bold('game')}`);
   console.log('============================================================');
   var {position, screen} = config;
 
-  const command = `${godotPath} local-fox-runner ${screen ? `--screen ${screen}` : `--position ${position}`}`;
+  const parameters =  ['local-fox-runner'];
 
-  currentInstance = shelljs.exec(command, {
-    async: true
-  });
+  if (screen) {
+    parameters.push(['--screen', screen]);
+  }
+  else{
+    parameters.push(['--position', position]);
+  }
+
+  childProcess = spawn(godotPath, parameters, {stdio: 'inherit'});
+
 };
 
 // -----------------------------------------------------------------------------
 
 const runGame = (godotPath, config) => {
-  console.log(`⚙️  running ${chalk.blue.bold('game')}...`);
+  keypress(process.stdin);
+
+  process.stdin.setRawMode(true);
 
   const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg'], {
     ignored: ['.godot/**']
   });
 
   watcher.on('ready', (event, path) => {
-    restart(godotPath, config);
+    start(godotPath, config);
   });
 
   watcher.on('change', (event, path) => {
-    shelljs.exec('clear');
+    console.log('restart on change');
+    restart(godotPath, config);
+  });
 
-    if (currentInstance) {
-      shelljs.exec(`kill -9 ${currentInstance.pid}`);
+  process.stdin.on('keypress', (ch, key) => {
+    if(key.name === 'r') {
+      restart(godotPath, config);
     }
 
-    restart(godotPath, config);
+    if(key.name === 'c' && key.ctrl === true) {
+      console.log('🦊 bye');
+
+      if (childProcess) {
+        childProcess.kill();
+      }
+
+      process.exit(0);
+    }
   });
 };
 

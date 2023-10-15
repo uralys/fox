@@ -54,3 +54,10 @@ Commands:
 ```
 
 - more details for exporting [here](./docs/export.md)
+
+## shortcuts
+
+You can use the following shortcuts in the terminal:
+
+- `ctrl + c` to stop the current command
+- `r` to reload the game (only with the `run:game` command)

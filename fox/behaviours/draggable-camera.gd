@@ -38,12 +38,12 @@ func _ready():
 
 # ------------------------------------------------------------------------------
 
+## _input retrieve every events | @todo create local behaviour
 func _input(event):
   if event is InputEventMouseButton:
     if event.is_pressed():
       var now = Time.get_ticks_msec()
       startPressingTime = now
-      # tween.stop(self, 'position')
       tweening = false
       smoothing = false
       pressing = true
@@ -67,7 +67,7 @@ func _input(event):
           mouse_start_pos = event.position
           screen_start_position = position
 
-        position = (mouse_start_pos - event.position) / zoom + screen_start_position
+        self.position = (mouse_start_pos - event.position) / self.zoom + screen_start_position
 
 # ------------------------------------------------------------------------------
 
