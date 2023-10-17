@@ -67,7 +67,9 @@ func _input(event):
           mouse_start_pos = event.position
           screen_start_position = position
 
-        self.position = (mouse_start_pos - event.position) / self.zoom + screen_start_position
+        # updates position only when global dragging is occuring
+        if(Display.DRAGGING_OBJECT == null):
+          self.position = (mouse_start_pos - event.position) / self.zoom + screen_start_position
 
 # ------------------------------------------------------------------------------
 
