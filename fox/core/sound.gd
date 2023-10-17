@@ -81,8 +81,7 @@ func isMusicOn():
 
 func _play(soundName, delay = 0, volume = 0):
   if(delay > 0):
-    var _timer = Wait.start(___node, delay)
-    await _timer.timeout
+    await Wait.forSomeTime(___node, delay).timeout
 
   if(DEBUG.SOUNDS):prints('🎵 playing', soundName, 'with delay', delay)
 

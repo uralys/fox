@@ -45,8 +45,7 @@ Animate.to(yourObject, {
 Animate.show(car)
 
 # then wait for 2 seconds
-var timer = Wait.start(car, 2)
-await timer.timeout
+await Wait.forSomeTime(car, 2).timeout
 
 # then moving the car to (200, 200)
 Animate.to(car, {

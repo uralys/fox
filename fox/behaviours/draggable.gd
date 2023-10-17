@@ -1,26 +1,40 @@
-extends Node
+extends Control
 
-var dragging = false
+# ------------------------------------------------------------------------------
+
+var parent = false
+var params = {}
 var mouseStartPosition
 var screenStartPosition
 
+# ------------------------------------------------------------------------------
+
+signal dragged
+
+# ------------------------------------------------------------------------------
+
+func _ready():
+  connect('gui_input' , _gui_input)
+  params.id = generateUID.withPrefix('draggable')
+  parent = get_parent();
+  parent.add_user_signal('dragged')
+
+# ------------------------------------------------------------------------------
+
 func _gui_input(event):
   if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-    dragging = true
-    mouseStartPosition = event.position
-    screenStartPosition = self.position
+    Display.DRAGGING_OBJECT = params.id
+    mouseStartPosition = get_global_mouse_position()
+    screenStartPosition = parent.position
     return
 
   if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and !event.pressed:
-    dragging = false
+    Display.DRAGGING_OBJECT = null
     return
 
-  if event is InputEventMouseMotion and dragging:
-    print("Mouse Motion at: ", event.position)
-    prints({screenStartPosition=screenStartPosition, mouseStartPosition=mouseStartPosition});
-    self.position = (mouseStartPosition - event.position) + screenStartPosition
+  if event is InputEventMouseMotion and Display.DRAGGING_OBJECT == params.id:
+    parent.position = (get_global_mouse_position()- mouseStartPosition) + screenStartPosition
 
-# func _physics_process(delta):
-#   if(dragging):
-#     prints(self.position, get_viewport().get_mouse_position());
-#     self.position = lerp(self.position, get_viewport().get_mouse_position(), 25 * delta)
+    Wait.withTimer(0.3, self, func():
+      parent.emit_signal('dragged', parent.position)
+    )

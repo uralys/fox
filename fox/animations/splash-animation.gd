@@ -36,8 +36,8 @@ func _ready():
   Animate.show(S, appearDuration, appearDelay)
   Animate.show(DOT, appearDuration, appearDelay)
 
-  var timer = Wait.start(self,appearDuration + appearDelay + 0.1)
-  await timer.timeout
+  var delay = appearDuration + appearDelay + 0.1
+  await Wait.forSomeTime(self, delay).timeout
 
   # ------------------- UR
 
@@ -81,8 +81,7 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func exitSplashAnimation(delay):
-  var timer = Wait.start(self,delay)
-  await timer.timeout
+  await Wait.forSomeTime(self, delay).timeout
 
   emit_signal('splashFinished')
   get_parent().remove_child(self)

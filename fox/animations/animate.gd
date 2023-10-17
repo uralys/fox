@@ -72,8 +72,7 @@ static func toAndBack(object, _options):
   options.duration = duration
   to(object, options)
 
-  var _timer = Wait.start(object, duration)
-  await _timer.timeout
+  await Wait.forSomeTime(object, duration).timeout
 
   options.toValue = fromValue
   to(object, options)
@@ -90,8 +89,7 @@ static func show(object, duration = 0.3, delay = 0, doNotHide = false):
     object.visible = false
 
   if(delay > 0):
-    var _timer = Wait.start(object, delay)
-    await _timer.timeout
+    await Wait.forSomeTime(object, delay).timeout
 
   object.visible = true
 
@@ -131,8 +129,7 @@ static func appear(object, delay = 0):
   if(not object.has_signal(ANIMATION_DONE)):
     object.add_user_signal(ANIMATION_DONE)
 
-  var timer = Wait.start(object, delay)
-  await timer.timeout
+  await Wait.forSomeTime(object, delay).timeout
 
   _animate(object, {
     propertyPath = 'modulate:a',
@@ -239,8 +236,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
     duration = duration
   })
 
-  var _timer = Wait.start(object, duration)
-  await _timer.timeout
+  await Wait.forSomeTime(object, duration).timeout
 
   to(object, {
     propertyPath = property,
@@ -248,8 +244,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
     duration = duration
   })
 
-  _timer = Wait.start(object, duration)
-  await _timer.timeout
+  await Wait.forSomeTime(object, duration).timeout
 
   if(times > 1):
     _bounce(object, fromScale, upScale, stepDuration, property, times - 1)
@@ -341,8 +336,7 @@ static func _animate(object, options):
   # --------
 
   if(delay > 0):
-    var _timer = Wait.start(object, delay)
-    await _timer.timeout
+    await Wait.forSomeTime(object, delay).timeout
 
   # --------
 
