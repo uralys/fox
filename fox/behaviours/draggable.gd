@@ -17,7 +17,6 @@ func _ready():
   connect('gui_input' , _gui_input)
   params.id = generateUID.withPrefix('draggable')
   parent = get_parent();
-  parent.add_user_signal('dragged')
 
 # ------------------------------------------------------------------------------
 
@@ -33,8 +32,8 @@ func _gui_input(event):
     return
 
   if event is InputEventMouseMotion and Display.DRAGGING_OBJECT == params.id:
-    parent.position = (get_global_mouse_position()- mouseStartPosition) + screenStartPosition
+    parent.position = (get_global_mouse_position() - mouseStartPosition) + screenStartPosition
 
     Wait.withTimer(0.3, self, func():
-      parent.emit_signal('dragged', parent.position)
+      emit_signal('dragged', parent.position)
     )

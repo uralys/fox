@@ -22,6 +22,10 @@ var startPressingTime = 0
 
 # ------------------------------------------------------------------------------
 
+signal draggingCamera
+
+# ------------------------------------------------------------------------------
+
 @export var pan_smooth: float = -3
 @export var drag_delay: float = 70
 
@@ -70,6 +74,7 @@ func _input(event):
         # updates position only when global dragging is occuring
         if(Display.DRAGGING_OBJECT == null):
           self.position = (mouse_start_pos - event.position) / self.zoom + screen_start_position
+          emit_signal('draggingCamera')
 
 # ------------------------------------------------------------------------------
 
