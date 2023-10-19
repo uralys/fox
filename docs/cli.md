@@ -32,6 +32,12 @@ You can now execute fox commands from your terminal:
 fox
 ```
 
+You can pass parameters to Godot by using them directly from the command line:
+
+```sh
+fox run:game --headless
+```
+
 ## usage
 
 ```ini

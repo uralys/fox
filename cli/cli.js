@@ -105,7 +105,7 @@ const verifyConfig = (config, defaultConfig) => {
 
 // -----------------------------------------------------------------------------
 
-const cli = async (yargs) => {
+const cli = async (yargs, params) => {
   const defaultConfigPath = path.resolve(process.cwd(), `${DEFAULT_CONFIG_FILE}`);
 
   let defaultConfig;
@@ -124,6 +124,7 @@ const cli = async (yargs) => {
   // --------
 
   const command = yargs.argv._[0];
+
   if (!commands.includes(command)) {
     yargs.showHelp();
     return;
@@ -172,7 +173,7 @@ const cli = async (yargs) => {
       return;
     }
     case RUN_GAME: {
-      runGame(core.godot, config);
+      runGame(core.godot, params, config);
       return;
     }
     case EXPORT: {
@@ -215,6 +216,8 @@ const cli = async (yargs) => {
 // -----------------------------------------------------------------------------
 
 const execute = async () => {
+  const params = process.argv.slice(3);
+
   const yargs = yargsFactory(process.argv.splice(2))
     .usage('Usage: fox <command> [options]')
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
@@ -241,7 +244,7 @@ const execute = async () => {
   // -----------------------------------------------------------------------------
 
   try {
-    const result = await cli(yargs);
+    const result = await cli(yargs, params);
     if (result) {
       console.log(`🦊 ${chalk.italic('done.')}`);
     }

@@ -13,26 +13,26 @@ let childProcess = null;
 
 // -----------------------------------------------------------------------------
 
-const restart = (godotPath, config) => {
+const restart = (godotPath, params, config) => {
   shelljs.exec('clear');
 
   if (childProcess) {
     childProcess.kill();
   }
 
-  start(godotPath, config);
+  start(godotPath, params, config);
 }
 
 // -----------------------------------------------------------------------------
 
-const start = (godotPath, config) => {
+const start = (godotPath, params, config) => {
   console.log('============================================================');
   console.log(`🦊 ${chalk.italic('restarting Godot')}`);
   console.log(`⚙️  running ${chalk.blue.bold('game')}`);
   console.log('============================================================');
   var {position, screen} = config;
 
-  const parameters =  ['local-fox-runner'];
+  const parameters = ['local-fox-runner', ...params];
 
   if (screen) {
     parameters.push(['--screen', screen]);
@@ -47,7 +47,7 @@ const start = (godotPath, config) => {
 
 // -----------------------------------------------------------------------------
 
-const runGame = (godotPath, config) => {
+const runGame = (godotPath, params, config) => {
   keypress(process.stdin);
 
   process.stdin.setRawMode(true);
@@ -57,17 +57,17 @@ const runGame = (godotPath, config) => {
   });
 
   watcher.on('ready', (event, path) => {
-    start(godotPath, config);
+    start(godotPath, params, config);
   });
 
   watcher.on('change', (event, path) => {
     console.log('restart on change');
-    restart(godotPath, config);
+    restart(godotPath, params, config);
   });
 
   process.stdin.on('keypress', (ch, key) => {
     if(key.name === 'r') {
-      restart(godotPath, config);
+      restart(godotPath, params, config);
     }
 
     if(key.name === 'c' && key.ctrl === true) {
