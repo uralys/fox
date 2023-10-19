@@ -52,7 +52,13 @@ const runGame = (godotPath, params, config) => {
 
   process.stdin.setRawMode(true);
 
-  const watcher = chokidar.watch(['**/*.gd', '**/*.tscn', '**/*.cfg'], {
+  const watcher = chokidar.watch([
+    '**/*.gd',
+    '**/*.tscn',
+    '**/*.cfg',
+    '**/*.json',
+    '**/*.yml'
+  ], {
     ignored: ['.godot/**']
   });
 
@@ -66,6 +72,10 @@ const runGame = (godotPath, params, config) => {
   });
 
   process.stdin.on('keypress', (ch, key) => {
+    if(!key) {
+      return
+    }
+
     if(key.name === 'r') {
       restart(godotPath, params, config);
     }

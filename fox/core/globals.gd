@@ -29,3 +29,18 @@ func isRunningOnProduction():
   return ENV == PRODUCTION and not IS_FOX_RUNNER
 
 # ------------------------------------------------------------------------------
+
+func __ansi(o):
+  return __.bbcodeToANSI(o) if o is String else o
+
+@warning_ignore('shadowed_global_identifier')
+func log(a, b=null,c=null,d=null,e=null,f=null,g=null,h=null):
+  prints(__ansi(a),
+    __ansi(b) if b else '',
+    __ansi(c) if c else '',
+    __ansi(d) if d else '',
+    __ansi(e) if e else '',
+    __ansi(f) if f else '',
+    __ansi(g) if g else '',
+    __ansi(h) if h else ''
+  )
