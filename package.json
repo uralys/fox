@@ -2,7 +2,7 @@
   "name": "@uralys/fox",
   "version": "1.4.0",
   "type": "module",
-  "description": "🦊 Starter and Components for your Godot Engine app",
+  "description": "🦊 Tools and Components for Godot 4",
   "author": "chrisdugne",
   "license": "MIT",
   "homepage": "https://github.com/uralys/fox#readme",
