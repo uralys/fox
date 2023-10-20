@@ -116,7 +116,7 @@ const exportBundle = async (coreConfig, bundles) => {
     exportType += '-pack';
   }
 
-  const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--no-window'], {
+  const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--headless'], {
     stdio: [process.stdin, process.stdout, process.stderr]
   });
 

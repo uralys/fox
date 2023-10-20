@@ -13,7 +13,7 @@ get latest version from <https://developer.apple.com/download/all/>
 ## build the xcode project
 
 ```sh
-/Applications/Apps/Godot.app/Contents/MacOS/Godot --export "iOS Production" --no-window
+/Applications/Apps/Godot.app/Contents/MacOS/Godot --export "iOS Production" --headless
 ```
 
 The build will end with an error while creating the `.ipa`.

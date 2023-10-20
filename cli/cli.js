@@ -166,7 +166,7 @@ const cli = async (yargs, params) => {
       {
         console.log('----------------------------');
         console.log(`🦊 ${chalk.italic('starting windowless Godot')}`);
-        spawn(core.godot, ['--no-window'], {
+        spawn(core.godot, ['--headless'], {
           stdio: [process.stdin, process.stdout, process.stderr]
         });
       }

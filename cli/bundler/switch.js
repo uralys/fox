@@ -80,7 +80,7 @@ const switchBundle = async (bundleVersion, bundles) => {
 
   if (!bundles) {
     console.log('\nmissing bundles in fox.config.json');
-    console.log(chalk.red.bold('🔴 failed'));
+    console.log(chalk.red.bold('🔴 failed: you can use default config for bundles'));
     return;
   }
 
@@ -90,7 +90,7 @@ const switchBundle = async (bundleVersion, bundles) => {
     presets = ini.parse(fs.readFileSync(PRESETS_CFG, 'utf8'));
   } catch (e) {
     console.log(`\nCould not open ${PRESETS_CFG}`);
-    console.log(chalk.red.bold('🔴 failed'));
+    console.log(chalk.red.bold('🔴 failed: use Godot editor > Project > Export to define your export config.'));
     return;
   }
 
@@ -101,7 +101,7 @@ const switchBundle = async (bundleVersion, bundles) => {
   const env = extractEnv(preset);
 
   if (!env) {
-    console.log(chalk.red.bold('🔴 failed'));
+    console.log(chalk.red.bold('🔴 failed: could not find env'));
     return;
   }
 
@@ -119,7 +119,8 @@ const switchBundle = async (bundleVersion, bundles) => {
     console.log(`\nCould not open ${OVERRIDE_CFG}. Created the file.`);
   }
 
-  override.fox.version = require('../../package.json').version;
+  const packageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
+  override.fox.version = packageJSON.version;
   override.bundle.id = bundleId;
   override.bundle.version = bundleVersion;
   override.bundle.versionCode = toVersionNumber(bundleVersion);

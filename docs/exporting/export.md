@@ -1,6 +1,6 @@
 # exporting with CLI
 
-To help export your presets you can use
+To quick export your presets you can use:
 
 ```sh
 fox export
@@ -8,29 +8,32 @@ fox export
 
 This will ask which preset you want to use, update it if you need to change the version for example, and run Godot export.
 
+This command cannot work out of the box, you need to set up your presets and config before to use it.
+
+Follow these requirements explained in the sections below:
+
+- prepare the presets, keys and path with Godot
+- define you `env`
+
+Then you're all set! You can now use `fox export` to quickly export your project, following the prompt to select your preset from the CLI.
+
 ## prepare the presets
 
-you can start from the samples provided in `./fox/export_presets.sample.cfg` or install templates from Godot.
+First, you need to install templates from Godot.
 
-## export_path
+Use `Project > Export` and be sure to generate your `export_presets.cfg` without errors from Godot Editor.
 
-This path is mandatory to build properly. This is the `<path>` parameter in the headless command.
+Be sure to define an `Export path` for each preset. (either from the Editor or directly in each preset in the `.cfg` file)
 
-```sh
---export <preset> <path>
-```
-
-You need to set it in your preset:
+For example for Android, you can create the folder `_build/android` and choose `YourGame` for the file name, it will set as `Export path`:
 
 ```ini
-export_path=_build/server.pck
+export_path=_build/android/YourGame.apk
 ```
 
-## env
+## define you `env`
 
 Define if your preset is for `production`, `debug`, or `pck` by setting it a `custom_features`.
-
-When exporting, it will apply `--export`, `--export-debug`, or `--export-pack`
 
 example:
 
@@ -42,7 +45,11 @@ platform="Android"
 custom_features="env:debug"
 ```
 
-## version
+Now, when exporting, it will apply Godot CLI option `--export`, `--export-debug`, or `--export-pack`.
+
+## additional options
+
+### version
 
 You may use the current version, or update it before exporting.
 
@@ -50,9 +57,9 @@ You may use the current version, or update it before exporting.
 
 Then this `version` is replaced in your preset property depending on the platform.
 
-## bundle
+### bundle
 
-**disclaimer**: I'm experimenting bundles for the different chapters in [Lockey Land](https://twitter.com/lockeylandgame), exported as separate applications.
+**disclaimer**: I've experimented bundles for the different chapters in [Lockey Land](https://uralys.com/lockeyland), exported as separate applications.
 
 By default 1 app = 1 bundle
 
@@ -60,7 +67,7 @@ You can configure `Fox` to export many apps built from a single project.
 
 Each bundle must have its `uid`, can use another icon, a subtitle attached to the main application name etc...
 
-### example in `fox.config.json`
+#### example in `fox.config.json`
 
 ```json
 "bundles": {

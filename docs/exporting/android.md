@@ -26,7 +26,7 @@ In `assets/android` you'll find the adaptive icons template from <https://cyrilm
 ### build apk from cli
 
 ```sh
-> /Applications/Apps/Godot.app/Contents/MacOS/Godot --export-debug "Android Debug" --no-window
+> /Applications/Apps/Godot.app/Contents/MacOS/Godot --export-debug "Android Debug" --headless
 ```
 
 ### manifest from apk
@@ -45,7 +45,7 @@ aapt: aliased to ~/Library/Android/sdk/build-tools/32.0.0/aapt2
 ### build aab from cli
 
 ```sh
-> /Applications/Apps/Godot.app/Contents/MacOS/Godot --export-debug "Android Release" --no-window
+> /Applications/Apps/Godot.app/Contents/MacOS/Godot --export-debug "Android Release" --headless
 ```
 
 ### manifest from aab
