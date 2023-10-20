@@ -1,0 +1,40 @@
+[gd_scene load_steps=3 format=3 uid="uid://ba68bcufxytuc"]
+
+[ext_resource type="Script" path="res://fox/behaviours/button.gd" id="1_b8ckg"]
+[ext_resource type="Script" path="res://fox/behaviours/draggable.gd" id="2_fchw0"]
+
+[node name="touchListeningArea" type="Control"]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -88.0
+offset_top = -104.0
+offset_right = 90.0
+offset_bottom = 104.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_b8ckg")
+onlyOnce = false
+MIN_MS_BETWEEN_PRESS = 300
+metadata/_edit_lock_ = true
+
+[node name="dragListeningArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -89.0
+offset_top = -104.0
+offset_right = 89.0
+offset_bottom = 104.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("2_fchw0")
+metadata/_edit_lock_ = true

@@ -16,8 +16,9 @@ Coding:
 
 - Using the [Router](./docs/gdscript/router.md)
 - Using [Animation](./docs/gdscript/animations.md) Tween helpers
-- Using [Sound](./docs/gdscript/sound.md)
+- Adding a [Touchable and Draggable](./docs/gdscript/touchable-and-draggable.md) behaviour on any Node
 - Using [DraggableCamera](./docs/gdscript/draggable-camera.md)
+- Using [Sound](./docs/gdscript/sound.md)
 - static functions inspired by [Underscore](/fox/libs/underscore.gd)
 
 Exporting:
