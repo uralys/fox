@@ -210,7 +210,7 @@ static func disappear(object, delay = 0):
 
 static func _getInitialValue(object, property):
   var initialValue = object[property];
-  var metaName = 'initial-'+property;
+  var metaName = 'initial_'+property;
   if(object.has_meta(metaName)):
     initialValue = object.get_meta(metaName)
   else:
