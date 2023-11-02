@@ -11,7 +11,7 @@
     "chokidar": "^3.5.3",
     "inquirer": "^9.2.11",
     "keypress": "^0.2.1",
-    "npm-check-updates": "^16.14.5",
+    "npm-check-updates": "^16.14.6",
     "shelljs": "^0.8.5",
     "yargs": "^17.7.2"
   },
@@ -19,6 +19,6 @@
     "ncu": "npm-check-updates"
   },
   "engines": {
-    "node": "19.0.1"
+    "node": ">=21.1.0"
   }
 }
