@@ -1,29 +1,18 @@
 [gd_scene load_steps=3 format=3 uid="uid://7qqtdv7ky8f5"]
 
-[sub_resource type="Shader" id="1"]
-code = "shader_type canvas_item;
+[ext_resource type="Shader" path="res://fox/components/blur.gdshader" id="1_ae0l5"]
 
-uniform sampler2D screen_texture : hint_screen_texture;
-
-uniform float blur_amount : hint_range(-2.0, 10.0);
-uniform float mix_amount : hint_range(0.0, 1.0);
-uniform vec4 color_over : source_color;
-
-void fragment() {
-  vec4 blurred = textureLod(screen_texture, SCREEN_UV, blur_amount);
-  vec4 fin = mix(blurred, color_over, mix_amount);
-  COLOR = fin;
-}"
-
-[sub_resource type="ShaderMaterial" id="2"]
-shader = SubResource("1")
-shader_parameter/blur_amount = 4.595
-shader_parameter/mix_amount = 0.128
-shader_parameter/color_over = Color(0, 0, 0, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_23ij8"]
+shader = ExtResource("1_ae0l5")
+shader_parameter/blur_type = 0
+shader_parameter/blur_amount = 16
+shader_parameter/blur_radius = 1.0
+shader_parameter/blur_direction = Vector2(1, 1)
 
 [node name="blur" type="ColorRect"]
-material = SubResource("2")
+material = SubResource("ShaderMaterial_23ij8")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
+color = Color(0.258824, 0.258824, 0.258824, 1)
