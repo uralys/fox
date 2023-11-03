@@ -36,11 +36,11 @@ func __ansi(o):
 @warning_ignore('shadowed_global_identifier')
 func log(a, b=null,c=null,d=null,e=null,f=null,g=null,h=null):
   prints(__ansi(a),
-    __ansi(b) if b else '',
-    __ansi(c) if c else '',
-    __ansi(d) if d else '',
-    __ansi(e) if e else '',
-    __ansi(f) if f else '',
-    __ansi(g) if g else '',
-    __ansi(h) if h else ''
+    __ansi(b) if b != null else '',
+    __ansi(c) if c != null else '',
+    __ansi(d) if d != null else '',
+    __ansi(e) if e != null else '',
+    __ansi(f) if f != null else '',
+    __ansi(g) if g != null else '',
+    __ansi(h) if h != null else ''
   )
