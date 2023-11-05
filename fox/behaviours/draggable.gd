@@ -3,6 +3,7 @@ extends Control
 # ------------------------------------------------------------------------------
 
 var draggable
+var zoom = 1
 var params = {}
 var mouseStartPosition
 var screenStartPosition
@@ -79,4 +80,4 @@ func _gui_input(event):
   if dragging \
   and event is InputEventMouseMotion \
   and Display.DRAGGING_OBJECT == params.id:
-    draggable.position = (get_global_mouse_position() - mouseStartPosition) + screenStartPosition
+    draggable.position = 1/zoom * (get_global_mouse_position() - mouseStartPosition) + screenStartPosition

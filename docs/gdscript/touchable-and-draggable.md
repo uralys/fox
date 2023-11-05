@@ -45,3 +45,10 @@ By default the dragging starts immediately but you can ask to start after a `lon
 ```gdscript
 dragListeningArea.afterLongPress = true
 ```
+
+Also, you may have scaled a parent. If so, you need to tell the `dragListeningArea` what scale to apply to calculate the dragged position.
+
+```gdscript
+var parent = $your/scaled/parent
+dragListeningArea.zoom = parent.scale.x
+```
