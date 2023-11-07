@@ -12,11 +12,18 @@ var screenStartPosition
 @export var useManualDragStart: bool = false
 @export var timeBeforeDragging: int = 500
 
-var dragging = false
-var pressing = false
+var _dragging = false
+var _pressing = false
+
+var isPressing = false
+var isLongPressing = false
 var lastPress = Time.get_ticks_msec()
 
 # ------------------------------------------------------------------------------
+
+signal press
+signal pressing
+signal longPress
 
 signal dragged
 signal startedDragging
@@ -24,33 +31,39 @@ signal startedDragging
 # ------------------------------------------------------------------------------
 
 func _ready():
-  connect('gui_input' , _gui_input)
   params.id = generateUID.withPrefix('draggable')
 
 # ------------------------------------------------------------------------------
 
 func _physics_process(_delta):
-  if(useManualDragStart or !afterLongPress):
-    return
-
-  if pressing:
+  if _pressing:
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
 
-    if(elapsedTime > timeBeforeDragging):
-      var mousePosition = get_global_mouse_position()
-      pressing = false
+    if(not isPressing and elapsedTime > 150):
+      emit_signal('pressing')
+      isPressing = true
 
-      if(abs(mouseStartPosition - mousePosition).length() > 1):
-        return
+    if(not isLongPressing and elapsedTime > timeBeforeDragging):
+      isLongPressing = true
+      emit_signal('longPress')
 
-      startDragging()
+      if(draggable and afterLongPress and !useManualDragStart):
+        var mousePosition = get_global_mouse_position()
+
+        if((mouseStartPosition - mousePosition).length() < 50):
+          return
+
+        startDragging()
 
 # ------------------------------------------------------------------------------
 
 func startDragging():
-  G.log('startDragging');
-  dragging = true
+  if(not draggable):
+    G.log('[color=pink]You must set your draggable object before to use dragging.[/color]')
+    return
+
+  _dragging = true
   Display.DRAGGING_OBJECT = params.id
   screenStartPosition = draggable.position
   emit_signal('startedDragging')
@@ -58,29 +71,38 @@ func startDragging():
 # ------------------------------------------------------------------------------
 
 func _gui_input(event):
-  if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+  # ---------- mouse down ----------
+  if event is InputEventMouseButton \
+  and event.button_index == MOUSE_BUTTON_LEFT \
+  and event.pressed:
     lastPress = Time.get_ticks_msec()
     mouseStartPosition = get_global_mouse_position()
 
-    if(not afterLongPress and not useManualDragStart):
+    if(draggable and not afterLongPress and not useManualDragStart):
       startDragging()
     else:
-      pressing = true
+      _pressing = true
 
     return
 
+  # ---------- mouse up ----------
   if event is InputEventMouseButton \
   and event.button_index == MOUSE_BUTTON_LEFT \
   and !event.pressed:
-    if(dragging):
+    if(_dragging):
       emit_signal('dragged', draggable.position)
+    else:
+      emit_signal('press')
 
     Display.DRAGGING_OBJECT = null
-    dragging = false
-    pressing = false
+    _dragging = false
+    _pressing = false
+    isPressing = false
+
     return
 
-  if dragging \
+  # ---------- mouse move ----------
+  if _dragging \
   and event is InputEventMouseMotion \
   and Display.DRAGGING_OBJECT == params.id:
     var mouseDiff = get_global_mouse_position() - mouseStartPosition

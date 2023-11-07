@@ -56,5 +56,4 @@ func _gui_input(event):
     _pressing = false
     isPressing = false
 
-    G.log('Button up');
     emit_signal('press')

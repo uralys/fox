@@ -14,6 +14,8 @@ extends CanvasLayer
 # ------------------------------------------------------------------------------
 
 signal startPressing
+signal startDragging
+signal stopDragging
 signal draggingCamera
 
 # ------------------------------------------------------------------------------
@@ -54,7 +56,6 @@ func _input(event):
       tweening = false
       smoothing = false
       pressing = true
-      G.log('camera input ---- startPressing');
       emit_signal('startPressing')
 
     else:
@@ -62,8 +63,13 @@ func _input(event):
       startPressingTime = 0
       startPressingPosition = null
 
+      if(Display.DRAGGING_OBJECT != null):
+        return
+
       if(dragging):
         dragging = false
+
+        emit_signal('stopDragging')
 
         if(boundaries):
           var outOfBoundaries = checkBoundaries({reposition=true})
@@ -73,6 +79,10 @@ func _input(event):
         get_viewport().set_input_as_handled()
 
   elif event is InputEventMouseMotion:
+    # updates position only when global dragging is occuring
+    if(Display.DRAGGING_OBJECT != null):
+      return
+
     if(startPressingTime > 0):
       var now = Time.get_ticks_msec()
       if(now - startPressingTime > drag_delay):
@@ -84,12 +94,12 @@ func _input(event):
           dragging = true
           mouse_start_pos = event.position
           screen_start_position = camera.position
+          emit_signal('startDragging')
 
-        # updates position only when global dragging is occuring
-        if(Display.DRAGGING_OBJECT == null):
-          var mouseDiff = mouse_start_pos - event.position
-          camera.position = mouseDiff / ZOOM + screen_start_position
-          emit_signal('draggingCamera')
+        var mouseDiff = mouse_start_pos - event.position
+        camera.position = mouseDiff / ZOOM + screen_start_position
+        emit_signal('draggingCamera')
+        get_viewport().set_input_as_handled()
 
 
 # ------------------------------------------------------------------------------
