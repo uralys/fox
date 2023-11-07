@@ -21,7 +21,7 @@ signal draggingCamera
 # ------------------------------------------------------------------------------
 
 @export var pan_smooth: float = -3
-@export var drag_delay: float = 370
+@export var dragDelay: float = 80
 
 # ------------------------------------------------------------------------------
 
@@ -49,6 +49,7 @@ var _last_cam_pos := Vector2(0,0)
 ## for the camera would intercept all input events
 func _input(event):
   if event is InputEventMouseButton:
+    # ------- mouse down
     if event.is_pressed():
       var now = Time.get_ticks_msec()
       startPressingTime = now
@@ -58,6 +59,7 @@ func _input(event):
       pressing = true
       emit_signal('startPressing')
 
+    # ------- mouse up
     else:
       pressing = false
       startPressingTime = 0
@@ -76,8 +78,7 @@ func _input(event):
           if(not outOfBoundaries):
             smoothing = true
 
-        get_viewport().set_input_as_handled()
-
+  # ------- mouse mmotion
   elif event is InputEventMouseMotion:
     # updates position only when global dragging is occuring
     if(Display.DRAGGING_OBJECT != null):
@@ -85,7 +86,7 @@ func _input(event):
 
     if(startPressingTime > 0):
       var now = Time.get_ticks_msec()
-      if(now - startPressingTime > drag_delay):
+      if(now - startPressingTime > dragDelay):
         var startDiff = startPressingPosition - event.position
         if(startDiff.length() < 50):
           return

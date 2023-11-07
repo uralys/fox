@@ -8,9 +8,13 @@ var params = {}
 var mouseStartPosition
 var screenStartPosition
 
-@export var afterLongPress: bool = false
+
+@export var minDragTime: int = 60
+@export var minPressTime: int = 150
+@export var longPressTime: int = 500
+
+@export var dragAfterLongPress: bool = false
 @export var useManualDragStart: bool = false
-@export var timeBeforeDragging: int = 500
 
 var _dragging = false
 var _pressing = false
@@ -34,21 +38,32 @@ func _physics_process(_delta):
   if _pressing:
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
+    var mousePosition = get_global_mouse_position()
 
-    if(not isPressing and elapsedTime > 150):
+    var mouseDiff = mouseStartPosition - mousePosition
+    var minMouseDragTresholdReached = (mouseDiff).length() > 3
+
+    if(draggable \
+      and not _dragging
+      and minMouseDragTresholdReached \
+      and not dragAfterLongPress \
+      and not useManualDragStart \
+      and elapsedTime > minDragTime):
+      startDragging()
+
+    if(not isPressing and elapsedTime > minPressTime):
       emit_signal('pressing')
       isPressing = true
 
-    if(not isLongPressing and elapsedTime > timeBeforeDragging):
+    if(not isLongPressing and elapsedTime > longPressTime):
       isLongPressing = true
       emit_signal('longPress')
 
-      if(draggable and afterLongPress and !useManualDragStart):
-        var mousePosition = get_global_mouse_position()
-
-        if((mouseStartPosition - mousePosition).length() < 50):
-          return
-
+      if(draggable \
+        and not _dragging
+        and minMouseDragTresholdReached \
+        and dragAfterLongPress \
+        and not useManualDragStart):
         startDragging()
 
 # ------------------------------------------------------------------------------
@@ -71,11 +86,7 @@ func _gui_input(event):
   and event.pressed:
     lastPress = Time.get_ticks_msec()
     mouseStartPosition = get_global_mouse_position()
-
-    if(draggable and not afterLongPress and not useManualDragStart):
-      startDragging()
-    else:
-      _pressing = true
+    _pressing = true
 
     return
 
