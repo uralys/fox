@@ -65,7 +65,7 @@ func _input(event):
       startPressingTime = 0
       startPressingPosition = null
 
-      if(Display.DRAGGING_OBJECT != null):
+      if(G.state.DRAGGING_OBJECT != null):
         return
 
       if(dragging):
@@ -81,7 +81,7 @@ func _input(event):
   # ------- mouse mmotion
   elif event is InputEventMouseMotion:
     # updates position only when global dragging is occuring
-    if(Display.DRAGGING_OBJECT != null):
+    if(G.state.DRAGGING_OBJECT != null):
       return
 
     if(startPressingTime > 0):

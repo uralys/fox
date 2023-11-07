@@ -25,6 +25,12 @@ var H = DisplayServer.window_get_size()[1]
 
 # ------------------------------------------------------------------------------
 
+# use this global state barely;
+# e.g. Draggable objects VS Draggable camera -> we cannot use a local camera control
+var state = {}
+
+# ------------------------------------------------------------------------------
+
 func isRunningOnProduction():
   return ENV == PRODUCTION and not IS_FOX_RUNNER
 

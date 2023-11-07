@@ -9,7 +9,7 @@ var mouseStartPosition
 var screenStartPosition
 
 
-@export var minDragTime: int = 60
+@export var minDragTime: int = 20
 @export var minPressTime: int = 150
 @export var longPressTime: int = 500
 
@@ -74,6 +74,7 @@ func startDragging():
     return
 
   _dragging = true
+  G.state.DRAGGING_OBJECT = draggable
   screenStartPosition = draggable.position
   emit_signal('startedDragging')
 
@@ -96,6 +97,7 @@ func _gui_input(event):
   and !event.pressed:
     if(_dragging):
       emit_signal('dropped', draggable.position)
+      G.state.DRAGGING_OBJECT = null
     else:
       emit_signal('press')
 
@@ -107,7 +109,6 @@ func _gui_input(event):
 
   # ---------- mouse move ----------
   if _dragging \
-  and event is InputEventMouseMotion \
-  and Display.DRAGGING_OBJECT == draggable:
+  and event is InputEventMouseMotion:
     var mouseDiff = get_global_mouse_position() - mouseStartPosition
     draggable.position = mouseDiff / zoom + screenStartPosition
