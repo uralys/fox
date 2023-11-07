@@ -94,6 +94,7 @@ func _input(event):
           dragging = true
           mouse_start_pos = event.position
           screen_start_position = camera.position
+
           emit_signal('startDragging')
 
         var mouseDiff = mouse_start_pos - event.position

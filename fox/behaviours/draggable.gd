@@ -25,13 +25,8 @@ signal press
 signal pressing
 signal longPress
 
-signal dragged
+signal dropped
 signal startedDragging
-
-# ------------------------------------------------------------------------------
-
-func _ready():
-  params.id = generateUID.withPrefix('draggable')
 
 # ------------------------------------------------------------------------------
 
@@ -64,7 +59,6 @@ func startDragging():
     return
 
   _dragging = true
-  Display.DRAGGING_OBJECT = params.id
   screenStartPosition = draggable.position
   emit_signal('startedDragging')
 
@@ -90,11 +84,10 @@ func _gui_input(event):
   and event.button_index == MOUSE_BUTTON_LEFT \
   and !event.pressed:
     if(_dragging):
-      emit_signal('dragged', draggable.position)
+      emit_signal('dropped', draggable.position)
     else:
       emit_signal('press')
 
-    Display.DRAGGING_OBJECT = null
     _dragging = false
     _pressing = false
     isPressing = false
@@ -104,6 +97,6 @@ func _gui_input(event):
   # ---------- mouse move ----------
   if _dragging \
   and event is InputEventMouseMotion \
-  and Display.DRAGGING_OBJECT == params.id:
+  and Display.DRAGGING_OBJECT == draggable:
     var mouseDiff = get_global_mouse_position() - mouseStartPosition
     draggable.position = mouseDiff / zoom + screenStartPosition
