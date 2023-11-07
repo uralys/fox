@@ -4,11 +4,26 @@
 # https://www.youtube.com/watch?v=duDk9ICkKWI
 # ------------------------------------------------------------------------------
 
-extends Camera2D
+extends CanvasLayer
 
 # ------------------------------------------------------------------------------
 
-var boundaries
+@onready var camera = $camera
+@onready var boundaries = $boundaries
+
+# ------------------------------------------------------------------------------
+
+signal startPressing
+signal draggingCamera
+
+# ------------------------------------------------------------------------------
+
+@export var pan_smooth: float = -3
+@export var drag_delay: float = 370
+
+# ------------------------------------------------------------------------------
+
+const ZOOM = 2.5
 
 var mouse_start_pos
 var screen_start_position
@@ -19,15 +34,7 @@ var dragging = false
 var smoothing = false
 var moving = false
 var startPressingTime = 0
-
-# ------------------------------------------------------------------------------
-
-signal draggingCamera
-
-# ------------------------------------------------------------------------------
-
-@export var pan_smooth: float = -3
-@export var drag_delay: float = 70
+var startPressingPosition
 
 # ------------------------------------------------------------------------------
 
@@ -36,45 +43,54 @@ var _last_cam_pos := Vector2(0,0)
 
 # ------------------------------------------------------------------------------
 
-func _ready():
-  if(get_parent().has_node('boundaries')):
-    boundaries = get_parent().get_node('boundaries')
-
-# ------------------------------------------------------------------------------
-
-## _input retrieve every events | @todo create local behaviour
+## it's not possible to create a local behaviour because a fullscreen Control
+## for the camera would intercept all input events
 func _input(event):
   if event is InputEventMouseButton:
     if event.is_pressed():
       var now = Time.get_ticks_msec()
       startPressingTime = now
+      startPressingPosition = event.position
       tweening = false
       smoothing = false
       pressing = true
+      G.log('camera input ---- startPressing');
+      emit_signal('startPressing')
 
     else:
       pressing = false
-      dragging = false
       startPressingTime = 0
+      startPressingPosition = null
 
-      if(boundaries):
-        var outOfBoundaries = checkBoundaries({reposition=true})
-        if(not outOfBoundaries):
-          smoothing = true
+      if(dragging):
+        dragging = false
+
+        if(boundaries):
+          var outOfBoundaries = checkBoundaries({reposition=true})
+          if(not outOfBoundaries):
+            smoothing = true
+
+        get_viewport().set_input_as_handled()
 
   elif event is InputEventMouseMotion:
     if(startPressingTime > 0):
       var now = Time.get_ticks_msec()
       if(now - startPressingTime > drag_delay):
+        var startDiff = startPressingPosition - event.position
+        if(startDiff.length() < 50):
+          return
+
         if(not dragging):
           dragging = true
           mouse_start_pos = event.position
-          screen_start_position = position
+          screen_start_position = camera.position
 
         # updates position only when global dragging is occuring
         if(Display.DRAGGING_OBJECT == null):
-          self.position = (mouse_start_pos - event.position) / self.zoom + screen_start_position
+          var mouseDiff = mouse_start_pos - event.position
+          camera.position = mouseDiff / ZOOM + screen_start_position
           emit_signal('draggingCamera')
+
 
 # ------------------------------------------------------------------------------
 
@@ -87,9 +103,9 @@ func _process(delta):
   elif smoothing:
     smooth(delta)
 
-  var diff = _last_cam_pos - self.position
+  var diff = _last_cam_pos - camera.position
   moving = diff.length() > 5
-  _last_cam_pos = self.position
+  _last_cam_pos = camera.position
 
   if(not moving and not pressing):
     smoothing = false
@@ -101,7 +117,7 @@ func _process(delta):
 # ------------------------------------------------------------------------------
 
 func update_vel(delta : float):
-  var move = _last_cam_pos - self.position
+  var move = _last_cam_pos - camera.position
   var move_speed:Vector2 = move / delta
 
   draggingVelocity = (draggingVelocity + move_speed  ) / 2.0
@@ -118,8 +134,8 @@ func toPosition(from: Vector2, to : Vector2, duration: float = 1):
 
   var tween = create_tween()
 
-  self.position = from
-  tween.tween_property(self, "position", to, duration).connect("finished", func():
+  camera.position = from
+  tween.tween_property(camera, "position", to, duration).connect("finished", func():
     tweening = false
   )
 
@@ -139,7 +155,7 @@ func smooth(delta : float):
   var l = draggingVelocity.length()
   var move_frame = 10 * exp(pan_smooth * ((log(l/10) / pan_smooth)+delta))
   draggingVelocity = draggingVelocity.normalized() * move_frame
-  self.position -= draggingVelocity * delta
+  camera.position -= draggingVelocity * delta
 
 # ------------------------------------------------------------------------------
 
@@ -152,15 +168,15 @@ func checkBoundaries(options = {}):
   var boundariesTop = boundaries.position.y - _offset
   var boundariesBottom = boundaries.position.y + boundaries.size[1] + _offset
 
-  var outOnLeft = position.x < boundariesLeft
-  var outOnRight = position.x > boundariesRight
-  var outOnTop = position.y < boundariesTop
-  var outOnBottom = position.y > boundariesBottom
+  var outOnLeft = camera.position.x < boundariesLeft
+  var outOnRight = camera.position.x > boundariesRight
+  var outOnTop = camera.position.y < boundariesTop
+  var outOnBottom = camera.position.y > boundariesBottom
 
   if outOnLeft or outOnRight or outOnBottom or outOnTop:
     if(reposition):
-      var newX = position.x
-      var newY = position.y
+      var newX = camera.position.x
+      var newY = camera.position.y
       var innerMargin = 10 # not to have accurate equalities
 
       if outOnLeft:
@@ -172,7 +188,35 @@ func checkBoundaries(options = {}):
       if outOnBottom:
         newY = boundariesBottom - innerMargin
 
-      if(newX != position.x or newY != position.y):
-        toPosition(position, Vector2(newX, newY), 0.5)
+      if(newX != camera.position.x or newY != camera.position.y):
+        toPosition(camera.position, Vector2(newX, newY), 0.5)
 
     return true
+
+# ==============================================================================
+# API
+# ==============================================================================
+
+func setPosition(_position: Vector2):
+  camera.position = _position
+
+func setZoom(_zoom: Vector2):
+  camera.zoom = _zoom
+
+func zoom():
+  setZoom(Vector2(1.6, 1.6))
+
+  Animate.to(camera, {
+    propertyPath = 'zoom',
+    toValue = Vector2(ZOOM, ZOOM),
+    duration = 1,
+    easing = Tween.EASE_OUT
+  })
+
+func focusCameraOn(_position):
+  Animate.to(camera, {
+    propertyPath = 'position',
+    toValue = _position,
+    duration = 1,
+    easing = Tween.EASE_OUT
+  })

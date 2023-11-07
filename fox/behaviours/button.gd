@@ -1,32 +1,38 @@
 extends Node
 
 signal press
+signal pressing
 signal longPress
 
 @export var onlyOnce: bool = true
 @export var sound: bool = true
 @export var MIN_MS_BETWEEN_PRESS: int = 700
 
-var pressing = false
+var _pressing = false
+var isPressing = false
 var nbPressed = 0
 var lastPress = Time.get_ticks_msec()
 
 # ------------------------------------------------------------------------------
 
 func _physics_process(_delta):
-  if pressing:
+  if _pressing:
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
 
+    if(not isPressing and elapsedTime > 150):
+      emit_signal('pressing')
+      isPressing = true
+
     if(elapsedTime > 750):
       emit_signal('longPress')
-      pressing = false
 
 # ------------------------------------------------------------------------------
 
 func _gui_input(event):
   if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-    pressing = true
+    _pressing = true
+
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
 
@@ -42,11 +48,13 @@ func _gui_input(event):
     # if(sound):
     #   Sound.play(Sound.BUTTON_PRESS)
 
-  if pressing \
+  if _pressing \
   and event is InputEventMouseButton \
   and event.button_index == MOUSE_BUTTON_LEFT \
   and not event.pressed:
     # mouse up
-    pressing = false
+    _pressing = false
+    isPressing = false
 
+    G.log('Button up');
     emit_signal('press')

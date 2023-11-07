@@ -9,6 +9,8 @@ var mouseStartPosition
 var screenStartPosition
 
 @export var afterLongPress: bool = false
+@export var useManualDragStart: bool = false
+@export var timeBeforeDragging: int = 500
 
 var dragging = false
 var pressing = false
@@ -28,29 +30,30 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func _physics_process(_delta):
-  if(!afterLongPress):
+  if(useManualDragStart or !afterLongPress):
     return
 
   if pressing:
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
 
-    if(elapsedTime > 500):
+    if(elapsedTime > timeBeforeDragging):
       var mousePosition = get_global_mouse_position()
       pressing = false
 
       if(abs(mouseStartPosition - mousePosition).length() > 1):
         return
 
-      emit_signal('startedDragging')
       startDragging()
 
 # ------------------------------------------------------------------------------
 
 func startDragging():
+  G.log('startDragging');
   dragging = true
   Display.DRAGGING_OBJECT = params.id
   screenStartPosition = draggable.position
+  emit_signal('startedDragging')
 
 # ------------------------------------------------------------------------------
 
@@ -59,7 +62,7 @@ func _gui_input(event):
     lastPress = Time.get_ticks_msec()
     mouseStartPosition = get_global_mouse_position()
 
-    if(not afterLongPress):
+    if(not afterLongPress and not useManualDragStart):
       startDragging()
     else:
       pressing = true
@@ -80,4 +83,5 @@ func _gui_input(event):
   if dragging \
   and event is InputEventMouseMotion \
   and Display.DRAGGING_OBJECT == params.id:
-    draggable.position = 1/zoom * (get_global_mouse_position() - mouseStartPosition) + screenStartPosition
+    var mouseDiff = get_global_mouse_position() - mouseStartPosition
+    draggable.position = mouseDiff / zoom + screenStartPosition
