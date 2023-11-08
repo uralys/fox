@@ -25,9 +25,11 @@ var H = DisplayServer.window_get_size()[1]
 
 # ------------------------------------------------------------------------------
 
-# use this global state barely;
-# e.g. Draggable objects VS Draggable camera -> we cannot use a local camera control
-var state = {}
+# this global state should not be used outside fox;
+var state = {
+  # Draggable objects VS Draggable camera -> we cannot use a local camera control
+  DRAGGING_OBJECT = null
+}
 
 # ------------------------------------------------------------------------------
 
