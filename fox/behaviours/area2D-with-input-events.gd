@@ -3,6 +3,7 @@ extends Area2D
 # ------------------------------------------------------------------------------
 
 var draggable
+var additionalDragData
 var zoom = 1
 var params = {}
 var mouseStartPosition
@@ -47,8 +48,6 @@ func _physics_process(_delta):
 
     var mouseDiff = mousePosition - mouseStartPosition
     var minMouseDragTresholdReached = (mouseDiff).length() > 3
-
-    G.log(draggable);
 
     if(draggable \
       and not _dragging
@@ -98,9 +97,15 @@ func startDragging():
     return
 
   _dragging = true
+
   G.state.DRAGGING_DATA = {
     draggable = draggable
   }
+
+  if(additionalDragData):
+    for key in additionalDragData.keys():
+      var value = additionalDragData[key]
+      __.Set(value, key, G.state.DRAGGING_DATA)
 
   screenStartPosition = draggable.position
   emit_signal('startedDragging')
