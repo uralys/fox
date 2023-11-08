@@ -8,7 +8,6 @@ var params = {}
 var mouseStartPosition
 var screenStartPosition
 
-
 @export var minDragTime: int = 20
 @export var minPressTime: int = 150
 @export var longPressTime: int = 500

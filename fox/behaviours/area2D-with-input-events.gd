@@ -28,15 +28,14 @@ signal press
 signal pressing
 signal longPress
 
-signal dropped
+signal droppedOnDroppable
+signal droppedIntheWild
 signal startedDragging
 
 # ------------------------------------------------------------------------------
 
 func _ready():
   connect("input_event", onInput)
-  connect("mouse_entered", mouse_entered)
-  connect("mouse_exited", mouse_exited)
 
 # ------------------------------------------------------------------------------
 
@@ -48,6 +47,8 @@ func _physics_process(_delta):
 
     var mouseDiff = mousePosition - mouseStartPosition
     var minMouseDragTresholdReached = (mouseDiff).length() > 3
+
+    G.log(draggable);
 
     if(draggable \
       and not _dragging
@@ -78,18 +79,6 @@ func _physics_process(_delta):
 
 # ------------------------------------------------------------------------------
 
-func mouse_entered():
-  G.log('mouse_entered');
-  # set_texture(onTexture)
-
-# ------------------------------------------------------------------------------
-
-func mouse_exited():
-  G.log('mouse_exited');
-  # set_texture(offTexture)
-
-# ------------------------------------------------------------------------------
-
 func onInput(_viewport, event, _shape_idx):
   # ---------- mouse down ----------
   if event is InputEventMouseButton \
@@ -101,22 +90,6 @@ func onInput(_viewport, event, _shape_idx):
 
     return
 
-  # ---------- mouse up ----------
-  if event is InputEventMouseButton \
-  and event.button_index == MOUSE_BUTTON_LEFT \
-  and !event.pressed:
-
-    if(_dragging):
-      emit_signal('dropped', draggable.position)
-      G.state.DRAGGING_OBJECT = null
-    else:
-      emit_signal('press')
-
-    _dragging = false
-    _pressing = false
-    isPressing = false
-    return
-
 # ------------------------------------------------------------------------------
 
 func startDragging():
@@ -125,6 +98,32 @@ func startDragging():
     return
 
   _dragging = true
-  G.state.DRAGGING_OBJECT = draggable
+  G.state.DRAGGING_DATA = {
+    draggable = draggable
+  }
+
   screenStartPosition = draggable.position
   emit_signal('startedDragging')
+
+# ------------------------------------------------------------------------------
+
+func _unhandled_input(event):
+  if _pressing \
+    and event is InputEventMouseButton \
+    and event.button_index == MOUSE_BUTTON_LEFT \
+    and !event.pressed:
+
+    if(_dragging):
+      var droppable = __.Get('droppable', G.state.DRAGGING_DATA)
+      if(droppable):
+        droppable.onDrop(G.state.DRAGGING_DATA)
+        emit_signal('droppedOnDroppable', droppable)
+      else:
+        emit_signal('droppedIntheWild', draggable.position)
+      G.state.DRAGGING_DATA = null
+    else:
+      emit_signal('press')
+
+    _dragging = false
+    _pressing = false
+    isPressing = false
