@@ -9,7 +9,7 @@
   "devDependencies": {
     "chalk": "^5.3.0",
     "chokidar": "^3.5.3",
-    "inquirer": "^9.2.11",
+    "inquirer": "^9.2.12",
     "keypress": "^0.2.1",
     "npm-check-updates": "^16.14.6",
     "shelljs": "^0.8.5",
