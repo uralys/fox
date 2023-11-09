@@ -25,7 +25,7 @@ signal draggingCamera
 
 # ------------------------------------------------------------------------------
 
-const ZOOM = 2.5
+var ZOOM = 2.5
 
 var mouse_start_pos
 var screen_start_position
@@ -212,11 +212,12 @@ func checkBoundaries(options = {}):
 func setPosition(_position: Vector2):
   camera.position = _position
 
-func setZoom(_zoom: Vector2):
-  camera.zoom = _zoom
+func setZoom(_zoom: float):
+  ZOOM = _zoom
+  camera.zoom = Vector2(_zoom, _zoom)
 
 func zoom():
-  setZoom(Vector2(1.6, 1.6))
+  camera.zoom = Vector2(ZOOM * 0.7, ZOOM * 0.7)
 
   Animate.to(camera, {
     propertyPath = 'zoom',
