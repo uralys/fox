@@ -220,10 +220,10 @@ static func _getInitialValue(object, property):
 
 # ------------------------------------------------------------------------------
 
-static func bounce(object, stepDuration = 0.25, upScale = 0.05):
+static func bounce(object, duration = 0.25, upScale = 0.05):
   var property = _scaleProperty(object)
   var initialScale = _getInitialValue(object, property);
-  return await _bounce(object, initialScale, upScale, stepDuration, property)
+  return await _bounce(object, initialScale, upScale, duration, property)
 
 # ------------------------------------------------------------------------------
 
@@ -346,4 +346,7 @@ static func _animate(object, options):
 
   tween.connect("finished", func onFinished():
     object.emit_signal(SIGNAL_ON_DONE)
+
+    if(options.get('onFinished')):
+      options.onFinished.call()
   )
