@@ -120,7 +120,7 @@ func _unhandled_input(event):
 
     if(_dragging):
       var droppable = __.Get('droppable', G.state.DRAGGING_DATA)
-      if(droppable):
+      if(droppable and droppable.get('onDrop')):
         droppable.onDrop(G.state.DRAGGING_DATA)
         emit_signal('droppedOnDroppable', droppable)
       else:
