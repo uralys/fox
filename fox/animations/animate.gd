@@ -51,6 +51,27 @@ static func from(object, _options):
 
 # mandatory options = {propertyPath, toValue}
 static func to(object, _options):
+  if(typeof(object) == TYPE_ARRAY):
+    var __onFinished = _options.get('onFinished')
+    var delayBetweenElements = __.GetOr(0, 'delayBetweenElements', _options)
+    _options.onFinished = null
+
+    while object.size() > 0:
+      var o = object.pop_front()
+
+      if(object.size() == 0):
+        _options.onFinished = __onFinished
+
+      _to(o, _options)
+      if(delayBetweenElements > 0):
+        await Wait.forSomeTime(o, delayBetweenElements).timeout
+
+  else:
+    return _to(object, _options)
+
+# ------------------------------------------------------------------------------
+
+static func _to(object, _options):
   var options = _options.duplicate()
   options.fromValue = __.Get(options.propertyPath, object)
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE

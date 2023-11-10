@@ -14,6 +14,8 @@ Read `/fox/animations/animate.gd` for details on options
 
 - static func `to`(object, \_options):
 
+- static func `to`(array, \_options):
+
 - static func `toAndBack`(object, \_options):
 
 - static func `show`(object, duration = 0.3, delay = 0):
@@ -53,4 +55,14 @@ Animate.to(car, {
   toValue = Vector2(200, 200),
   duration = 0.5
 })
+```
+
+```gdscript
+  Animate.to([potion, car, book], {
+    propertyPath = "position",
+    toValue = Vector2(0, 0),
+    delayBetweenElements = 1,
+    onFinished = func():
+      G.log('DONE');
+  })
 ```

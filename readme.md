@@ -6,6 +6,22 @@
 
 <p align="center"><img title="fox"  src="./assets/logo.jpg"></p>
 
+## Scenes and scripts
+
+With Fox, you can use `Scenes`, `Resources`, scripts and static functions to build your app.
+
+As an example, this code will move 3 nodes to the same position, with a delay of 1 second between each animation. Finally it fill print 'DONE' in the console.
+
+```gdscript
+  Animate.to([potion, car, book], {
+    propertyPath = "position",
+    toValue = Vector2(0, 0),
+    delayBetweenElements = 1,
+    onFinished = func():
+      G.log('DONE');
+  })
+```
+
 ## Documentation
 
 Few documentation links (find more in the [docs](./docs)):
