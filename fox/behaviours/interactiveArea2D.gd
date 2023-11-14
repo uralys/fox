@@ -3,8 +3,8 @@ extends Area2D
 # ------------------------------------------------------------------------------
 
 var draggable
+var parentReference
 var additionalDragData
-var zoom = 1
 var params = {}
 var mouseStartPosition
 var screenStartPosition
@@ -15,6 +15,7 @@ var screenStartPosition
 
 @export var dragAfterLongPress: bool = false
 @export var useManualDragStart: bool = false
+@export var useBoundaries: bool = false
 
 var _dragging = false
 var _pressing = false
@@ -73,7 +74,21 @@ func _physics_process(_delta):
         startDragging()
 
     if(_dragging):
+      var zoom = parentReference.scale.x if parentReference else 1
       var newPosition = mouseDiff / zoom + screenStartPosition
+
+      if(useBoundaries):
+        var draggableWidth = draggable.get_rect().size.x * draggable.scale.x
+        var draggableHeight = draggable.get_rect().size.y * draggable.scale.y
+
+        var xMin = G.W() - draggableWidth/2
+        var xMax = draggableWidth/2
+        var yMin = G.H() - draggableHeight/2
+        var yMax = draggableHeight/2
+
+        newPosition.x = min(max(newPosition.x, xMin), xMax)
+        newPosition.y = min(max(newPosition.y, yMin), yMax)
+
       draggable.position = lerp(draggable.position, newPosition, 25 * _delta)
 
 # ------------------------------------------------------------------------------

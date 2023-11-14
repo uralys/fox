@@ -43,10 +43,11 @@ func pressed():
 
 ## Dragging
 
-To drag your Node needs one more setting: you need to tell it what Node is to be dragged.
+To drag your Node needs few more settings: you need to tell it what Node is to be dragged, and what parent it's dragged on, to apply the parent scale to the new positions.
 
 ```gdscript
 interactiveArea2D.draggable = self
+interactiveArea2D.parentReference = get_parent()
 ```
 
 By default the dragging starts immediately but you can ask to start after a `longPress`
