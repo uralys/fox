@@ -243,7 +243,7 @@ static func _getInitialValue(object, property):
 
 static func bounce(object, duration = 0.25, upScale = 0.05):
   var property = _scaleProperty(object)
-  var initialScale = _getInitialValue(object, property);
+  var initialScale = object[property];
   return await _bounce(object, initialScale, upScale, duration, property)
 
 # ------------------------------------------------------------------------------
