@@ -27,7 +27,9 @@ func H(): return DisplayServer.window_get_size()[1]
 
 # this global state should not be used outside fox;
 var state = {
-  DRAGGING_DATA = null
+  DRAGGING_DATA = null,
+  PRESSED_ITEMS = [],
+  ACCEPTED_PRESSED_ITEMS = [],
 }
 
 # ------------------------------------------------------------------------------

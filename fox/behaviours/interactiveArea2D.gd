@@ -8,17 +8,19 @@ var additionalDragData
 var params = {}
 var mouseStartPosition
 var screenStartPosition
+var useBoundaries ## usually the draggable itself to use its size
 
+@export var inputPriority: int = 1 # the lower the more priority
 @export var minDragTime: int = 20
 @export var minPressTime: int = 150
 @export var longPressTime: int = 500
 
 @export var dragAfterLongPress: bool = false
 @export var useManualDragStart: bool = false
-@export var useBoundaries: bool = false
 
 var _dragging = false
 var _pressing = false
+var _accepted = false
 
 var isPressing = false
 var isLongPressing = false
@@ -43,6 +45,20 @@ func _ready():
 
 func _physics_process(_delta):
   if _pressing:
+    if(G.state.PRESSED_ITEMS.size() > 0):
+      for item in G.state.PRESSED_ITEMS:
+        if(item.inputPriority < inputPriority):
+          resetInteraction()
+          return
+
+    if(G.state.DRAGGING_DATA and G.state.DRAGGING_DATA.draggable != draggable):
+      resetInteraction()
+      return
+
+    if(not _accepted):
+      G.state.ACCEPTED_PRESSED_ITEMS.append(self)
+      _accepted = true
+
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
     var mousePosition = get_global_mouse_position()
@@ -78,8 +94,8 @@ func _physics_process(_delta):
       var newPosition = mouseDiff / zoom + screenStartPosition
 
       if(useBoundaries):
-        var draggableWidth = draggable.get_rect().size.x * draggable.scale.x
-        var draggableHeight = draggable.get_rect().size.y * draggable.scale.y
+        var draggableWidth = useBoundaries.get_rect().size.x * draggable.scale.x
+        var draggableHeight = useBoundaries.get_rect().size.y * draggable.scale.y
 
         var xMin = G.W() - draggableWidth/2
         var xMax = draggableWidth/2
@@ -101,6 +117,9 @@ func onInput(_viewport, event, _shape_idx):
     lastPress = Time.get_ticks_msec()
     mouseStartPosition = get_global_mouse_position()
     _pressing = true
+    _accepted = false
+
+    G.state.PRESSED_ITEMS.append(self)
 
     return
 
@@ -127,6 +146,19 @@ func startDragging():
 
 # ------------------------------------------------------------------------------
 
+func resetInteraction():
+  _dragging = false
+  _pressing = false
+  _accepted = false
+
+  isPressing = false
+  isLongPressing = false
+
+  G.state.PRESSED_ITEMS.erase(self)
+  G.state.ACCEPTED_PRESSED_ITEMS.erase(self)
+
+# ------------------------------------------------------------------------------
+
 func _unhandled_input(event):
   if _pressing \
     and event is InputEventMouseButton \
@@ -144,6 +176,4 @@ func _unhandled_input(event):
     else:
       emit_signal('press')
 
-    _dragging = false
-    _pressing = false
-    isPressing = false
+    resetInteraction()
