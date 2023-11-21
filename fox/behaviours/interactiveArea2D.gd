@@ -75,7 +75,7 @@ func _physics_process(_delta):
       and not dragAfterLongPress \
       and not useManualDragStart \
       and elapsedTime > minDragTime):
-      startDragging()
+      _startDragging()
 
     if(not isPressing and elapsedTime > minPressTime):
       emit_signal('pressing')
@@ -90,7 +90,7 @@ func _physics_process(_delta):
         and minMouseDragTresholdReached \
         and dragAfterLongPress \
         and not useManualDragStart):
-        startDragging()
+        _startDragging()
 
     if(_dragging):
       var zoom = parentReference.scale.x if parentReference else 1
@@ -128,24 +128,8 @@ func onInput(_viewport, event, _shape_idx):
 
 # ------------------------------------------------------------------------------
 
-func startDragging():
-  if(not draggable):
-    G.log('[color=pink]You must set your draggable object before to use dragging.[/color]')
-    return
-
-  _dragging = true
-
-  G.state.DRAGGING_DATA = {
-    draggable = draggable,
-    dragger = self
-  }
-
-  if(additionalDragData):
-    for key in additionalDragData.keys():
-      var value = additionalDragData[key]
-      __.Set(value, key, G.state.DRAGGING_DATA)
-
-  screenStartPosition = draggable.position
+func _startDragging():
+  manualStartDragging()
   emit_signal('startedDragging')
 
 # ------------------------------------------------------------------------------
@@ -181,6 +165,29 @@ func _unhandled_input(event):
       emit_signal('press')
 
     resetInteraction()
+
+# ------------------------------------------------------------------------------
+
+func manualStartDragging():
+  if(not draggable):
+    G.log('[color=pink]You must set your draggable object before to use dragging.[/color]')
+    return
+
+  _pressing = true
+  _dragging = true
+  mouseStartPosition = get_global_mouse_position()
+
+  G.state.DRAGGING_DATA = {
+    draggable = draggable,
+    dragger = self
+  }
+
+  if(additionalDragData):
+    for key in additionalDragData.keys():
+      var value = additionalDragData[key]
+      __.Set(value, key, G.state.DRAGGING_DATA)
+
+  screenStartPosition = draggable.position
 
 # ------------------------------------------------------------------------------
 
