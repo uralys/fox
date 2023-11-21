@@ -16,14 +16,14 @@ func _ready():
 
 func mouse_entered():
   if(G.state.DRAGGING_DATA):
-    G.state.DRAGGING_DATA.droppable = self
+    G.state.DRAGGING_DATA.dragger.onDropActived(self)
     emit_signal("dropActived")
 
 # ------------------------------------------------------------------------------
 
 func mouse_exited():
   if(G.state.DRAGGING_DATA):
-    G.state.DRAGGING_DATA.droppable = null
+    G.state.DRAGGING_DATA.dragger.onDropDeactived(self)
     emit_signal("dropDeactived")
 
 # ------------------------------------------------------------------------------

@@ -1,15 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://bqbex8ooxkxnm"]
+[gd_scene load_steps=2 format=3 uid="uid://bqbex8ooxkxnm"]
 
 [ext_resource type="Script" path="res://fox/behaviours/dropArea2D.gd" id="1_wu3mr"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_2v11e"]
-size = Vector2(181.991, 180.895)
-
 [node name="dropArea" type="Area2D"]
 script = ExtResource("1_wu3mr")
-metadata/_edit_lock_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 1.52588e-05)
-shape = SubResource("RectangleShape2D_2v11e")
-metadata/_edit_lock_ = true

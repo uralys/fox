@@ -34,6 +34,9 @@ signal longPress
 
 signal droppedOnDroppable
 signal droppedIntheWild
+signal foundDroppable
+signal leftDroppable
+
 signal startedDragging
 
 # ------------------------------------------------------------------------------
@@ -133,7 +136,8 @@ func startDragging():
   _dragging = true
 
   G.state.DRAGGING_DATA = {
-    draggable = draggable
+    draggable = draggable,
+    dragger = self
   }
 
   if(additionalDragData):
@@ -177,3 +181,18 @@ func _unhandled_input(event):
       emit_signal('press')
 
     resetInteraction()
+
+# ------------------------------------------------------------------------------
+
+func resetDraggingPosition():
+  screenStartPosition = draggable.position
+
+# ------------------------------------------------------------------------------
+
+func onDropActived(droppable):
+  G.state.DRAGGING_DATA.droppable = droppable
+  emit_signal('foundDroppable', droppable)
+
+func onDropDeactived(droppable):
+  G.state.DRAGGING_DATA.droppable = null
+  emit_signal('leftDroppable', droppable)

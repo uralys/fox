@@ -14,6 +14,9 @@ var currentScene = null
 
 # ------------------------------------------------------------------------------
 
+func getCurrentSceneName():
+  return str(currentScene.name)
+
 func getCurrentScene():
   return currentScene
 
