@@ -2,9 +2,13 @@ extends Area2D
 
 # ------------------------------------------------------------------------------
 
+@export var acceptedType = 'default'
+
+# ------------------------------------------------------------------------------
+
 signal dropActived
 signal dropDeactived
-signal received
+signal received # triggered from interactiveArea
 
 # ------------------------------------------------------------------------------
 
@@ -15,19 +19,18 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func mouse_entered():
-  if(G.state.DRAGGING_DATA):
-    G.state.DRAGGING_DATA.dragger.onDropActived(self)
+  var draggerType = __.Get('DRAGGING_DATA.dragger.type' , G.state)
+
+  if(draggerType == acceptedType):
+    G.state.DRAGGING_DATA.droppable = self
+    G.state.DRAGGING_DATA.dragger.emit_signal('foundDroppable', self)
     emit_signal("dropActived")
 
 # ------------------------------------------------------------------------------
 
 func mouse_exited():
-  if(G.state.DRAGGING_DATA):
-    G.state.DRAGGING_DATA.dragger.onDropDeactived(self)
+  var draggerType = __.Get('DRAGGING_DATA.dragger.type' , G.state)
+  if(draggerType == acceptedType):
+    G.state.DRAGGING_DATA.droppable = null
+    G.state.DRAGGING_DATA.dragger.emit_signal('leftDroppable', self)
     emit_signal("dropDeactived")
-
-# ------------------------------------------------------------------------------
-
-func onDrop(draggedData):
-  emit_signal("received", draggedData)
-

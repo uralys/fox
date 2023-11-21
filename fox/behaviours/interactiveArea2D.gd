@@ -17,6 +17,7 @@ var useBoundaries ## usually the draggable itself to use its size
 
 @export var dragAfterLongPress: bool = false
 @export var useManualDragStart: bool = false
+@export var type = 'default'
 
 var _dragging = false
 var _pressing = false
@@ -155,9 +156,9 @@ func _unhandled_input(event):
 
     if(_dragging):
       var droppable = __.Get('droppable', G.state.DRAGGING_DATA)
-      if(droppable and droppable.get('onDrop')):
-        droppable.onDrop(G.state.DRAGGING_DATA)
-        emit_signal('droppedOnDroppable', droppable)
+      if(droppable):
+        droppable.emit_signal('received', G.state.DRAGGING_DATA, draggable.position)
+        emit_signal('droppedOnDroppable', G.state.DRAGGING_DATA, draggable.position)
       else:
         emit_signal('droppedIntheWild', draggable.position)
       G.state.DRAGGING_DATA = null
@@ -193,13 +194,3 @@ func manualStartDragging():
 
 func resetDraggingPosition():
   screenStartPosition = draggable.position
-
-# ------------------------------------------------------------------------------
-
-func onDropActived(droppable):
-  G.state.DRAGGING_DATA.droppable = droppable
-  emit_signal('foundDroppable', droppable)
-
-func onDropDeactived(droppable):
-  G.state.DRAGGING_DATA.droppable = null
-  emit_signal('leftDroppable', droppable)
