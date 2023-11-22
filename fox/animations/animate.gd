@@ -318,6 +318,10 @@ static func swing(object, _options):
 # ------------------------------------------------------------------------------
 
 static func _animate(object, options):
+  if(not object):
+    G.log('warning: trying to Animate a Nil object', options);
+    return
+
   if(typeof(object) != TYPE_OBJECT):
     prints(
       '🔴 Animate is meant for TYPE_OBJECT, not',

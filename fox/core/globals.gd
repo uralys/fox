@@ -25,15 +25,6 @@ func H(): return DisplayServer.window_get_size()[1]
 
 # ------------------------------------------------------------------------------
 
-# this global state should not be used outside fox;
-var state = {
-  DRAGGING_DATA = null,
-  PRESSED_ITEMS = [],
-  ACCEPTED_PRESSED_ITEMS = [],
-}
-
-# ------------------------------------------------------------------------------
-
 func isRunningOnProduction():
   return ENV == PRODUCTION and not IS_FOX_RUNNER
 

@@ -65,7 +65,7 @@ func _input(event):
       startPressingTime = 0
       startPressingPosition = null
 
-      if(G.state.DRAGGING_DATA != null):
+      if(Gesture.isDragging()):
         return
 
       if(dragging):
@@ -81,7 +81,7 @@ func _input(event):
   # ------- mouse mmotion
   elif event is InputEventMouseMotion:
     # updates position only when global dragging is occuring
-    if(G.state.DRAGGING_DATA != null):
+    if(Gesture.isDragging()):
       return
 
     if(startPressingTime > 0):
@@ -102,7 +102,6 @@ func _input(event):
         camera.position = mouseDiff / ZOOM + screen_start_position
         emit_signal('draggingCamera')
         get_viewport().set_input_as_handled()
-
 
 # ------------------------------------------------------------------------------
 

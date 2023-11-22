@@ -19,18 +19,9 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func mouse_entered():
-  var draggerType = __.Get('DRAGGING_DATA.dragger.type' , G.state)
-
-  if(draggerType == acceptedType):
-    G.state.DRAGGING_DATA.droppable = self
-    G.state.DRAGGING_DATA.dragger.emit_signal('foundDroppable', self)
-    emit_signal("dropActived")
+  Gesture.verifyDroppableOnEnter(self, acceptedType)
 
 # ------------------------------------------------------------------------------
 
 func mouse_exited():
-  var draggerType = __.Get('DRAGGING_DATA.dragger.type' , G.state)
-  if(draggerType == acceptedType):
-    G.state.DRAGGING_DATA.droppable = null
-    G.state.DRAGGING_DATA.dragger.emit_signal('leftDroppable', self)
-    emit_signal("dropDeactived")
+  Gesture.verifyDroppableOnExit(self, acceptedType)

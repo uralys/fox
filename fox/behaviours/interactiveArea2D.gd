@@ -49,18 +49,16 @@ func _ready():
 
 func _physics_process(_delta):
   if _pressing:
-    if(G.state.PRESSED_ITEMS.size() > 0):
-      for item in G.state.PRESSED_ITEMS:
-        if(item.inputPriority < inputPriority):
-          resetInteraction()
-          return
-
-    if(G.state.DRAGGING_DATA and G.state.DRAGGING_DATA.draggable != draggable):
+    if(Gesture.shouldConcedePriority(self)):
       resetInteraction()
       return
 
+    # if(Gesture.currentDraggable() != draggable):
+    #   resetInteraction()
+    #   return
+
     if(not _accepted):
-      G.state.ACCEPTED_PRESSED_ITEMS.append(self)
+      Gesture.acceptTouchable(self)
       _accepted = true
 
     var now = Time.get_ticks_msec()
@@ -123,8 +121,7 @@ func onInput(_viewport, event, _shape_idx):
     _pressing = true
     _accepted = false
 
-    G.state.PRESSED_ITEMS.append(self)
-
+    Gesture.addPressedItem(self)
     return
 
 # ------------------------------------------------------------------------------
@@ -143,8 +140,7 @@ func resetInteraction():
   isPressing = false
   isLongPressing = false
 
-  G.state.PRESSED_ITEMS.erase(self)
-  G.state.ACCEPTED_PRESSED_ITEMS.erase(self)
+  Gesture.removePressedItem(self)
 
 # ------------------------------------------------------------------------------
 
@@ -155,13 +151,7 @@ func _unhandled_input(event):
     and !event.pressed:
 
     if(_dragging):
-      var droppable = __.Get('droppable', G.state.DRAGGING_DATA)
-      if(droppable):
-        droppable.emit_signal('received', G.state.DRAGGING_DATA, draggable.position)
-        emit_signal('droppedOnDroppable', G.state.DRAGGING_DATA, draggable.position)
-      else:
-        emit_signal('droppedIntheWild', draggable.position)
-      G.state.DRAGGING_DATA = null
+      Gesture.handleDraggingEnd()
     else:
       emit_signal('press')
 
@@ -178,15 +168,7 @@ func manualStartDragging():
   _dragging = true
   mouseStartPosition = get_global_mouse_position()
 
-  G.state.DRAGGING_DATA = {
-    draggable = draggable,
-    dragger = self
-  }
-
-  if(additionalDragData):
-    for key in additionalDragData.keys():
-      var value = additionalDragData[key]
-      __.Set(value, key, G.state.DRAGGING_DATA)
+  Gesture.startDragging(self, draggable, additionalDragData)
 
   screenStartPosition = draggable.position
 
