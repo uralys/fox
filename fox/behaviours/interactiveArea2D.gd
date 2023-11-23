@@ -29,7 +29,7 @@ var lastPress = Time.get_ticks_msec()
 
 # ------------------------------------------------------------------------------
 
-signal press
+signal pressed
 signal pressing
 signal longPress
 
@@ -153,7 +153,7 @@ func _unhandled_input(event):
     if(_dragging):
       Gesture.handleDraggingEnd()
     else:
-      emit_signal('press')
+      emit_signal('pressed')
 
     resetInteraction()
 

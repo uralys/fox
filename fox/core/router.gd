@@ -45,6 +45,9 @@ func _openScene(scene, options = {}):
     if(timerOnOpenScene):
       await timerOnOpenScene.timeout
 
+    if(currentScene.has_method('onLeave')):
+      currentScene.onLeave(options)
+
     $'/root/app/scene'.remove_child(currentScene)
     currentScene.queue_free()
 
