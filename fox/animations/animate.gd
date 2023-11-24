@@ -1,7 +1,6 @@
 # ------------------------------------------------------------------------------
 # Tweening curves:
 # https://github.com/wandomPewlin/godotTweeningCheatSheet
-# ------------------------------------------------------------------------------
 
 extends Node
 
@@ -14,24 +13,6 @@ class_name Animate
 const ANIMATION_DONE = 'animationDone'
 
 # ==============================================================================
-
-static func _scaleProperty(object):
-  if(object.get('scale') != null):
-    return 'scale'
-  elif(object.get('scale') != null):
-    return 'scale'
-  else:
-    prints('❌ scale/scale not found checked this object;', object)
-
-static func _positionProperty(object):
-  if(object.get('position') != null):
-    return 'position'
-  elif(object.get('position') != null):
-    return 'position'
-  else:
-    prints('❌ position/position not found checked this object;', object)
-
-# ------------------------------------------------------------------------------
 
 # mandatory options = {propertyPath, fromValue}
 static func from(object, _options):
@@ -51,33 +32,7 @@ static func from(object, _options):
 
 # mandatory options = {propertyPath, toValue}
 static func to(object, _options):
-  if(typeof(object) == TYPE_ARRAY):
-    var __onFinished = _options.get('onFinished')
-    var delayBetweenElements = __.GetOr(0, 'delayBetweenElements', _options)
-    _options.onFinished = null
-
-    while object.size() > 0:
-      var o = object.pop_front()
-
-      if(object.size() == 0):
-        _options.onFinished = __onFinished
-
-      _to(o, _options)
-      if(delayBetweenElements > 0):
-        await Wait.forSomeTime(o, delayBetweenElements).timeout
-
-  else:
-    return _to(object, _options)
-
-# ------------------------------------------------------------------------------
-
-static func _to(object, _options):
-  var options = _options.duplicate()
-  options.fromValue = __.Get(options.propertyPath, object)
-  if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
-
-  _animate(object, options)
-  # await object.options.signalToWait
+  return await _processAnimations(object, Animate._to, _options)
 
 # ------------------------------------------------------------------------------
 
@@ -139,13 +94,11 @@ static func hide(object:Variant, duration:float = 0.3, delay:float = 0):
 
 # maybe too specific to Lockey Land
 static func appear(object, delay = 0):
-  var scaleProperty = _scaleProperty(object)
-  var positionProperty = _positionProperty(object)
-  var initialScale = _getInitialValue(object, scaleProperty);
-  var aimY = object[positionProperty].y
+  var initialScale = _getInitialValue(object, object.scale);
+  var aimY = object.position.y
 
   object.modulate.a = 0
-  object[positionProperty].y += 30
+  object.position.y += 30
 
   if(not object.has_signal(ANIMATION_DONE)):
     object.add_user_signal(ANIMATION_DONE)
@@ -162,7 +115,7 @@ static func appear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = scaleProperty,
+    propertyPath = object.scale,
     fromValue = Vector2(0.01,0.01),
     toValue = initialScale,
     duration = 0.2,
@@ -172,9 +125,9 @@ static func appear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = positionProperty,
-    fromValue = object[positionProperty],
-    toValue = Vector2(object[positionProperty].x, aimY),
+    propertyPath = 'position',
+    fromValue = object.position,
+    toValue = Vector2(object.position.x, aimY),
     duration = 1.2,
     transition = Tween.TRANS_ELASTIC,
     easing = Tween.EASE_OUT,
@@ -190,9 +143,7 @@ static func appear(object, delay = 0):
 
 # maybe too specific to Lockey Land
 static func disappear(object, delay = 0):
-  var scaleProperty = _scaleProperty(object)
-  var positionProperty = _positionProperty(object)
-  var initialScale = _getInitialValue(object, scaleProperty);
+  var initialScale = _getInitialValue(object, object.scale);
 
   _animate(object, {
     propertyPath = 'modulate:a',
@@ -206,18 +157,18 @@ static func disappear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = scaleProperty,
+    propertyPath = object.scale,
     fromValue = initialScale,
     toValue = Vector2(0.01,0.01),
     delay = delay + 0.3,
     duration = 0.15,
     transition = Tween.TRANS_QUAD,
-    easing = Tween.EASE_IN
+  easing = Tween.EASE_IN
   })
 
   toAndBack(object, {
-    propertyPath = positionProperty,
-    toValue = object[positionProperty] + Vector2(0, 10),
+    propertyPath = 'position',
+    toValue = object.position + Vector2(0, 10),
     duration = 2,
     transition = Tween.TRANS_ELASTIC,
     delay = delay
@@ -227,7 +178,67 @@ static func disappear(object, delay = 0):
   if(object.has_method('onDisappear')):
     object.onDisappear()
 
+# ------------------------------------------------------------------------------
+
+static func zoomIn(object, _options = {}):
+  return await _processAnimations(object, Animate._zoomIn, _options)
+
+static func _zoomIn(object, _options = {}):
+  var duration = __.GetOr(0.5, 'duration', _options)
+  var fromScaleRatio = __.GetOr(0.9, 'fromScaleRatio', _options)
+
+  var aimedScale = object.scale
+  var startScale = object.scale * fromScaleRatio
+  object.scale = startScale
+
+  to(object, {
+    propertyPath = 'scale',
+    toValue = aimedScale,
+    duration = duration,
+    easing = Tween.EASE_OUT
+  })
+
+# ------------------------------------------------------------------------------
+
+static func bounce(object, duration = 0.25, upScale = 0.05):
+  var initialScale = object.scale;
+  return await _bounce(object, initialScale, upScale, duration)
+
 # ==============================================================================
+
+static func _processAnimations(object, callable: Callable, _options = {}):
+  if(typeof(_options) != TYPE_DICTIONARY):
+    G.log('❌ [b][color=pink] Animate options must be of TYPE_DICTIONARY[/color][/b] ');
+    G.log('[color=pink]found:[/color] ', {options=_options});
+    return null
+
+  if(typeof(object) == TYPE_ARRAY):
+    var __onFinished = _options.get('onFinished')
+    var delayBetweenElements = __.GetOr(0, 'delayBetweenElements', _options)
+    _options.onFinished = null
+
+    while object.size() > 0:
+      var o = object.pop_front()
+
+      if(object.size() == 0):
+        _options.onFinished = __onFinished
+
+      callable.call(o, _options)
+      if(delayBetweenElements > 0):
+        await Wait.forSomeTime(o, delayBetweenElements).timeout
+
+  else:
+    return callable.call(object, _options)
+
+# ------------------------------------------------------------------------------
+
+static func _to(object, _options):
+  var options = _options.duplicate()
+  options.fromValue = __.Get(options.propertyPath, object)
+  if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
+
+  _animate(object, options)
+  # await object.options.signalToWait
 
 static func _getInitialValue(object, property):
   var initialValue = object[property];
@@ -241,18 +252,11 @@ static func _getInitialValue(object, property):
 
 # ------------------------------------------------------------------------------
 
-static func bounce(object, duration = 0.25, upScale = 0.05):
-  var property = _scaleProperty(object)
-  var initialScale = object[property];
-  return await _bounce(object, initialScale, upScale, duration, property)
-
-# ------------------------------------------------------------------------------
-
-static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, property = "scale", times = 1):
+static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, times = 1):
   var duration = float(stepDuration)/2
 
   to(object, {
-    propertyPath = property,
+    propertyPath = 'scale',
     toValue = fromScale + Vector2(upScale, upScale),
     duration = duration
   })
@@ -260,7 +264,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
   await Wait.forSomeTime(object, duration).timeout
 
   to(object, {
-    propertyPath = property,
+    propertyPath = 'scale',
     toValue = fromScale,
     duration = duration
   })
@@ -268,7 +272,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, prop
   await Wait.forSomeTime(object, duration).timeout
 
   if(times > 1):
-    _bounce(object, fromScale, upScale, stepDuration, property, times - 1)
+    _bounce(object, fromScale, upScale, stepDuration, times - 1)
 
 # ------------------------------------------------------------------------------
 

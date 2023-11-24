@@ -16,7 +16,12 @@ static func Get(path, obj):
     return obj
 
   if(typeof(path) != TYPE_STRING):
-    prints('🔴 __.Get(path, obj): path must be of TYPE_STRING');
+    G.log('❌ [b][color=pink] __.Get(path, obj): path must be of TYPE_STRING[/color][/b] ');
+    return null
+
+  if(typeof(obj) != TYPE_DICTIONARY and typeof(obj) != TYPE_OBJECT):
+    G.log('❌ [b][color=pink] __.Get(path, obj): obj must be either a TYPE_OBJECT or a TYPE_DICTIONARY[/color][/b] ');
+    G.log('found: ', {obj=obj});
     return null
 
   # ---

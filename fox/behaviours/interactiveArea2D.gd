@@ -53,9 +53,9 @@ func _physics_process(_delta):
       resetInteraction()
       return
 
-    # if(Gesture.currentDraggable() != draggable):
-    #   resetInteraction()
-    #   return
+    if(Gesture.isDragging() and Gesture.currentDraggable() != draggable):
+      resetInteraction()
+      return
 
     if(not _accepted):
       Gesture.acceptTouchable(self)
@@ -150,6 +150,7 @@ func _unhandled_input(event):
     and event.button_index == MOUSE_BUTTON_LEFT \
     and !event.pressed:
 
+    G.log('touch up', {from=self.get_parent(), _dragging=_dragging});
     if(_dragging):
       Gesture.handleDraggingEnd()
     else:
