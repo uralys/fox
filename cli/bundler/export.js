@@ -83,7 +83,13 @@ const exportBundle = async (coreConfig, bundles) => {
 
   // ---------
 
-  const {bundleId, preset, presets, env} = await switchBundle(newVersion, bundles);
+  const bundleSettings = await switchBundle(newVersion, bundles);
+  if (!bundleSettings) {
+    console.log(chalk.red.bold('🔴 failed during bundle settings preparation.'));
+    return;
+  }
+
+  const {bundleId, preset, presets, env} = bundleSettings;
 
   // ---------
 
