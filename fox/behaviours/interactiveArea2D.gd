@@ -150,7 +150,6 @@ func _unhandled_input(event):
     and event.button_index == MOUSE_BUTTON_LEFT \
     and !event.pressed:
 
-    G.log('touch up', {from=self.get_parent(), _dragging=_dragging});
     if(_dragging):
       Gesture.handleDraggingEnd()
     else:
