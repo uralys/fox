@@ -161,7 +161,7 @@ func _unhandled_input(event):
 
 func manualStartDragging():
   if(not draggable):
-    G.log('[color=pink]You must set your draggable object before to use dragging.[/color]')
+    G.log('[color=pink]You must set your draggable object before to use dragging. Use prepareDraggable()[/color]')
     return
 
   _pressing = true
@@ -174,5 +174,22 @@ func manualStartDragging():
 
 # ------------------------------------------------------------------------------
 
+func prepareDraggable(_options):
+  draggable = __.Get('draggable', _options)
+
+  if(!draggable):
+    G.log('[color=pink]You must pass your draggable within the options: prepareDraggable({draggable=item})[/color]')
+    return
+
+  type = __.Get('type', _options)
+  parentReference = __.Get('parentReference', _options)
+  useBoundaries = __.Get('useBoundaries', _options)
+  useManualDragStart = __.GetOr(false, 'useManualDragStart', _options)
+
+# ------------------------------------------------------------------------------
+
 func resetDraggingPosition():
   screenStartPosition = draggable.position
+
+func resetDraggable():
+  draggable = null

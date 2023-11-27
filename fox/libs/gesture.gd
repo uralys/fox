@@ -64,8 +64,6 @@ func startDragging(dragArea, draggable, additionalDragData):
     draggable = draggable
   }
 
-  G.log('startDragging', state.DRAGGING_DATA);
-
   if(additionalDragData):
     for key in additionalDragData.keys():
       var value = additionalDragData[key]
@@ -114,13 +112,18 @@ func handleDraggingEnd():
 
 # ------------------------------------------------------------------------------
 
-func switchDraggingTo(newDraggable):
+func switchDraggingTo(newDraggable, parentReference = null):
   var droppable = currentDroppable()
   var dragArea = currentDragArea()
   dragArea.resetInteraction()
 
   var newDragArea = newDraggable.get_node('interactiveArea2D')
-  newDragArea.type = dragArea.type
+
+  newDragArea.prepareDraggable({
+    draggable = newDraggable,
+    type = dragArea.type,
+    parentReference = parentReference
+  })
 
   newDragArea.manualStartDragging()
 
