@@ -181,7 +181,7 @@ func prepareDraggable(_options):
     G.log('[color=pink]You must pass your draggable within the options: prepareDraggable({draggable=item})[/color]')
     return
 
-  type = __.Get('type', _options)
+  type = __.GetOr('default', 'type', _options)
   parentReference = __.Get('parentReference', _options)
   useBoundaries = __.Get('useBoundaries', _options)
   useManualDragStart = __.GetOr(false, 'useManualDragStart', _options)

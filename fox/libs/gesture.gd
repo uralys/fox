@@ -73,13 +73,14 @@ func startDragging(dragArea, draggable, additionalDragData):
 
 func verifyDroppableOnEnter(_droppable, acceptedType: String):
   var dragArea = currentDragArea()
+
   if(not dragArea):
     return
 
-  G.log('verifyDroppableOnEnter', dragArea, dragArea.get_parent(), dragArea.type, acceptedType);
   if(dragArea.type == acceptedType):
     state.DRAGGING_DATA.droppable = _droppable
     dragArea.emit_signal('foundDroppable', _droppable)
+
     _droppable.emit_signal('dropActived')
 
 # ------------------------------------------------------------------------------
@@ -89,7 +90,6 @@ func verifyDroppableOnExit(_droppable, acceptedType: String):
   if(not dragArea):
     return
 
-  G.log('verifyDroppableOnExit', dragArea, dragArea.get_parent(), dragArea.type, acceptedType);
   if(dragArea.type == acceptedType):
     state.DRAGGING_DATA.droppable = null
     dragArea.emit_signal('leftDroppable', _droppable)

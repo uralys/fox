@@ -180,8 +180,8 @@ static func disappear(object, delay = 0):
 
 # ------------------------------------------------------------------------------
 
-static func zoomIn(object, _options = {}):
-  return await _processAnimations(object, Animate._zoomIn, _options)
+static func zoomIn(objectOrArray, _options = {}):
+  return await _processAnimations(objectOrArray, Animate._zoomIn, _options)
 
 static func _zoomIn(object, _options = {}):
   var duration = __.GetOr(0.5, 'duration', _options)
@@ -206,21 +206,22 @@ static func bounce(object, duration = 0.25, upScale = 0.05):
 
 # ==============================================================================
 
-static func _processAnimations(object, callable: Callable, _options = {}):
+static func _processAnimations(objectOrArray, callable: Callable, _options = {}):
   if(typeof(_options) != TYPE_DICTIONARY):
     G.log('❌ [b][color=pink] Animate options must be of TYPE_DICTIONARY[/color][/b] ');
     G.log('[color=pink]found:[/color] ', {options=_options});
     return null
 
-  if(typeof(object) == TYPE_ARRAY):
+  if(typeof(objectOrArray) == TYPE_ARRAY):
+    var _array = objectOrArray
     var __onFinished = _options.get('onFinished')
     var delayBetweenElements = __.GetOr(0, 'delayBetweenElements', _options)
     _options.onFinished = null
 
-    while object.size() > 0:
-      var o = object.pop_front()
+    while _array.size() > 0:
+      var o = _array.pop_front()
 
-      if(object.size() == 0):
+      if(_array.size() == 0):
         _options.onFinished = __onFinished
 
       callable.call(o, _options)
@@ -228,7 +229,8 @@ static func _processAnimations(object, callable: Callable, _options = {}):
         await Wait.forSomeTime(o, delayBetweenElements).timeout
 
   else:
-    return callable.call(object, _options)
+    var _object = objectOrArray
+    return callable.call(_object, _options)
 
 # ------------------------------------------------------------------------------
 
