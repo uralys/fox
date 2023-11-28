@@ -10,7 +10,7 @@ var mouseStartPosition
 var screenStartPosition
 var useBoundaries ## usually the draggable itself to use its size
 
-@export var inputPriority: int = 1 # the lower the more priority
+@export var inputPriority: int = 0 # the lower the more priority
 @export var minDragTime: int = 20
 @export var minPressTime: int = 150
 @export var longPressTime: int = 500
