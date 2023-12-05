@@ -55,7 +55,7 @@ static func toAndBack(object, _options):
 
 # ------------------------------------------------------------------------------
 
-static func show(object, duration = 0.3, delay = 0, doNotHide = false):
+static func show(object, duration = 0.3, delay = 0.0, doNotHide = false):
   if(not object):
     prints('warning: trying to Animate.show a Nil object')
     return
@@ -69,9 +69,8 @@ static func show(object, duration = 0.3, delay = 0, doNotHide = false):
 
   object.visible = true
 
-  _animate(object, {
+  _to(object, {
     propertyPath = 'modulate:a',
-    fromValue = object.modulate.a,
     toValue = 1,
     duration = duration
   })
@@ -278,48 +277,29 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, time
 
 # ------------------------------------------------------------------------------
 
-static func _stoppedSwinging(object):
-  return object.get('swinging') != null and not object.swinging
-
-## mandatory options: {propertyPath, toValue}
-static func swing(object, _options):
+static func swing(object, _options = {}):
   var options = _options.duplicate()
+  var propertyPath = __.Get('propertyPath', options)
+  var duration = __.Get('duration', options)
+  var ratio = __.Get('ratio', options)
+  var transition = __.GetOr( Tween.TRANS_LINEAR, 'transition', options)
+  var easing = __.GetOr(Tween.EASE_OUT, 'ease', options)
 
-  if(_stoppedSwinging(object)):
-    return
+  var fromValue = __.Get(propertyPath, object)
+  var toValue = fromValue * ratio
+  # var toValue = __.Get('toValue', options)
 
-  # --------
-  # swing forth
 
-  options.fromValue = __.Get(options.propertyPath, object)
-  options.signalToWait = 'swing1Done'
+  G.log('swing', {fromValue=fromValue, toValue=toValue, ratio=ratio});
 
-  _animate(object, options)
-  await Signal(object, 'swing1Done')
+  var tween = object.create_tween()
+  tween.tween_property(object, propertyPath, toValue, duration).set_trans(transition).set_ease(easing).from(fromValue)
+  tween.tween_property(object, propertyPath, fromValue, duration).set_trans(transition).set_ease(easing)
 
-  if(_stoppedSwinging(object)):
-    return
+  await tween.finished
+  tween.kill()
 
-  # --------
-  # swing back
-
-  var currentToValue = options.toValue
-  var currentFromValue = options.fromValue
-  options.fromValue = currentToValue
-  options.toValue = currentFromValue
-  options.delay = 0
-  options.signalToWait = 'swing2Done'
-
-  _animate(object, options)
-  await Signal(object, 'swing2Done')
-
-  if(_stoppedSwinging(object)):
-    return
-
-  # --------
-  # loop
-
-  swing(object, _options)
+  swing(object, options)
 
 # ------------------------------------------------------------------------------
 
