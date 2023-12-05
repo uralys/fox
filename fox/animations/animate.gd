@@ -286,11 +286,7 @@ static func swing(object, _options = {}):
   var easing = __.GetOr(Tween.EASE_OUT, 'ease', options)
 
   var fromValue = __.Get(propertyPath, object)
-  var toValue = fromValue * ratio
-  # var toValue = __.Get('toValue', options)
-
-
-  G.log('swing', {fromValue=fromValue, toValue=toValue, ratio=ratio});
+  var toValue = fromValue * ratio if(ratio != null) else __.Get('toValue', options)
 
   var tween = object.create_tween()
   tween.tween_property(object, propertyPath, toValue, duration).set_trans(transition).set_ease(easing).from(fromValue)
