@@ -20,8 +20,8 @@ var IS_FOX_RUNNER = false
 
 # ------------------------------------------------------------------------------
 
-func W(): return DisplayServer.window_get_size()[0]
-func H(): return DisplayServer.window_get_size()[1]
+var W
+var H
 
 # ------------------------------------------------------------------------------
 

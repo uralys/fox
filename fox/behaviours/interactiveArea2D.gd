@@ -99,9 +99,9 @@ func _physics_process(_delta):
         var draggableWidth = useBoundaries.get_rect().size.x * draggable.scale.x
         var draggableHeight = useBoundaries.get_rect().size.y * draggable.scale.y
 
-        var xMin = G.W() - draggableWidth/2
+        var xMin = G.W - draggableWidth/2
         var xMax = draggableWidth/2
-        var yMin = G.H() - draggableHeight/2
+        var yMin = G.H - draggableHeight/2
         var yMax = draggableHeight/2
 
         newPosition.x = min(max(newPosition.x, xMin), xMax)

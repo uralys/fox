@@ -29,7 +29,7 @@ func removePressedItem(touchable):
 func shouldConcedePriority(touchable):
   if(state.PRESSED_ITEMS.size() > 0):
     for item in state.PRESSED_ITEMS:
-      if(item.inputPriority < touchable.inputPriority):
+      if(__.GetOr(10000, 'inputPriority', item) < touchable.inputPriority):
         return true
 
   return false
