@@ -16,6 +16,11 @@ const updateOptions = (preset, key, value) => {
   console.log(`  - ${chalk.bold(key)}=${chalk.yellow.italic(value)}`);
 };
 
+const updateMain = (preset, key, value) => {
+  preset[key] = value;
+  console.log(`  - ${chalk.bold(key)}=${chalk.yellow.italic(value)}`);
+};
+
 // -----------------------------------------------------------------------------
 
 const updateIcons = (preset, bundleId) => {
@@ -33,7 +38,11 @@ const updateIcons = (preset, bundleId) => {
 
 // -----------------------------------------------------------------------------
 
-const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
+const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bundleName, newVersion) => {
+  console.log(`main:`);
+  updateMain(preset, 'export_path', `_build/android/${bundleName}.apk`);
+  console.log(`options:`);
+
   const _applicationName = `${applicationName}${env === 'debug' ? '(debug)' : ''}`;
   updateOptions(preset, 'package/name', _applicationName);
 
@@ -55,12 +64,15 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, new
 
 // -----------------------------------------------------------------------------
 
-const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
+const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleName, newVersion) => {
+  console.log(`main:`);
+  updateMain(preset, 'export_path', `_build/iOS/${bundleName}.ipa`);
+  console.log(`options:`);
+
   updateOptions(preset, 'application/name', applicationName);
 
-  const packageUIDKey = 'application/identifier';
-  const packageUID = (bundle[IOS] && bundle[IOS][packageUIDKey]) || bundle.uid;
-  updateOptions(preset, packageUIDKey, packageUID);
+  const packageUID = (bundle[IOS] && bundle[IOS]['application/bundle_identifier']) || bundle.uid;
+  updateOptions(preset, 'application/bundle_identifier', packageUID);
 
   if (newVersion) {
     updateOptions(preset, 'application/short_version', newVersion);
@@ -73,11 +85,14 @@ const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, newVers
 // -----------------------------------------------------------------------------
 
 const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName, newVersion) => {
+  console.log(`main:`);
+  updateMain(preset, 'export_path', `_build/macOS/${bundleName}`);
+  console.log(`options:`);
+
   updateOptions(preset, 'application/name', applicationName);
 
-  const packageUIDKey = 'application/identifier';
-  const packageUID = (bundle[IOS] && bundle[IOS][packageUIDKey]) || bundle.uid;
-  updateOptions(preset, packageUIDKey, packageUID);
+  const packageUID = (bundle[IOS] && bundle[IOS]['application/bundle_identifier']) || bundle.uid;
+  updateOptions(preset, 'application/bundle_identifier', packageUID);
 
   if (newVersion) {
     updateOptions(preset, 'application/short_version', newVersion);
@@ -98,15 +113,17 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => 
     ? `${coreConfig.applicationName}: ${subtitle}`
     : coreConfig.applicationName;
 
+  const bundleName = `${bundleId}${env === 'debug' ? '-debug' : '-production'}`;
+
   switch (platform) {
     case ANDROID:
-      updateAndroidPreset(env, preset, bundle, bundleId, applicationName, newVersion);
+      updateAndroidPreset(env, preset, bundle, bundleId, applicationName, bundleName, newVersion);
       break;
     case IOS:
-      updateIOSPreset(env, preset, bundle, bundleId, applicationName, newVersion);
+      updateIOSPreset(env, preset, bundle, bundleId, applicationName, bundleName, newVersion);
       break;
     case MAC_OSX:
-      updateMacOSPreset(env, preset, bundle, bundleId, applicationName, newVersion);
+      updateMacOSPreset(env, preset, bundle, bundleId, applicationName, bundleName, newVersion);
       break;
     default:
       console.log(`\n> platform ${platform} has no preset specificity.`);
@@ -117,7 +134,8 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => 
   console.log('✅ preset successfully updated.');
 
   return {
-    applicationName
+    applicationName,
+    bundleName
   };
 };
 

@@ -48,6 +48,20 @@ const verifyBuildFolder = () => {
 
 // -----------------------------------------------------------------------------
 
+const unzipIPA = (bundleName) => {
+  console.log(`\n⚙️  Unzipping ${bundleName}.app...`);
+
+  const absolutePath = `${path.resolve(process.cwd())}/_build/iOS`
+  shell.exec(`tar -xf ${absolutePath}/${bundleName}.ipa -C _build/iOS`)
+  shell.exec(`mv ${absolutePath}/Payload/${bundleName}.app ${absolutePath}/${bundleName}.app`)
+  shell.rm('-rf', `${absolutePath}/Payload`)
+
+  console.log(`\n${chalk.blue.bold(`_build/iOS/${bundleName}.app`)} is ready for ${chalk.bold('ios-deploy')}`);
+  console.log(`ios-deploy --debug --bundle _build/iOS/${bundleName}.app`);
+};
+
+// -----------------------------------------------------------------------------
+
 const exportBundle = async (coreConfig, bundles) => {
   console.log(`⚙️  exporting a ${chalk.blue.bold('bundle')}...`);
 
@@ -99,7 +113,7 @@ const exportBundle = async (coreConfig, bundles) => {
 
   console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
 
-  const {applicationName} = updatePreset(
+  const {applicationName, bundleName} = updatePreset(
     bundleId,
     env,
     coreConfig,
@@ -131,11 +145,16 @@ const exportBundle = async (coreConfig, bundles) => {
     console.log(`✅ Exported ${bundleInfo} successfully!`);
 
     if (preset.platform === 'iOS') {
-      console.log(`The ${chalk.blue.bold('.xcodeproj')} is ready on _build/ios`);
+      if(env === 'debug') {
+        unzipIPA(bundleName);
+      }
+
+      console.log(`\n${chalk.blue.bold(`_build/iOS/${bundleName}.xcodeproj`)} is ready to be used with XCode`);
     }
 
     if (preset.platform === 'Android') {
-      console.log(`The ${chalk.blue.bold('build')} is ready on _build/android`);
+      console.log(`\n${chalk.blue.bold(`_build/android/${bundleName}.apk`)} is ready`);
+      console.log(`adb -d install -r _build/android/${bundleName}.apk`);
     }
   });
 };

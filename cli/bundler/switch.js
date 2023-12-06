@@ -106,6 +106,8 @@ const switchBundle = async (bundleVersion, bundles) => {
     return;
   }
 
+  console.log(`⚙️  env: ${env}`);
+
   // ---------
 
   let override;
