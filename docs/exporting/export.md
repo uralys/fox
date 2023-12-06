@@ -43,6 +43,7 @@ example:
 name="Android Debug"
 platform="Android"
 custom_features="env:debug"
+include_filter="override.cfg"
 ```
 
 Now, when exporting, it will apply Godot CLI option `--export`, `--export-debug`, or `--export-pack`.
