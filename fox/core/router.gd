@@ -55,6 +55,9 @@ func _openScene(scene, options = {}):
   prints('[🦊 Router]>', previousSceneName, '>', str(currentScene.name))
   $'/root/app/scene'.add_child(currentScene)
 
+  if(__.Get('onOpen',options) != null):
+    options.onOpen.call()
+
   if(currentScene.has_method('onOpen')):
     currentScene.onOpen(options)
 
