@@ -5,6 +5,7 @@ extends Node
 # ------------------------------------------------------------------------------
 
 var ___node
+var _verbose = true
 
 # ------------------------------------------------------------------------------
 
@@ -27,8 +28,8 @@ func _ready():
 
 # ------------------------------------------------------------------------------
 
-func useSettings(oggFiles, musicOn = true, soundsOn = true):
-  OGG = oggFiles
+func useSettings(musicOn = true, soundsOn = true):
+  OGG = self.oggFiles
   MUSIC_ON = musicOn
   SOUNDS_ON = soundsOn
 
@@ -41,6 +42,7 @@ func playMusic(musicName, delay = 0):
 # ------------------------------------------------------------------------------
 
 func play(soundName, delay = 0, volume = 0):
+  G.log({soundName=soundName});
   if(SOUNDS_ON):
     _play(soundName, delay, volume)
 
@@ -83,16 +85,16 @@ func _play(soundName, delay = 0, volume = 0):
   if(delay > 0):
     await Wait.forSomeTime(___node, delay).timeout
 
-  if(DEBUG.SOUNDS):prints('🎵 playing', soundName, 'with delay', delay)
+  if(_verbose):prints('[Sound] playing', soundName, 'with delay', delay)
 
   var assetPath =__.Get(soundName, OGG)
   if(assetPath):
     if(DEBUG.SOUND_OFF):
-      prints('🎵 >> debug sound unchecked [', soundName, ']');
+      prints('🎵 >> DEBUG.SOUND_OFF [', soundName, ']');
     else:
       return _playStream(assetPath, volume)
   else:
-    if(DEBUG.SOUNDS):prints('🎵 ❌ sound [', soundName, '] has no super.ogg');
+    if(_verbose):prints('[Sound] ❌ sound [', soundName, '] has no super.ogg');
 
 # ------------------------------------------------------------------------------
 

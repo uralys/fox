@@ -53,6 +53,7 @@ const unzipIPA = (bundleName) => {
 
   const absolutePath = `${path.resolve(process.cwd())}/_build/iOS`
   shell.exec(`tar -xf ${absolutePath}/${bundleName}.ipa -C _build/iOS`)
+  shell.rm('-rf', `${absolutePath}/${bundleName}.app`)
   shell.exec(`mv ${absolutePath}/Payload/${bundleName}.app ${absolutePath}/${bundleName}.app`)
   shell.rm('-rf', `${absolutePath}/Payload`)
 

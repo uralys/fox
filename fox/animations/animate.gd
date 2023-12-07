@@ -235,7 +235,7 @@ static func _processAnimations(objectOrArray, callable: Callable, _options = {})
 
 static func _to(object, _options):
   var options = _options.duplicate()
-  options.fromValue = __.Get(options.propertyPath, object)
+  options.fromValue = __.GetOr(__.Get(options.propertyPath, object), 'fromValue', options)
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
   _animate(object, options)
@@ -314,6 +314,10 @@ static func _animate(object, options):
 
   var propertyPath = options.propertyPath
   var toValue = options.get('toValue')
+  var fromValue = options.get('fromValue')
+
+  if(fromValue != null):
+    object.set_indexed(propertyPath, fromValue)
 
   var delay = __.GetOr(0, 'delay', options)
   var duration = __.GetOr(0.75, 'duration', options)
