@@ -66,4 +66,4 @@ func recordScreenDimensions():
   var screenReference = $/root/app/hud/screenReference
   G.W = screenReference.get_rect().size.x
   G.H = screenReference.get_rect().size.y
-  G.log('recordScreenDimensions', G.W, G.H);
+  G.SCREEN_CENTER = Vector2(G.W /2.0, G.H /2.0)

@@ -35,27 +35,47 @@ Leave it as an empty object for now, just know you can fill it to override the [
 
 ### 4 - Declare your main Scene
 
-Create a `src` folder and Create a new scene with Godot Editor, you can name it `main.tscn`.
+Create a `src` folder and Create a new scene with Godot Editor, you can name it `app.tscn`.
 
-Then add attach a `main.gd` script to this scene.
+Then add attach a `app.gd` script to this scene.
 
 You can remove the default code and replace with:
 
 ```gdscript
-extends 'res://fox/core/main.gd'
+extends 'res://fox/core/app.gd'
 
 func _ready():
   super._ready()
   print(G.BUNDLE_ID + ' is running!')
 ```
 
-Finally, right click on your `main.tscn` to `Set as Main Scene`
+#### set as main scene
+
+Finally, right click on your `app.tscn` to `Set as Main Scene`
 
 Or edit manually your `project.godot` to declare:
 
 ```ini
 [application]
-run/main_scene="res://src/main.tscn"
+run/main_scene="res://src/app.tscn"
+```
+
+#### create mandatory nodes
+
+You must setup a few nodes in your main scene:
+
+by default:
+
+- `app` should be a `Node2D`
+- `app/scene` should also be a `Node2D`
+- `app/hud` should be a `CanvasLayer`
+
+To change these defaults, edit the `fox/core` "extends XXX"
+
+```sh
+app
+├── scene
+└── hud
 ```
 
 ### 4 - Declare Fox default config
@@ -96,8 +116,8 @@ At this point, you should have something like this:
   ├── icon.svg
   ├── project.godot
   └── src
-      ├── main.gd
-      └── main.tscn
+      ├── app.gd
+      └── app.tscn
 ```
 
 You can have a look at your startup app:

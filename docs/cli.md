@@ -32,10 +32,14 @@ You can now execute fox commands from your terminal:
 fox
 ```
 
-You can pass parameters to Godot by using them directly from the command line:
+You can pass parameters to Godot by using them directly from the command line.
+
+See all available parameters on [Godot CLI Reference](https://docs.godotengine.org/en/stable/tutorials/editor/command_line_tutorial.html#command-line-reference)
+
+Example:
 
 ```sh
-fox run:game --headless
+fox run:game --headless --debug-collisions
 ```
 
 ## usage
