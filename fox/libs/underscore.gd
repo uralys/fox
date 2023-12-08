@@ -51,7 +51,15 @@ static func Set(value, path, obj):
   if(not path):
     return obj
 
-  obj.set_indexed(path, value)
+  if(typeof(obj) == TYPE_OBJECT):
+    obj.set_indexed(path, value)
+  else:
+    if '.' in path:
+      var fields = Array(path.split('.'))
+      var first = fields.pop_front()
+      Set(value, ".".join(fields), obj[first])
+    else:
+      obj[path] = value
 
 # ------------------------------------------------------------------------------
 
