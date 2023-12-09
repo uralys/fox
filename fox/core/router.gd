@@ -52,7 +52,7 @@ func _openScene(scene, options = {}):
     currentScene.queue_free()
 
   currentScene = scene.instantiate()
-  prints('[🦊 Router]>', previousSceneName, '>', str(currentScene.name))
+  prints('[🦊 Router]> leaving', previousSceneName, '> ---------')
   $'/root/app/scene'.add_child(currentScene)
 
   if(__.Get('onOpen',options) != null):
@@ -60,6 +60,7 @@ func _openScene(scene, options = {}):
 
   if(currentScene.has_method('onOpen')):
     currentScene.onOpen(options)
+  prints('[🦊 Router]> ---------- entering', str(currentScene.name))
 
 # ------------------------------------------------------------------------------
 

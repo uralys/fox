@@ -22,7 +22,6 @@ const STEP_DURATION = 0.75
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-  prints('-------------------------------')
   prints('> splashScreen');
   prints('-------------------------------')
   var appearDuration = 0.4

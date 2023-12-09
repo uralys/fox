@@ -21,17 +21,14 @@ var BUTTON_PRESS = "onButtonPress"
 
 # ------------------------------------------------------------------------------
 
-func _ready():
-  ___node = Node.new()
-  ___node.process_mode = PROCESS_MODE_ALWAYS
-  $'/root/app'.add_child(___node)
-
-# ------------------------------------------------------------------------------
-
-func useSettings(musicOn = true, soundsOn = true):
+func init(musicOn = true, soundsOn = true):
   OGG = self.oggFiles
   MUSIC_ON = musicOn
   SOUNDS_ON = soundsOn
+
+  ___node = Node.new()
+  ___node.process_mode = PROCESS_MODE_ALWAYS
+  $'/root/app'.add_child(___node)
 
 # ------------------------------------------------------------------------------
 
@@ -42,7 +39,6 @@ func playMusic(musicName, delay = 0):
 # ------------------------------------------------------------------------------
 
 func play(soundName, delay = 0, volume = 0):
-  G.log({soundName=soundName});
   if(SOUNDS_ON):
     _play(soundName, delay, volume)
 
