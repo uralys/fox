@@ -21,7 +21,6 @@ var useBoundaries ## usually the draggable itself to use its size
 
 var _dragging = false
 var _pressing = false
-var _accepted = false
 
 var isPressing = false
 var isLongPressing = false
@@ -57,10 +56,6 @@ func _physics_process(_delta):
       resetInteraction()
       return
 
-    if(not _accepted):
-      Gesture.acceptTouchable(self)
-      _accepted = true
-
     var now = Time.get_ticks_msec()
     var elapsedTime = now - lastPress
     var mousePosition = get_global_mouse_position()
@@ -76,20 +71,29 @@ func _physics_process(_delta):
       and elapsedTime > minDragTime):
       _startDragging()
 
-    if(not isPressing and elapsedTime > minPressTime):
-      emit_signal('pressing')
-      isPressing = true
+    if(not _dragging and not isPressing and elapsedTime > minPressTime):
+      var _accepted = Gesture.acceptTouchable(self)
+      if(_accepted):
+        isPressing = true
+        emit_signal('pressing')
+      else:
+        resetInteraction()
 
-    if(not isLongPressing and elapsedTime > longPressTime):
-      isLongPressing = true
-      emit_signal('longPress')
+    if(not _dragging and not isLongPressing and elapsedTime > longPressTime):
+      var _accepted = Gesture.acceptTouchable(self)
+      if(_accepted):
+        isLongPressing = true
+        emit_signal('longPress')
 
-      if(draggable \
-        and not _dragging
-        and minMouseDragTresholdReached \
-        and dragAfterLongPress \
-        and not useManualDragStart):
-        _startDragging()
+        if(draggable \
+          and minMouseDragTresholdReached \
+          and dragAfterLongPress \
+          and not useManualDragStart):
+          _startDragging()
+
+      else:
+        resetInteraction()
+
 
     if(_dragging):
       var zoom = parentReference.scale.x if parentReference else 1
@@ -119,9 +123,19 @@ func onInput(_viewport, event, _shape_idx):
     lastPress = Time.get_ticks_msec()
     mouseStartPosition = get_global_mouse_position()
     _pressing = true
-    _accepted = false
 
-    Gesture.addPressedItem(self)
+    var globalPosition = get_parent().global_position
+    var touchDistance = (mouseStartPosition - globalPosition).length()
+
+    var pressEvent = {
+      zIndex = get_parent().z_index,
+      touchable = self,
+      from = get_parent(),
+      touchDistance = touchDistance,
+      mouseStartPosition = mouseStartPosition
+    }
+
+    Gesture.addPressedItem(pressEvent)
     return
 
 # ------------------------------------------------------------------------------
@@ -135,7 +149,6 @@ func _startDragging():
 func resetInteraction():
   _dragging = false
   _pressing = false
-  _accepted = false
 
   isPressing = false
   isLongPressing = false
@@ -153,7 +166,9 @@ func _unhandled_input(event):
     if(_dragging):
       Gesture.handleDraggingEnd()
     else:
-      emit_signal('pressed')
+      var _accepted = Gesture.acceptTouchable(self)
+      if(_accepted):
+        emit_signal('pressed')
 
     resetInteraction()
 

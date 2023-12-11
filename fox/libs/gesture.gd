@@ -9,27 +9,47 @@ var state = {
   draggable = null,
   droppable = null,
   DRAGGING_DATA = null,
-  PRESSED_ITEMS = [],
-  ACCEPTED_PRESSED_ITEMS = [],
+  PRESS_EVENTS = []
 }
 
 # ------------------------------------------------------------------------------
 
-func addPressedItem(touchable):
-  state.PRESSED_ITEMS.append(touchable)
+func findPressEvent(touchable):
+  var pressEvents = state.PRESS_EVENTS.filter(func(_event):
+    return _event.touchable == touchable
+  )
+
+  if(pressEvents.size() > 0):
+    return pressEvents[0]
+
+# ------------------------------------------------------------------------------
+
+func addPressedItem(pressEvent):
+  state.PRESS_EVENTS.append(pressEvent)
+  state.PRESS_EVENTS.sort_custom(func(evA, evB):
+    if(evA.zIndex > evA.zIndex): return true
+    return evA.touchDistance < evB.touchDistance
+  )
 
 # ------------------------------------------------------------------------------
 
 func removePressedItem(touchable):
-  state.PRESSED_ITEMS.erase(touchable)
-  state.ACCEPTED_PRESSED_ITEMS.erase(touchable)
+  # another touchable has already claimed acceptation
+  if(state.PRESS_EVENTS.size() == 0):
+    return
+
+  var pressEvent = findPressEvent(touchable)
+
+  if(pressEvent):
+    state.PRESS_EVENTS.erase(pressEvent)
 
 # ------------------------------------------------------------------------------
 
 func shouldConcedePriority(touchable):
-  if(state.PRESSED_ITEMS.size() > 0):
-    for item in state.PRESSED_ITEMS:
-      if(__.GetOr(10000, 'inputPriority', item) < touchable.inputPriority):
+  if(state.PRESS_EVENTS.size() > 0):
+    for pressEvent in state.PRESS_EVENTS:
+      var priority = __.GetOr(10000, 'touchable.inputPriority', pressEvent)
+      if(priority < touchable.inputPriority):
         return true
 
   return false
@@ -37,7 +57,18 @@ func shouldConcedePriority(touchable):
 # ------------------------------------------------------------------------------
 
 func acceptTouchable(touchable):
-  state.ACCEPTED_PRESSED_ITEMS.append(touchable)
+  # another touchable has already been accepted
+  if(state.PRESS_EVENTS.size() == 0):
+    return false
+
+  # PRESS_EVENTS are sorted as soon as they are added during addPressedItem
+  var isAccepted = state.PRESS_EVENTS[0].touchable == touchable
+
+  if(isAccepted):
+    state.PRESS_EVENTS = [state.PRESS_EVENTS[0]]
+    return true
+
+  return false
 
 # ------------------------------------------------------------------------------
 
