@@ -31,7 +31,7 @@ func _ready():
   prints('> splashScreen');
   prints('-------------------------------')
   var appearDuration = 1
-  var appearDelay = 1.5
+  var appearDelay = 0.2
 
   letters.hide()
   blur.material.set_shader_parameter('blur_amount', 0)
