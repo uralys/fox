@@ -2,7 +2,7 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-const PRODUCTION = 'production'
+const RELEASE = 'release'
 const DEBUG = 'debug'
 
 # ------------------------------------------------------------------------------
@@ -27,7 +27,7 @@ var SCREEN_CENTER
 # ------------------------------------------------------------------------------
 
 func isRunningOnProduction():
-  return ENV == PRODUCTION and not IS_FOX_RUNNER
+  return ENV == RELEASE and not IS_FOX_RUNNER
 
 # ------------------------------------------------------------------------------
 

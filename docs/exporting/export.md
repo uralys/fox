@@ -33,7 +33,7 @@ export_path=_build/android/YourGame.apk
 
 ## define you `env`
 
-Define if your preset is for `production`, `debug`, or `pck` by setting it a `custom_features`.
+Define if your preset is for `release`, `debug`, or `pack` by setting it a `custom_features`.
 
 example:
 

@@ -1,7 +1,7 @@
 # 🔋 experimental NodeJS CLI
 
 - to watch your files and allow to `live reload` your game.
-- to `export` your debug and production bundles.
+- to `export` your debug and release bundles.
 - to `generate` your release icons and screenshots.
 
 <img title="exporting-illustration" height="270px"  src="../assets/docs/cli-export.png"/>

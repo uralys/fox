@@ -50,7 +50,7 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bun
   const packageUID = (bundle[ANDROID] && bundle[ANDROID][packageUIDKey]) || bundle.uid;
   updateOptions(preset, packageUIDKey, packageUID);
 
-  if (env === 'production' && bundle[ANDROID]['keystore/release_user']) {
+  if (env === 'release' && bundle[ANDROID]['keystore/release_user']) {
     updateOptions(preset, 'keystore/release_user', bundle[ANDROID]['keystore/release_user']);
   }
 
@@ -113,7 +113,7 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, newVersion) => 
     ? `${coreConfig.applicationName}: ${subtitle}`
     : coreConfig.applicationName;
 
-  const bundleName = `${bundleId}${env === 'debug' ? '-debug' : '-production'}`;
+  const bundleName = `${bundleId}${env === 'debug' ? '-debug' : ''}`;
 
   switch (platform) {
     case ANDROID:

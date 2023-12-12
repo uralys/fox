@@ -4,21 +4,14 @@
 
 get latest version from <https://developer.apple.com/download/all/>
 
-## cli tools
-
-```sh
-> xcode-select --install
-```
-
 ## build the xcode project
 
 ```sh
-/Applications/Apps/Godot.app/Contents/MacOS/Godot --export "iOS Production" --headless
+fox export
 ```
 
-The build will end with an error while creating the `.ipa`.
-
-So the `.ipa` will be created, signed and uploaded using XCode
+- Select your iOS preset
+- the `.ipa` will be created, you'll be able to use it with XCode
 
 ## added auto signing option
 

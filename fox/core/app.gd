@@ -33,15 +33,15 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func checkEnv():
-  if(G.ENV != 'production'):
+  if(G.ENV != 'release'):
     prints('⚠️👾 ENV='+G.ENV)
 
   for cliOptions in OS.get_cmdline_args():
     if(cliOptions == 'local-fox-runner'):
       G.IS_FOX_RUNNER = true
 
-  if(G.ENV == G.PRODUCTION and G.IS_FOX_RUNNER):
-    prints('⚠️👾 Started with Fox and production settings.')
+  if(G.ENV == G.RELEASE and G.IS_FOX_RUNNER):
+    prints('⚠️👾 Started with Fox and release settings.')
 
 # ------------------------------------------------------------------------------
 

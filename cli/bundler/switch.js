@@ -14,7 +14,7 @@ import toVersionNumber from './version-number.js';
 
 const PRESETS_CFG = 'export_presets.cfg';
 const OVERRIDE_CFG = 'override.cfg';
-const ENV = ['debug', 'production', 'pck'];
+const ENV = ['debug', 'release', 'pack'];
 
 // -----------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ const extractEnv = (preset) => {
   if (!_env) {
     console.warn(`\n🔴 env:${chalk.red('export_presets.cfg must be edited')}`);
     console.warn(`Missing 'env' in custom_features: "${preset.custom_features}"`);
-    console.warn(`add "env:debug", "env:production" or "env:pck" within the ${chalk.blueBright('custom_features')} list`);
+    console.warn(`add "env:debug", "env:release" or "env:pack" within the ${chalk.blueBright('custom_features')} list`);
     return;
   }
 
