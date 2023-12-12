@@ -1,7 +1,8 @@
-[gd_scene load_steps=10 format=3 uid="uid://cjn6axsnftr01"]
+[gd_scene load_steps=14 format=3 uid="uid://cjn6axsnftr01"]
 
 [ext_resource type="Texture2D" uid="uid://d3ricfc70iv3w" path="res://assets/sprites/splash/u.png" id="1"]
 [ext_resource type="Script" path="res://fox/animations/splash-animation.gd" id="2"]
+[ext_resource type="Texture2D" uid="uid://h0rbv0rx6k28" path="res://assets/sprites/splash/uralys-banner.webp" id="2_g3k34"]
 [ext_resource type="Texture2D" uid="uid://bos3q5os8nrcu" path="res://assets/sprites/splash/l.png" id="4"]
 [ext_resource type="Texture2D" uid="uid://cp4g7lrjk5jdw" path="res://assets/sprites/splash/y.png" id="5"]
 [ext_resource type="Texture2D" uid="uid://0al8exyymgk8" path="res://assets/sprites/splash/dot.png" id="6"]
@@ -9,18 +10,206 @@
 [ext_resource type="Texture2D" uid="uid://datpvdietwi68" path="res://assets/sprites/splash/a.png" id="8"]
 [ext_resource type="Texture2D" uid="uid://dv5xl04lkmwnq" path="res://assets/sprites/splash/r.png" id="9"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rqpcl"]
-bg_color = Color(0.0980392, 0.0980392, 0.0980392, 1)
+[sub_resource type="Gradient" id="Gradient_xy75g"]
+offsets = PackedFloat32Array(0.0876623, 0.262987, 0.597403)
+colors = PackedColorArray(0.627451, 0.27451, 0.278431, 1, 0.113172, 0.140508, 0.209619, 1, 0.0208125, 0.051448, 0.0946116, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_enrcg"]
+gradient = SubResource("Gradient_xy75g")
+fill = 1
+fill_from = Vector2(0.509174, 0.577982)
+fill_to = Vector2(0.922018, 0.0894495)
+
+[sub_resource type="Shader" id="Shader_qwo4n"]
+code = "shader_type canvas_item;
+
+uniform sampler2D SCREEN_TEXTURE : hint_screen_texture, filter_linear_mipmap;
+// Xor's gausian blur function
+// Link: https://xorshaders.weebly.com/tutorials/blur-shaders-5-part-2
+// Defaults from: https://www.shadertoy.com/view/Xltfzj
+//
+// BLUR BLURRINESS (Default 8.0)
+// BLUR ITERATIONS (Default 16.0 - More is better but slower)
+// BLUR QUALITY (Default 4.0 - More is better but slower)
+//
+// Desc.: Don't have the best performance but will run on almost
+// anything, although, if developing for mobile, is better to use
+// 'texture_nodevgaussian(...) instead'.
+vec4 texture_xorgaussian(sampler2D tex, vec2 uv, vec2 pixel_size, float blurriness, int iterations, int quality){
+	float pi = 6.28;
+
+	vec2 radius = blurriness / (1.0 / pixel_size).xy;
+	vec4 blurred_tex = texture(tex, uv);
+
+	for(float d = 0.0; d < pi; d += pi / float(iterations)){
+		for( float i = 1.0 / float(quality); i <= 1.0; i += 1.0 / float(quality) ){
+			vec2 directions = uv + vec2(cos(d), sin(d)) * radius * i;
+			blurred_tex += texture(tex, directions);
+		}
+	}
+	blurred_tex /= float(quality) * float(iterations) + 1.0;
+
+	return blurred_tex;
+}
+
+// Experience-Monks' fast gaussian blur function
+// Link: https://github.com/Experience-Monks/glsl-fast-gaussian-blur/
+//
+// BLUR ITERATIONS (Default 16.0 - More is better but slower)
+// BLUR DIRECTION (Direction in which the blur is apllied, use vec2(1, 0) for first pass and vec2(0, 1) for second pass)
+//
+// Desc.: ACTUALLY PRETTY SLOW but still pretty good for custom cinematic
+// bloom effects, since this needs render 2 passes
+vec4 texture_monksgaussian_multipass(sampler2D tex, vec2 uv, vec2 pixel_size, int iterations, vec2 direction){
+	vec4 blurred_tex = vec4(0.0);
+	vec2 resolution = 1.0 / pixel_size;
+
+	for (int i=0; i < iterations; i++){
+		float size = float(iterations - i);
+
+		vec2 off1 = vec2(1.3846153846) * (direction * size);
+		vec2 off2 = vec2(3.2307692308) * (direction * size);
+
+		blurred_tex += texture(tex, uv) * 0.2270270270;
+		blurred_tex += texture(tex, uv + (off1 / resolution)) * 0.3162162162;
+		blurred_tex += texture(tex, uv - (off1 / resolution)) * 0.3162162162;
+		blurred_tex += texture(tex, uv + (off2 / resolution)) * 0.0702702703;
+		blurred_tex += texture(tex, uv - (off2 / resolution)) * 0.0702702703;
+	}
+
+	blurred_tex /= float(iterations) + 1.0;
+
+	return blurred_tex;
+}
+
+// u/_NoDev_'s gaussian blur function
+// Discussion Link: https://www.reddit.com/r/godot/comments/klgfo9/help_with_shaders_in_gles2/
+// Code Link: https://postimg.cc/7JDJw80d
+//
+// BLUR BLURRINESS (Default 8.0 - More is better but slower)
+// BLUR RADIUS (Default 1.5)
+// BLUR DIRECTION (Direction in which the blur is apllied, use vec2(1, 0) for first pass and vec2(0, 1) for second pass)
+//
+// Desc.: Really fast and GOOD FOR MOST CASES, but might NOT RUN IN THE WEB!
+// use 'texture_xorgaussian' instead if you found any issues.
+vec4 texture_nodevgaussian_singlepass(sampler2D tex, vec2 uv, vec2 pixel_size, float blurriness, float radius){
+	float pi = 3.14;
+	float n = 0.0015;
+
+	vec4 blurred_tex = vec4(0);
+
+	float weight;
+	for (float i = -blurriness; i <= blurriness; i++){
+		float d = i / pi;
+		vec2 anchor = vec2(cos(d), sin(d)) * radius * i;
+		vec2 directions = uv + pixel_size * anchor;
+		blurred_tex += texture(tex, directions) * n;
+		if (i <= 0.0) {n += 0.0015; }
+		if (i > 0.0) {n -= 0.0015; }
+		weight += n;
+	}
+
+	float norm = 1.0 / weight;
+	blurred_tex *= norm;
+	return blurred_tex;
+}
+vec4 texture_nodevgaussian_multipass(sampler2D tex, vec2 uv, vec2 pixel_size, float blurriness, vec2 direction){
+	float n = 0.0015;
+
+	vec4 blurred_tex = vec4(0);
+
+	float weight;
+	for (float i = -blurriness; i <= blurriness; i++){
+		vec2 directions = uv + pixel_size * (direction * i);
+		blurred_tex += texture(tex, directions) * n;
+		if (i <= 0.0) {n += 0.0015; }
+		if (i > 0.0) {n -= 0.0015; }
+		weight += n;
+	}
+
+	float norm = 1.0 / weight;
+	blurred_tex *= norm;
+	return blurred_tex;
+}
+
+//  -- EXAMPLE CODE -- //
+uniform int blur_type = 0;
+uniform int blur_amount = 16;
+uniform float blur_radius = 1;
+uniform vec2 blur_direction = vec2(1, 1);
+void fragment(){
+	vec2 uv = FRAGCOORD.xy / (1.0 / SCREEN_PIXEL_SIZE).xy;
+
+	if (blur_type == 0)
+	{
+		vec4 xorgaussian = texture_xorgaussian(SCREEN_TEXTURE, uv, SCREEN_PIXEL_SIZE, float(blur_amount), 16, 4);
+		COLOR =  xorgaussian;
+	}
+	else if (blur_type == 1)
+	{
+		vec4 monksgaussian_multipass = texture_monksgaussian_multipass(SCREEN_TEXTURE, uv, SCREEN_PIXEL_SIZE, blur_amount, blur_direction);
+		COLOR =  monksgaussian_multipass;
+	}
+	else if (blur_type == 2)
+	{
+		vec4 nodevgaussian_singlepass = texture_nodevgaussian_singlepass(SCREEN_TEXTURE, uv, SCREEN_PIXEL_SIZE, float(blur_amount), blur_radius);
+		COLOR =  nodevgaussian_singlepass;
+	}
+	else if (blur_type == 3)
+	{
+		vec4 nodevgaussian_multipass = texture_nodevgaussian_multipass(SCREEN_TEXTURE, uv, SCREEN_PIXEL_SIZE, float(blur_amount), blur_direction);
+		COLOR =  nodevgaussian_multipass;
+	}
+	else
+	{
+		COLOR =  texture(SCREEN_TEXTURE, uv);
+	}
+}"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jjryo"]
+shader = SubResource("Shader_qwo4n")
+shader_parameter/blur_type = 0
+shader_parameter/blur_amount = 0
+shader_parameter/blur_radius = 1.0
+shader_parameter/blur_direction = Vector2(1, 1)
 
 [node name="splashScreen" type="CanvasLayer"]
 layer = 128
 script = ExtResource("2")
 
-[node name="panel" type="Panel" parent="."]
+[node name="bg" type="TextureRect" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_rqpcl")
+offset_left = -1.0
+offset_right = -1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_enrcg")
+
+[node name="logo" type="TextureRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -420.0
+offset_top = -232.0
+offset_right = 409.0
+offset_bottom = 235.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(419, 277)
+texture = ExtResource("2_g3k34")
+expand_mode = 1
+
+[node name="blur" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_jjryo")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="letters" type="ReferenceRect" parent="."]
 anchors_preset = 8
@@ -32,6 +221,7 @@ offset_left = -515.0
 offset_top = -91.0
 offset_right = 517.0
 offset_bottom = 91.0
+border_width = 0.0
 
 [node name="u" type="Sprite2D" parent="letters"]
 position = Vector2(91.9979, 87.8643)

@@ -7,8 +7,14 @@ signal splashFinished
 # ------------------------------------------------------------------------------
 
 const STEP_DURATION = 0.75
+var blurring = false
 
 # ------------------------------------------------------------------------------
+
+@onready var blur = $blur
+@onready var bg = $bg
+@onready var logo = $logo
+@onready var letters = $letters
 
 @onready var U = $letters/u
 @onready var R = $letters/r
@@ -24,8 +30,15 @@ const STEP_DURATION = 0.75
 func _ready():
   prints('> splashScreen');
   prints('-------------------------------')
-  var appearDuration = 0.4
-  var appearDelay = 0.5
+  var appearDuration = 1
+  var appearDelay = 1.5
+
+  letters.hide()
+  blur.material.set_shader_parameter('blur_amount', 0)
+
+  await Wait.forSomeTime(self, 0.5).timeout
+  letters.show()
+  blurring = true
 
   Animate.show(U, appearDuration, appearDelay)
   Animate.show(R, appearDuration, appearDelay)
@@ -69,19 +82,34 @@ func _ready():
 
   Animate.hide(L, STEP_DURATION, 0.5)
   Animate.hide(Y, STEP_DURATION, .3)
-  Animate.hide(S, STEP_DURATION, 1.2)
+  Animate.hide(S, STEP_DURATION, 0.7)
   Animate.hide(DOT, STEP_DURATION, .8)
 
   await Signal(A, 'scaled')
-  Animate.hide(A, 0.5, 0.25)
 
-  exitSplashAnimation(1)
+  Animate.to(logo, {
+    propertyPath = 'scale',
+    toValue = Vector2(0.5, 0.5),
+    duration = 2,
+    easing = Tween.EASE_IN
+  })
+
+  Animate.hide(logo, 3, 0.5)
+  Animate.hide(A, 0.7, 0.8)
+  await Wait.forSomeTime(self, 1.5).timeout
+  exitSplashAnimation()
 
 # ------------------------------------------------------------------------------
 
-func exitSplashAnimation(delay):
-  await Wait.forSomeTime(self, delay).timeout
+func _physics_process(delta):
+  if(blurring):
+    var current = blur.material.get_shader_parameter('blur_amount')
+    var newValue = current - delta * 15
+    blur.material.set_shader_parameter('blur_amount', newValue)
 
+# ------------------------------------------------------------------------------
+
+func exitSplashAnimation():
   emit_signal('splashFinished')
   get_parent().remove_child(self)
   queue_free()
