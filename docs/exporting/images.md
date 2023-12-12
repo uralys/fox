@@ -18,6 +18,8 @@ export using
 fox generate:icons
 ```
 
+### iOS
+
 once exported you can fill the paths in the iOS export section:
 
 ```ini
@@ -34,6 +36,10 @@ icons/settings_87x87="res://assets/generated/icons/icon-87x87.png"
 icons/notification_40x40="res://assets/generated/icons/icon-40x40.png"
 icons/notification_60x60="res://assets/generated/icons/icon-60x60.png"
 ```
+
+### android
+
+more info for android: <https://github.com/godotengine/godot-docs/blob/master/tutorials/export/exporting_for_android.rst#providing-launcher-icons>
 
 ## Splashscreens
 
