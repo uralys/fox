@@ -50,6 +50,7 @@ const generateSplashscreens = (config) => {
       LANDSCAPE_SIZES.length + PORTRAIT_SIZES.length
     )} splashscreens ${chalk.green('successfully')}.`
   );
+  console.log(`--->  ${chalk.blue.bold('output:')} ${output}`);
 };
 
 // -----------------------------------------------------------------------------

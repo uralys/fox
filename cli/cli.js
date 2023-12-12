@@ -63,7 +63,7 @@ const getSettings = async (command, defaultConfig) => {
     config = (await import(configPath, {assert: {type: "json"}})).default;
 
     if (!config[command] && defaultConfig[command]) {
-      console.log(chalk.yellow(`No config for "${command}" was found\nUsing default config.`));
+      console.log(chalk.green(`Using default config for "${command}"`));
       config = defaultConfig;
     }
   } catch (e) {
@@ -96,6 +96,7 @@ const verifyConfig = (config, defaultConfig) => {
   const output = `${projectPath}/${config.output}`;
 
   console.log(`⚙️  ${chalk.blue.bold('verifying output path')}`);
+  console.log(output);
 
   if (!fs.existsSync(output)) {
     shell.mkdir('-p', output);
