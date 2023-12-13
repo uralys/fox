@@ -2,6 +2,7 @@
 
 import chalk from 'chalk';
 import toVersionNumber from './version-number.js';
+import { androidExtension } from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -40,7 +41,7 @@ const updateIcons = (preset, bundleId) => {
 
 const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bundleName, newVersion) => {
   console.log(`main:`);
-  updateMain(preset, 'export_path', `_build/android/${bundleName}.apk`);
+  updateMain(preset, 'export_path', `_build/android/${bundleName}${androidExtension(env)}`);
   console.log(`options:`);
 
   const _applicationName = `${applicationName}${env === 'debug' ? '(debug)' : ''}`;

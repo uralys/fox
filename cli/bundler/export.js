@@ -17,6 +17,7 @@ import switchBundle from './switch.js';
 
 const PRESETS_CFG = 'export_presets.cfg';
 const SEMVER = ['patch', 'minor', 'major'];
+export const androidExtension = (env) => env === 'release' ? '.aab' : '.apk'
 
 // -----------------------------------------------------------------------------
 
@@ -147,8 +148,8 @@ const exportBundle = async (coreConfig, bundles) => {
     }
 
     if (preset.platform === 'Android') {
-      console.log(`\n${chalk.blue.bold(`_build/android/${bundleName}.apk`)} is ready`);
-      console.log(`adb -d install -r _build/android/${bundleName}.apk`);
+      console.log(`\n${chalk.blue.bold(`_build/android/${bundleName}${androidExtension(env)}`)} is ready`);
+      console.log(`adb install -r _build/android/${bundleName}${androidExtension(env)}`);
     }
   });
 };

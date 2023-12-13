@@ -23,13 +23,7 @@ First, you need to install templates from Godot.
 
 Use `Project > Export` and be sure to generate your `export_presets.cfg` without errors from Godot Editor.
 
-Be sure to define an `Export path` for each preset. (either from the Editor or directly in each preset in the `.cfg` file)
-
-For example for Android, you can create the folder `_build/android` and choose `YourGame` for the file name, it will set as `Export path`:
-
-```ini
-export_path=_build/android/YourGame.apk
-```
+The `Export path` will be generated from the preset name, `bundleId` and `env`
 
 ## define you `env`
 
@@ -46,7 +40,7 @@ custom_features="env:debug"
 include_filter="override.cfg"
 ```
 
-Now, when exporting, it will apply Godot CLI option `--export`, `--export-debug`, or `--export-pack`.
+Then, when exporting, it will apply Godot CLI option `--export-release`, `--export-debug`, or `--export-pack`.
 
 ## additional options
 
@@ -58,11 +52,11 @@ You may use the current version, or update it before exporting.
 
 Then this `version` is replaced in your preset property depending on the platform.
 
-### bundle
+### bundles
 
 **disclaimer**: I've experimented bundles for the different chapters in [Lockey Land](https://uralys.com/lockeyland), exported as separate applications.
 
-By default 1 app = 1 bundle
+By default 1 app = 1 bundle --> `bundleId` is the same as the app name.
 
 You can configure `Fox` to export many apps built from a single project.
 

@@ -79,7 +79,7 @@ all steps: <https://proandroiddev.com/install-google-play-store-in-an-android-em
 1 - `emulator @pixel-api-21 -no-snapshot -writable-system`
 2 - `fox export` an android debug preset
 3 - `adb uninstall com.uralys.xxx`
-4- `adb install -r ~/path/to/your.apk`
+4 - `adb install -r ~/path/to/your.apk`
 5 - `adb logcat -s godot`
 
 --> repeat from `2` to `5` on every test
