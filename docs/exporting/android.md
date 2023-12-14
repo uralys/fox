@@ -83,3 +83,28 @@ all steps: <https://proandroiddev.com/install-google-play-store-in-an-android-em
 5 - `adb logcat -s godot`
 
 --> repeat from `2` to `5` on every test
+
+## IAP
+
+- install android plugins within `_build/android/plugins`
+
+```sh
+_build/android/plugins
+├── GodotGooglePlayBilling.x.x.x.release.aar
+└── GodotGooglePlayBilling.gdap
+```
+
+note: currently using `godot-lib.4.1.3.stable.template_release.aar` and building `assembleRelease` from Android Studio
+
+to test android IAP:
+
+- `fox export > select an android release preset` to generate the `.aab`
+- create an intern release
+- add a product
+- add a tester and send invite link to internal Play Store
+- connect to PlayStore with this tester account
+- Accept the invitation through the link
+
+then the test account can see the SKU even from `debug.apk` generated with `fox export > android debug preset` manually installed with `adb`.
+
+API reference and examples: <https://docs.godotengine.org/en/stable/tutorials/platform/android/android_in_app_purchases.html>
