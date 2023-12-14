@@ -1,7 +1,6 @@
 extends TextureRect
 
-const TURN_DURATION = 1
+@export var speed = 10
 
 func _process(delta):
-  rotation += 360 / float(TURN_DURATION) * delta
-  pass
+  rotation += delta * speed

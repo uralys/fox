@@ -4,8 +4,15 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-var loader
+var ScreenFader = preload("res://fox/components/screen-fader.tscn")
+var FullscreenLoader = preload("res://fox/components/fullscreen-loader.tscn")
+
+# ------------------------------------------------------------------------------
+
+var resourceLoader
 var _loadedResources = {}
+var fullscreenLoader
+
 signal loaded
 
 # ------------------------------------------------------------------------------
@@ -65,26 +72,42 @@ func _openScene(scene, options = {}):
 # ------------------------------------------------------------------------------
 
 func startLoadingResource(path):
-  loader = ResourceLoader.load_threaded_request(path)
+  resourceLoader = ResourceLoader.load_threaded_request(path)
   _loadedResources.__loading = path
 
-  if loader == null: # Check for errors.
+  if resourceLoader == null: # Check for errors.
     openDefault()
 
 func finishedLoadingResource():
-  var resource = loader.get_resource()
+  var resource = resourceLoader.get_resource()
   _loadedResources[_loadedResources.__loading] = resource
   _loadedResources.__loading = null
-  loader = null
+  resourceLoader = null
   emit_signal('loaded')
   return resource
 
 func getLoadingProgress():
-  if loader == null:
+  if resourceLoader == null:
     return 1
-  return float(loader.get_stage()) / loader.get_stage_count()
+  return float(resourceLoader.get_stage()) / resourceLoader.get_stage_count()
 
 func getLoadedResource(path):
   if(_loadedResources.has(path)):
     return _loadedResources[path]
   return null
+
+# ------------------------------------------------------------------------------
+
+func useScreenFader(duration:float = 0.75):
+  var fader = ScreenFader.instantiate()
+  fader.duration = duration
+  getCurrentScene().add_child(fader)
+
+# ------------------------------------------------------------------------------
+
+func showLoader():
+  fullscreenLoader = FullscreenLoader.instantiate()
+  $/root/app.add_child(fullscreenLoader)
+
+func hideLoader():
+  fullscreenLoader.remove()

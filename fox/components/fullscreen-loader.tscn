@@ -1,0 +1,39 @@
+[gd_scene load_steps=6 format=3 uid="uid://taju5q2s32ku"]
+
+[ext_resource type="Shader" path="res://fox/behaviours/simple-blur.gdshader" id="1_7qld6"]
+[ext_resource type="Script" path="res://fox/components/fullscreen-loader.gd" id="1_sxau7"]
+[ext_resource type="Texture2D" uid="uid://bvvucvxltvypj" path="res://assets/sprites/gui/loader.webp" id="2_b52vk"]
+[ext_resource type="Script" path="res://fox/behaviours/rotation.gd" id="3_t5duq"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ctepg"]
+shader = ExtResource("1_7qld6")
+shader_parameter/lod = 2.632
+
+[node name="loader" type="CanvasLayer"]
+script = ExtResource("1_sxau7")
+
+[node name="panel" type="Panel" parent="."]
+material = SubResource("ShaderMaterial_ctepg")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="circle" type="TextureRect" parent="panel"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -149.5
+offset_right = 150.0
+offset_bottom = 149.5
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.3, 0.3)
+pivot_offset = Vector2(150, 150)
+texture = ExtResource("2_b52vk")
+script = ExtResource("3_t5duq")
