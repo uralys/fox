@@ -86,10 +86,11 @@ all steps: <https://proandroiddev.com/install-google-play-store-in-an-android-em
 
 ## IAP
 
-- install android plugins within `_build/android/plugins`
+- configure to build with gradle: it will generate a root `android` folder
+- install android plugins within `android/plugins`
 
 ```sh
-_build/android/plugins
+android/plugins
 ├── GodotGooglePlayBilling.x.x.x.release.aar
 └── GodotGooglePlayBilling.gdap
 ```
