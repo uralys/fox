@@ -16,6 +16,7 @@ import generateIcons from './generate-icons.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateScreenshots from './generate-screenshots.js';
 import exportBundle from './bundler/export.js';
+import {readPresets} from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
 import runGame from './run-game.js';
 
@@ -30,7 +31,6 @@ const GENERATE_SCREENSHOTS = 'generate:screenshots';
 
 const RUN_EDITOR = 'run:editor';
 const RUN_GAME = 'run:game';
-const RUN_NO_WINDOW = 'run:no-window';
 
 // -----------------------------------------------------------------------------
 
@@ -41,8 +41,7 @@ const commands = [
   GENERATE_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
   RUN_EDITOR,
-  RUN_GAME,
-  RUN_NO_WINDOW
+  RUN_GAME
 ];
 
 const commandMessage = `choose a command above, example:\n${chalk.italic(`fox ${RUN_EDITOR}`)}`;
@@ -163,16 +162,6 @@ const cli = async (yargs, params) => {
 
       return;
     }
-    case RUN_NO_WINDOW: {
-      {
-        console.log('----------------------------');
-        console.log(`🦊 ${chalk.italic('starting windowless Godot')}`);
-        spawn(core.godot, ['--headless'], {
-          stdio: [process.stdin, process.stdout, process.stderr]
-        });
-      }
-      return;
-    }
     case RUN_GAME: {
       runGame(core.godot, params, config);
       return;
@@ -182,8 +171,8 @@ const cli = async (yargs, params) => {
       return;
     }
     case SWITCH: {
-      const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
-      switchBundle(packageJSON.version, bundles);
+      const presets = readPresets();
+      switchBundle(bundles, presets);
       return;
     }
   }
@@ -223,7 +212,6 @@ const execute = async () => {
     .usage('Usage: fox <command> [options]')
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
-    .command(RUN_NO_WINDOW, 'start your app without window')
     .command(EXPORT, 'export a bundle for one of your presets')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')

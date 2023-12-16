@@ -9,14 +9,17 @@ import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
-import ini from './ini.js';
 import updatePreset from './update-preset.js';
 import switchBundle from './switch.js';
+import {readPresets, writePresets} from './read-presets.js';
+import { getNextVersion, increasePackageVersion, increasePresetsVersion } from './versioning.js';
 
 // -----------------------------------------------------------------------------
 
-const PRESETS_CFG = 'export_presets.cfg';
-const SEMVER = ['patch', 'minor', 'major'];
+const INCREASE_SEMVER_LEVELS = ['patch', 'minor', 'major'];
+
+// -----------------------------------------------------------------------------
+
 export const androidExtension = (env) => env === 'release' ? '.aab' : '.apk'
 
 // -----------------------------------------------------------------------------
@@ -27,7 +30,7 @@ const inquireVersioning = async (currentVersion) => {
       message: 'version',
       name: 'versionLevel',
       type: 'list',
-      choices: [`${currentVersion}`, ...SEMVER]
+      choices: [`${currentVersion}`, ...INCREASE_SEMVER_LEVELS]
     }
   ];
 
@@ -82,30 +85,36 @@ const exportBundle = async (coreConfig, bundles) => {
   const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   const currentVersion = packageJSON.version;
 
-  const {versionLevel} = await inquireVersioning(currentVersion);
+  // ---------
 
-  let newVersion = versionLevel;
-  if (SEMVER.includes(versionLevel)) {
-    console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
-    const result = shell.exec(`npm version ${versionLevel}`);
-
-    try {
-      newVersion = /v(.+)\n/g.exec(result.stdout)[1];
-    } catch (e) {
-      console.log(chalk.red.bold('🔴 failed during versioning, check "git status"'));
-      return;
-    }
+  const presets = readPresets();
+  if (!presets) {
+    console.log(chalk.red.bold('🔴 failed during reading presets.'));
+    return;
   }
 
   // ---------
 
-  const bundleSettings = await switchBundle(newVersion, bundles);
+  const {versionLevel} = await inquireVersioning(currentVersion);
+  const upgrading = versionLevel !== currentVersion;
+
+  let newVersion = currentVersion
+
+  if(upgrading) {
+    newVersion = getNextVersion(currentVersion, versionLevel)
+    increasePresetsVersion(newVersion, presets)
+    increasePackageVersion(newVersion, versionLevel)
+  }
+
+  // ---------
+
+  const bundleSettings = await switchBundle(bundles, presets);
   if (!bundleSettings) {
     console.log(chalk.red.bold('🔴 failed during bundle settings preparation.'));
     return;
   }
 
-  const {bundleId, preset, presets, env} = bundleSettings;
+  const {bundleId, preset, env} = bundleSettings;
 
   // ---------
 
@@ -124,7 +133,7 @@ const exportBundle = async (coreConfig, bundles) => {
     newVersion
   );
 
-  fs.writeFileSync(PRESETS_CFG, ini.stringify(presets));
+  writePresets(presets);
 
   // ---------
 

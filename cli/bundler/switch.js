@@ -8,12 +8,11 @@ import shell from 'shelljs';
 // -----------------------------------------------------------------------------
 
 import ini from './ini.js';
-import toVersionNumber from './version-number.js';
+import { toVersionNumber } from './versioning.js';
 
 // -----------------------------------------------------------------------------
 
-const PRESETS_CFG = 'export_presets.cfg';
-const OVERRIDE_CFG = 'override.cfg';
+const OVERRIDE_CFG = './override.cfg';
 const ENV = ['debug', 'release', 'pack'];
 
 // -----------------------------------------------------------------------------
@@ -40,8 +39,7 @@ const extractEnv = (preset) => {
 
 // -----------------------------------------------------------------------------
 
-const inquireParams = async (bundles, _presets) => {
-  const presets = _presets.preset;
+const inquireParams = async (bundles, presets) => {
   const bundleIds = Object.keys(bundles);
   const singleBundleId = bundleIds.length > 1 ? null : bundleIds[0];
 
@@ -76,7 +74,7 @@ const inquireParams = async (bundles, _presets) => {
 
 // -----------------------------------------------------------------------------
 
-const switchBundle = async (bundleVersion, bundles) => {
+const switchBundle = async (bundles, presets) => {
   console.log(`⚙️  switching to another ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -85,13 +83,8 @@ const switchBundle = async (bundleVersion, bundles) => {
     return;
   }
 
-  let presets;
-
-  try {
-    presets = ini.parse(fs.readFileSync(PRESETS_CFG, 'utf8'));
-  } catch (e) {
-    console.log(`\nCould not open ${PRESETS_CFG}`);
-    console.log(chalk.red.bold('🔴 failed: use Godot editor > Project > Export to define your export config.'));
+  if (!presets) {
+    console.log(chalk.red.bold('🔴 failed: missing presets'));
     return;
   }
 
@@ -122,17 +115,19 @@ const switchBundle = async (bundleVersion, bundles) => {
     console.log(`\nCould not open ${OVERRIDE_CFG}. Created the file.`);
   }
 
-  const packageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
-  override.fox.version = packageJSON.version;
+  const appPackageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+  const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
+
+  override.fox.version = foxPackageJSON.version;
   override.bundle.id = bundleId;
-  override.bundle.version = bundleVersion;
-  override.bundle.versionCode = toVersionNumber(bundleVersion);
+  override.bundle.version = appPackageJSON.version;
+  override.bundle.versionCode = toVersionNumber(appPackageJSON.version);
   override.bundle.platform = preset.platform;
   override.bundle.env = env;
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
-  return {bundleId, preset, presets, env};
+  return {bundleId, preset, env};
 };
 
 // -----------------------------------------------------------------------------
