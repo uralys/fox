@@ -1,13 +1,18 @@
+# ------------------------------------------------------------------------------
+
 extends Node
+
+# ------------------------------------------------------------------------------
+
+var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
+
+# ------------------------------------------------------------------------------
 
 func _ready():
   prints('========================================')
   var foxVersion = ProjectSettings.get_setting('fox/version')
   foxVersion = foxVersion if foxVersion else ''
   prints('[🦊 Fox]', foxVersion)
-  prints('-------------------------------')
-  prints('viewport:', get_viewport().size)
-  prints('window:', get_window().get_size())
   prints('-------------------------------')
 
   G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
@@ -23,12 +28,14 @@ func _ready():
   prints('bundle/platform: ' + G.PLATFORM)
 
   checkEnv()
+  createScreenReference()
+  randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
 
   prints('========================================')
-
-  createScreenReference()
-
-  randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
+  var appName = ProjectSettings.get_setting('application/config/name')
+  prints('[' + appName + ']', G.VERSION)
+  prints('------------------------')
+  DEBUG.printEnabledOptions()
 
 # ------------------------------------------------------------------------------
 
@@ -42,6 +49,17 @@ func checkEnv():
 
   if(G.ENV == G.RELEASE and G.IS_FOX_RUNNER):
     prints('⚠️👾 Started with Fox and release settings.')
+
+# ------------------------------------------------------------------------------
+
+func startSplashAnimation():
+  if(DEBUG.NO_SPLASH_ANIMATION):
+    return
+
+  var splash = SplashAnimation.instantiate()
+  add_child(splash)
+
+  await splash.splashFinished
 
 # ------------------------------------------------------------------------------
 

@@ -5,15 +5,15 @@
 [ext_resource type="Texture2D" uid="uid://bvvucvxltvypj" path="res://assets/sprites/gui/loader.webp" id="2_b52vk"]
 [ext_resource type="Script" path="res://fox/behaviours/rotation.gd" id="3_t5duq"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_ctepg"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_umrd7"]
 shader = ExtResource("1_7qld6")
-shader_parameter/lod = 2.632
+shader_parameter/lod = 2.526
 
 [node name="loader" type="CanvasLayer"]
 script = ExtResource("1_sxau7")
 
-[node name="panel" type="Panel" parent="."]
-material = SubResource("ShaderMaterial_ctepg")
+[node name="panel" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_umrd7")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
