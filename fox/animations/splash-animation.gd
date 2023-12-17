@@ -30,13 +30,22 @@ var blurring = false
 func _ready():
   prints('> splashScreen');
   prints('-------------------------------')
-  var appearDuration = 1
+  var appearDuration = 1.5
   var appearDelay = 0.2
 
   letters.hide()
+
+  Animate.from(logo, {
+    propertyPath = 'scale',
+    fromValue = Vector2(0.8, 0.8),
+    duration = 0.8,
+    easing = Tween.EASE_OUT
+  })
+
+  Animate.show(logo, 2)
   blur.material.set_shader_parameter('blur_amount', 0)
 
-  await Wait.forSomeTime(self, 0.5).timeout
+  await Wait.forSomeTime(self, 1.5).timeout
   letters.show()
   blurring = true
 
@@ -85,18 +94,17 @@ func _ready():
   Animate.hide(S, STEP_DURATION, 0.7)
   Animate.hide(DOT, STEP_DURATION, .8)
 
-  await Signal(A, 'scaled')
-
   Animate.to(logo, {
     propertyPath = 'scale',
-    toValue = Vector2(0.5, 0.5),
-    duration = 2,
+    toValue = Vector2(0.3, 0.3),
+    duration = 4,
     easing = Tween.EASE_IN
   })
 
-  Animate.hide(logo, 3, 0.5)
+  await Signal(A, 'scaled')
   Animate.hide(A, 0.7, 0.8)
-  await Wait.forSomeTime(self, 1.5).timeout
+  Animate.hide(logo, 2)
+  await Wait.forSomeTime(self, 1.4).timeout
   exitSplashAnimation()
 
 # ------------------------------------------------------------------------------
