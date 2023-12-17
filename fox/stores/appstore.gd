@@ -5,7 +5,7 @@ extends Node
 # ------------------------------------------------------------------------------
 # plugin: https://github.com/godotengine/godot-ios-plugins/blob/master/plugins/inappstore/README.md
 # ------------------------------------------------------------------------------
-# sandbox test users: https://appstoreconnect.apple.com/access/testers
+# You must use sandbox users to test IAP: https://appstoreconnect.apple.com/access/testers
 # connect/logout sandbox users: Reglages > AppStore > sandbox user
 # ------------------------------------------------------------------------------
 
@@ -28,7 +28,6 @@ func _ready():
 
 ## looping here when there is a process, to wait for StoreKit results
 func checkEvents():
-  G.log('[AppStore] checking events...');
   if appStore.get_pending_event_count() > 0:
     var event = appStore.pop_pending_event()
 
@@ -43,7 +42,6 @@ func checkEvents():
             item.price = price
 
           emit_signal('skuDetailsReceived')
-
           return
 
         'purchase':
@@ -86,5 +84,5 @@ func fetchItems():
 # ------------------------------------------------------------------------------
 
 func waitAWhileAndCheckEvents():
-  await Wait.forSomeTime(self, 1).timeout
+  await Wait.forSomeTime(self, 2).timeout
   checkEvents()
