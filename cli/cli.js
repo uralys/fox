@@ -28,6 +28,7 @@ const SWITCH = 'switch';
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
+const UPDATE_TRANSLATIONS = 'update-translations';
 
 const RUN_EDITOR = 'run:editor';
 const RUN_GAME = 'run:game';
@@ -40,6 +41,7 @@ const commands = [
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
+  UPDATE_TRANSLATIONS,
   RUN_EDITOR,
   RUN_GAME
 ];
@@ -62,7 +64,7 @@ const getSettings = async (command, defaultConfig) => {
     config = (await import(configPath, {assert: {type: "json"}})).default;
 
     if (!config[command] && defaultConfig[command]) {
-      console.log(chalk.green(`Using default config for "${command}"`));
+      console.log(chalk.green(`Using default config for command "${command}"`));
       config = defaultConfig;
     }
   } catch (e) {
@@ -91,15 +93,17 @@ const verifyConfig = (config, defaultConfig) => {
     }
   });
 
-  const projectPath = path.resolve(process.cwd(), './');
-  const output = `${projectPath}/${config.output}`;
+  if(config.output) {
+    const projectPath = path.resolve(process.cwd(), './');
+    const output = `${projectPath}/${config.output}`;
 
-  console.log(`⚙️  ${chalk.blue.bold('verifying output path')}`);
-  console.log(output);
+    console.log(`⚙️  ${chalk.blue.bold('verifying output path')}`);
+    console.log(output);
 
-  if (!fs.existsSync(output)) {
-    shell.mkdir('-p', output);
-    console.log('✅ created output.');
+    if (!fs.existsSync(output)) {
+      shell.mkdir('-p', output);
+      console.log('✅ created output.');
+    }
   }
 };
 
@@ -190,6 +194,12 @@ const cli = async (yargs, params) => {
       generateSplashscreens(config);
       break;
     }
+    case UPDATE_TRANSLATIONS: {
+      const {poFiles, potTemplate} = config;
+      console.log(`⚙️  ${chalk.blue.bold('using msgmerge on your .po files')}`);
+      shell.exec(`for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`);
+      break;
+    }
     case GENERATE_SCREENSHOTS: {
       generateScreenshots(config);
       break;
@@ -214,6 +224,7 @@ const execute = async () => {
     .command(RUN_GAME, 'start your game locally')
     .command(EXPORT, 'export a bundle for one of your presets')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
+    .command(UPDATE_TRANSLATIONS, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
     .command(
       GENERATE_SPLASHSCREENS,

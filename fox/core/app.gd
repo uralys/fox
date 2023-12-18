@@ -8,34 +8,13 @@ var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
 
 # ------------------------------------------------------------------------------
 
-func _ready():
-  prints('========================================')
-  var foxVersion = ProjectSettings.get_setting('fox/version')
-  foxVersion = foxVersion if foxVersion else ''
-  prints('[🦊 Fox]', foxVersion)
-  prints('-------------------------------')
-
-  G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
-  G.ENV = ProjectSettings.get_setting('bundle/env')
-  G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
-  G.VERSION = ProjectSettings.get_setting('bundle/version')
-  G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
-
-  G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + '.bin'
-
-  prints('bundle/id: ' + G.BUNDLE_ID)
-  prints('bundle/env: ' + G.ENV)
-  prints('bundle/platform: ' + G.PLATFORM)
-
+func finalizeFoxSetup():
+  DEBUG.printEnabledOptions()
+  prints('------------------------')
   checkEnv()
   createScreenReference()
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
-
-  prints('========================================')
-  var appName = ProjectSettings.get_setting('application/config/name')
-  prints('[' + appName + ']', G.VERSION)
   prints('------------------------')
-  DEBUG.printEnabledOptions()
 
 # ------------------------------------------------------------------------------
 

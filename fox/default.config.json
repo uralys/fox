@@ -23,6 +23,10 @@
     "resolution": "2980x2220",
     "position": "0,0"
   },
+  "update-translations": {
+    "poFiles": "./assets/translations/*.po",
+    "potTemplate": "./assets/translations/locales.pot"
+  },
   "run:game": {
     "position": "1120,20"
   },

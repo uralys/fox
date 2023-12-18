@@ -26,6 +26,25 @@ var SCREEN_CENTER
 
 # ------------------------------------------------------------------------------
 
+func _ready():
+  G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
+  G.ENV = ProjectSettings.get_setting('bundle/env')
+  G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
+  G.VERSION = ProjectSettings.get_setting('bundle/version')
+  G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
+  G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + '.bin'
+
+  prints('========================================')
+  var foxVersion = ProjectSettings.get_setting('fox/version')
+  foxVersion = foxVersion if foxVersion else ''
+  prints('[🦊 Fox]', foxVersion)
+  prints('-------------------------------')
+  prints('bundle/id: ' + G.BUNDLE_ID)
+  prints('bundle/env: ' + G.ENV)
+  prints('bundle/platform: ' + G.PLATFORM)
+
+# ------------------------------------------------------------------------------
+
 func isRunningOnProduction():
   return ENV == RELEASE and not IS_FOX_RUNNER
 
