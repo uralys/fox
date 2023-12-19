@@ -67,7 +67,7 @@ func _openScene(scene, options = {}):
 
   if(currentScene.has_method('onOpen')):
     currentScene.onOpen(options)
-  prints('[🦊 Router]> ---------- entering', str(currentScene.name))
+  prints('[🦊 Router]> ---------- entered:', str(currentScene.name))
 
 # ------------------------------------------------------------------------------
 

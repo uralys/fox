@@ -23,7 +23,7 @@
     "resolution": "2980x2220",
     "position": "0,0"
   },
-  "update-translations": {
+  "update-po-files": {
     "poFiles": "./assets/translations/*.po",
     "potTemplate": "./assets/translations/locales.pot"
   },

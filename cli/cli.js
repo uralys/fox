@@ -28,7 +28,7 @@ const SWITCH = 'switch';
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
-const UPDATE_TRANSLATIONS = 'update-translations';
+const UPDATE_PO_FILES = 'update-po-files';
 
 const RUN_EDITOR = 'run:editor';
 const RUN_GAME = 'run:game';
@@ -41,7 +41,7 @@ const commands = [
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
-  UPDATE_TRANSLATIONS,
+  UPDATE_PO_FILES,
   RUN_EDITOR,
   RUN_GAME
 ];
@@ -194,9 +194,9 @@ const cli = async (yargs, params) => {
       generateSplashscreens(config);
       break;
     }
-    case UPDATE_TRANSLATIONS: {
+    case UPDATE_PO_FILES: {
       const {poFiles, potTemplate} = config;
-      console.log(`⚙️  ${chalk.blue.bold('using msgmerge on your .po files')}`);
+      console.log(`⚙️  using ${chalk.blue.bold('msgmerge')} on your .po files`);
       shell.exec(`for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`);
       break;
     }
@@ -224,7 +224,7 @@ const execute = async () => {
     .command(RUN_GAME, 'start your game locally')
     .command(EXPORT, 'export a bundle for one of your presets')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
-    .command(UPDATE_TRANSLATIONS, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
+    .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
     .command(
       GENERATE_SPLASHSCREENS,

@@ -34,15 +34,8 @@ func _ready():
   var appearDelay = 0.2
 
   letters.hide()
-
-  Animate.from(logo, {
-    propertyPath = 'scale',
-    fromValue = Vector2(0.8, 0.8),
-    duration = 0.8,
-    easing = Tween.EASE_OUT
-  })
-
   Animate.show(logo, 2)
+
   blur.material.set_shader_parameter('blur_amount', 0)
 
   await Wait.forSomeTime(self, 1.5).timeout
@@ -102,7 +95,7 @@ func _ready():
   })
 
   await Signal(A, 'scaled')
-  Animate.hide(A, 0.7, 0.8)
+  Animate.hide(A, 1.2, 0.3)
   Animate.hide(logo, 2)
   await Wait.forSomeTime(self, 1.4).timeout
   exitSplashAnimation()
