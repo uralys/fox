@@ -3,9 +3,9 @@ extends ReferenceRect
 # ------------------------------------------------------------------------------
 
 @onready var blur = $blur
-@onready var content = $content
+@onready var panel = $panel
 
-@onready var closeButton = $content/panel/closeButton
+@onready var closeButton = $panel/closeButton
 
 var closing = false
 var showing = false
@@ -22,7 +22,7 @@ func _ready():
   blur.material.set_shader_parameter('blur_amount', 0)
 
   closeButton.connect('pressed', close)
-  Animate.show(content)
+  Animate.show(panel)
 
 func _physics_process(delta):
   var current = blur.material.get_shader_parameter('blur_amount')
@@ -53,7 +53,7 @@ func close():
   if(thisPopupPauseEngine):
     get_tree().paused = false
 
-  Animate.to(content, {
+  Animate.to(panel, {
     propertyPath = 'modulate:a',
     toValue = 0,
     duration = 0.3
