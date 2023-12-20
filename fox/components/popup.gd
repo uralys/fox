@@ -5,7 +5,7 @@ extends ReferenceRect
 @onready var blur = $blur
 @onready var content = $content
 
-@onready var closeButton = $content/closeButton
+@onready var closeButton = $content/panel/closeButton
 
 var closing = false
 var showing = false

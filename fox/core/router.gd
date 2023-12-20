@@ -47,19 +47,19 @@ func _openScene(scene, options = {}):
 
   if(currentScene):
     previousSceneName = str(currentScene.name)
+    prints('[🦊 Router]> leaving', previousSceneName, '> ---------')
+
+    if(currentScene.has_method('onLeave')):
+      currentScene.onLeave(options)
 
     var timerOnOpenScene = onOpenScene()
     if(timerOnOpenScene):
       await timerOnOpenScene.timeout
 
-    if(currentScene.has_method('onLeave')):
-      currentScene.onLeave(options)
-
     $'/root/app/scene'.remove_child(currentScene)
     currentScene.queue_free()
 
   currentScene = scene.instantiate()
-  prints('[🦊 Router]> leaving', previousSceneName, '> ---------')
   $'/root/app/scene'.add_child(currentScene)
 
   if(__.Get('onOpen',options) != null):
