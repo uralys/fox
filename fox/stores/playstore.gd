@@ -11,6 +11,7 @@ extends Node
 # ------------------------------------------------------------------------------
 
 var playStore
+var queryingPurchasesAtStart = false
 
 # ------------------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ func connectPlayStore():
   playStore.connect('sku_details_query_error', failedQueryingSKUDetails) # Response ID (int), Debug message (string), Queried SKUs (string[])
   playStore.connect('purchase_acknowledged', onPurchaseAcknowledged) # Purchase token (string)
   playStore.connect('purchase_acknowledgement_error', onPurchaseAcknowledgementError) # Response ID (int), Debug message (string), Purchase token (string)
-  playStore.connect('purchase_consumed', onPurchaseConsumed) # Purchase token (string)
+  playStore.connect('purchase_consumed', onPurchaseDone) # Purchase token (string)
   playStore.connect('purchase_consumption_error', onPurchaseConsumptionError) # Response ID (int), Debug message (string), Purchase token (string)
 
   playStore.startConnection()
@@ -48,6 +49,8 @@ func connectPlayStore():
 func playStoreConnected():
   G.log('✅ PlayStore connected')
 
+  G.log('queryPurchases 1 >>>  ------------------ ');
+  queryingPurchasesAtStart = true
   playStore.queryPurchases('inapp') # Use 'subs' for subscriptions.
 
   for sku in G.STORE:
@@ -58,7 +61,6 @@ func playStoreConnected():
 func playStoreErrorOnConnection(id, message):
   G.log('🔴 PlayStore: Error on connection', id, message)
 
-
 # ==============================================================================
 
 # details: [{ "icon_url": "", "original_price": "0,99 €", "original_price_amount_micros": 990000, "introductory_price_period": "", "description": "blabla", "title": "blaplop", "type": "inapp", "price_amount_micros": 990000, "price_currency_code": "EUR", "introductory_price_cycles": 0, "introductory_price": "", "introductory_price_amount_micros": 0, "price": "0,99 €", "free_trial_period": "", "subscription_period": "", "sku": "xxx.xxx.xxx" }]
@@ -67,6 +69,8 @@ func receivedSKUDetails(details):
     var item = G.STORE[receivedItem.sku]
     item.price = receivedItem.price
 
+  G.log('receivedSKUDetails  ------------------ ');
+  G.log(G.STORE);
   emit_signal('skuDetailsReceived')
 
 # ------------------------------------------------------------------------------
@@ -82,19 +86,23 @@ func failedQueryingSKUDetails(response_id, error_message, products_queried):
 # ==============================================================================
 
 func receivedPurchases(query_result):
-  G.log('✅ PlayStore: received ' + str(query_result.size()) +  ' purchases')
+  G.log('✅ PlayStore: received ' + str(query_result.purchases.size()) +  ' purchases')
 
   if query_result.status == OK:
     for _purchase in query_result.purchases:
       # We must acknowledge all purchases.
       # See https://developer.android.com/google/play/billing/integrate#process for more information
+      G.log({purchase=_purchase});
 
       if not _purchase.is_acknowledged:
-        G.log('Purchase ' + str(_purchase.sku) + ' has not been acknowledged. Acknowledging...')
+        G.log('Purchase ' + str(_purchase.skus[0]) + ' has not been acknowledged. Acknowledging...')
         playStore.acknowledgePurchase(_purchase.purchase_token)
 
-      # _purchase is_acknowledged but not consumed yet
+      # _purchase is_acknowledged but not consumed => either not consumed or not consumable
       elif _purchase.purchase_state == 1:
+        G.log('> -------  is_acknowledged but not consumed');
+        G.log({sku=_purchase.sku});
+        G.log({purchase_token=_purchase.purchase_token});
         Player.storePurchaseToken(_purchase.purchase_token, _purchase.sku)
         onPurchaseAcknowledged(_purchase.purchase_token)
 
@@ -108,13 +116,15 @@ func receivedPurchases(query_result):
 # ==============================================================================
 
 func onPurchaseAcknowledged(purchaseToken):
+  G.log('onPurchaseAcknowledged ------------------ ');
   var sku = Player.getSKUFromPurchaseToken(purchaseToken)
+  G.log({sku=sku});
   var storeItem = G.STORE[sku]
 
   if(storeItem.isConsumable):
     playStore.consumePurchase(purchaseToken)
   else:
-    Player.onPurchaseCompleted(purchaseToken)
+    onPurchaseDone(purchaseToken)
 
 # ------------------------------------------------------------------------------
 
@@ -158,21 +168,23 @@ func onPurchaseError(id, message):
 
 # ------------------------------------------------------------------------------
 
+# https://developer.android.com/reference/com/android/billingclient/api/PurchasesUpdatedListener
+# listener for purchases updates / initiated by a buy action from the game or the Play Store
+# kind of the successfull callback for purchase()
 func onPurchasesUpdated(purchases):
+  G.log('onPurchasesUpdated ------------------ ');
   for _purchase in purchases:
+    G.log({purchase=_purchase});
     var sku = JSON.parse_string(_purchase.original_json).productId
     var purchaseToken = _purchase.purchase_token
     Player.storePurchaseToken(purchaseToken, sku)
+    G.log('-------- ');
 
+
+  G.log('queryPurchases 2 >>>  ------------------ ');
   playStore.queryPurchases('inapp')
 
 # ==============================================================================
-
-func onPurchaseConsumed(purchaseToken):
-  Router.hideLoader()
-  Player.onPurchaseCompleted(purchaseToken)
-
-# ------------------------------------------------------------------
 
 func onPurchaseConsumptionError(id, message, purchaseToken):
   Router.hideLoader()
@@ -182,3 +194,12 @@ func onPurchaseConsumptionError(id, message, purchaseToken):
     purchaseToken = purchaseToken
   })
 
+# ==============================================================================
+
+func onPurchaseDone(purchaseToken):
+  Router.hideLoader()
+
+  if(queryingPurchasesAtStart):
+    Player.foundPreviousPurchase(purchaseToken)
+  else:
+    Player.onPurchaseCompleted(purchaseToken)
