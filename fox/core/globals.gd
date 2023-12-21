@@ -16,8 +16,6 @@ var RECORD_PATH
 var VERSION
 var VERSION_CODE
 
-var IS_FOX_RUNNER = false
-
 # ------------------------------------------------------------------------------
 
 var W
@@ -45,15 +43,9 @@ func _ready():
 
 # ------------------------------------------------------------------------------
 
-func isRunningOnProduction():
-  return ENV == RELEASE and not IS_FOX_RUNNER
-
-# ------------------------------------------------------------------------------
-
 func __ansi(o):
   return __.bbcodeToANSI(o) if o is String else o
 
-@warning_ignore('shadowed_global_identifier')
 func log(a, b=null,c=null,d=null,e=null,f=null,g=null,h=null):
   prints(__ansi(a),
     __ansi(b) if b != null else '',

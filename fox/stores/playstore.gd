@@ -47,9 +47,6 @@ func connectPlayStore():
 # ==============================================================================
 
 func playStoreConnected():
-  G.log('✅ PlayStore connected')
-
-  G.log('queryPurchases 1 >>>  ------------------ ');
   queryingPurchasesAtStart = true
   playStore.queryPurchases('inapp') # Use 'subs' for subscriptions.
 
@@ -69,8 +66,6 @@ func receivedSKUDetails(details):
     var item = G.STORE[receivedItem.sku]
     item.price = receivedItem.price
 
-  G.log('receivedSKUDetails  ------------------ ');
-  G.log(G.STORE);
   emit_signal('skuDetailsReceived')
 
 # ------------------------------------------------------------------------------
@@ -92,7 +87,6 @@ func receivedPurchases(query_result):
     for _purchase in query_result.purchases:
       # We must acknowledge all purchases.
       # See https://developer.android.com/google/play/billing/integrate#process for more information
-      G.log({purchase=_purchase});
 
       if not _purchase.is_acknowledged:
         G.log('Purchase ' + str(_purchase.skus[0]) + ' has not been acknowledged. Acknowledging...')
@@ -100,9 +94,6 @@ func receivedPurchases(query_result):
 
       # _purchase is_acknowledged but not consumed => either not consumed or not consumable
       elif _purchase.purchase_state == 1:
-        G.log('> -------  is_acknowledged but not consumed');
-        G.log({sku=_purchase.sku});
-        G.log({purchase_token=_purchase.purchase_token});
         Player.storePurchaseToken(_purchase.purchase_token, _purchase.sku)
         onPurchaseAcknowledged(_purchase.purchase_token)
 
@@ -116,9 +107,7 @@ func receivedPurchases(query_result):
 # ==============================================================================
 
 func onPurchaseAcknowledged(purchaseToken):
-  G.log('onPurchaseAcknowledged ------------------ ');
   var sku = Player.getSKUFromPurchaseToken(purchaseToken)
-  G.log({sku=sku});
   var storeItem = G.STORE[sku]
 
   if(storeItem.isConsumable):
@@ -172,16 +161,11 @@ func onPurchaseError(id, message):
 # listener for purchases updates / initiated by a buy action from the game or the Play Store
 # kind of the successfull callback for purchase()
 func onPurchasesUpdated(purchases):
-  G.log('onPurchasesUpdated ------------------ ');
   for _purchase in purchases:
-    G.log({purchase=_purchase});
     var sku = JSON.parse_string(_purchase.original_json).productId
     var purchaseToken = _purchase.purchase_token
     Player.storePurchaseToken(purchaseToken, sku)
-    G.log('-------- ');
 
-
-  G.log('queryPurchases 2 >>>  ------------------ ');
   playStore.queryPurchases('inapp')
 
 # ==============================================================================

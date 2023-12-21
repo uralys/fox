@@ -9,25 +9,10 @@ var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
 # ------------------------------------------------------------------------------
 
 func finalizeFoxSetup():
-  DEBUG.printEnabledOptions()
-  prints('------------------------')
-  checkEnv()
+  DEBUG.setup()
   createScreenReference()
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
   prints('------------------------')
-
-# ------------------------------------------------------------------------------
-
-func checkEnv():
-  if(G.ENV != 'release'):
-    prints('⚠️👾 ENV='+G.ENV)
-
-  for cliOptions in OS.get_cmdline_args():
-    if(cliOptions == 'local-fox-runner'):
-      G.IS_FOX_RUNNER = true
-
-  if(G.ENV == G.RELEASE and G.IS_FOX_RUNNER):
-    prints('⚠️👾 Started with Fox and release settings.')
 
 # ------------------------------------------------------------------------------
 
