@@ -13,8 +13,9 @@ import shell from 'shelljs';
 // -----------------------------------------------------------------------------
 
 const generateScreenshots = (config) => {
-  const {input, output, sizes = ['2560x1600']} = config;
+  const {orientation, input, output, sizes} = config;
   console.log(`⚙️  resizing ${chalk.blue.bold('screenshots')}...`);
+  console.log(`⚙️  orientation: ${chalk.blue.bold(orientation)}`);
 
   const files = fs.readdirSync(input);
 
@@ -25,14 +26,16 @@ const generateScreenshots = (config) => {
     }
 
     sizes.forEach((size) => {
-      const outputFileName = `${fileName.split(extension)[0]}-${size}${extension}`;
-      console.log(` > ${chalk.magenta.italic(fileName)} --> ${output}/${outputFileName}`);
+      const resolution = orientation === 'landscape' ? size.resolution : size.resolution.split('x').reverse().join('x');
+
+      const outputFileName = `${fileName.split(extension)[0]}-${size.name}-${resolution}${extension}`;
+      console.log(`\n > ${chalk.magenta.italic(fileName)} | ${chalk.magenta.italic(size.name)} --> ${output}/${outputFileName}`);
 
       shell.exec(
-        `convert ${input}/${fileName} -resize ${size}^ -gravity center -extent ${size} "${output}/${outputFileName}"`
+        `convert ${input}/${fileName} -resize ${resolution}^ -gravity center -extent ${resolution} "${output}/${outputFileName}"`
       );
 
-      console.log(`\n Resized images to ${size} ${chalk.green('successfully')}.`);
+      console.log(`Resized images to ${resolution} ${chalk.green('successfully')}.`);
     });
   });
 };

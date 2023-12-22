@@ -17,7 +17,16 @@
   },
   "generate:screenshots": {
     "input": "_release/raw-shots",
-    "output": "_release/generated/screenshots"
+    "output": "_release/generated-screenshots",
+    "orientation": "landscape",
+    "sizes": [
+      { "name": "iPhone_6'7", "resolution": "2796x1290" },
+      { "name": "iPhone_6'5", "resolution": "2778x1284" },
+      { "name": "iPhone_5'5", "resolution": "2208x1242" },
+      { "name": "iPad_12'9", "resolution": "2732x2048" },
+      { "name": "16'9", "resolution": "2160x1215" },
+      { "name": "4'3", "resolution": "1440x1080" }
+    ]
   },
   "run:editor": {
     "resolution": "2980x2220",

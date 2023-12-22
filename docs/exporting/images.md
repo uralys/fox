@@ -64,3 +64,19 @@ portrait_launch_screens/ipad_768x1024="res://assets/generated/splashscreens/spla
 portrait_launch_screens/ipad_1536x2048="res://assets/generated/splashscreens/splashscreen-1536x2048.png"
 portrait_launch_screens/iphone_1242x2208="res://assets/generated/splashscreens/splashscreen-1242x2208.png"
 ```
+
+## Screenshots
+
+Take screenshots from your app, then use this command to generate all resized resolutions:
+
+```sh
+fox generate:screenshots
+```
+
+Default orientation is `landscape`, if you need `portrait` add this in your `fox.config.json`:
+
+```json
+"generate:screenshots": {
+  "orientation": "portrait"
+}
+```
