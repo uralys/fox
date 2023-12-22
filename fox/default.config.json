@@ -16,8 +16,8 @@
     "output": "assets/generated/splashscreens"
   },
   "generate:screenshots": {
-    "input": "_release/raw-shots",
-    "output": "_release/generated-screenshots",
+    "input": "_release/images/raw-shots",
+    "output": "_release/images/generated-screenshots",
     "orientation": "landscape",
     "sizes": [
       { "name": "iPhone_6'7", "resolution": "2796x1290" },
