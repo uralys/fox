@@ -42,7 +42,7 @@ const generateScreenshots = (config) => {
     sizes.forEach((size) => {
       const resolution = orientation === 'landscape' ? size.resolution : size.resolution.split('x').reverse().join('x');
 
-      const outputFileName = `${fileName.split(extension)[0]}-${size.name}-${resolution}${extension}`;
+      const outputFileName = `${fileName.split(extension)[0]}-${resolution}${size.extension || extension}`;
       const outputPath = `${output}/${size.name}/${outputFileName}`;
 
       console.log(`\n > ${chalk.magenta.italic(fileName)} | ${chalk.magenta.italic(size.name)} --> ${outputPath}`);
