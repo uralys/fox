@@ -30,7 +30,7 @@ var blurring = false
 func _ready():
   prints('> splashScreen');
   prints('-------------------------------')
-  var appearDuration = 1.5
+  var appearDuration = 0.75
   var appearDelay = 0.2
 
   letters.hide()
@@ -38,7 +38,7 @@ func _ready():
 
   blur.material.set_shader_parameter('blur_amount', 0)
 
-  await Wait.forSomeTime(self, 1.5).timeout
+  await Wait.forSomeTime(self, 0.6).timeout
   letters.show()
   blurring = true
 
@@ -97,7 +97,7 @@ func _ready():
   await Signal(A, 'scaled')
   Animate.hide(A, 1.2, 0.3)
   Animate.hide(logo, 2)
-  await Wait.forSomeTime(self, 1.4).timeout
+  await Wait.forSomeTime(self, 1).timeout
   exitSplashAnimation()
 
 # ------------------------------------------------------------------------------

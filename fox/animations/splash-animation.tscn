@@ -11,7 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://dv5xl04lkmwnq" path="res://assets/sprites/splash/r.png" id="9"]
 
 [sub_resource type="Gradient" id="Gradient_xy75g"]
-offsets = PackedFloat32Array(0.0876623, 0.262987, 0.50974)
+offsets = PackedFloat32Array(0.0876623, 0.248227, 0.347518)
 colors = PackedColorArray(0.627451, 0.27451, 0.278431, 1, 0.113172, 0.140508, 0.209619, 1, 0.0208125, 0.051448, 0.0946116, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_enrcg"]
