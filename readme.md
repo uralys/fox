@@ -42,3 +42,10 @@ Exporting:
 - [Installing the CLI](./docs/cli.md)
 - Info about [Android](./docs/exporting/android.md) settings and building
 - Info about [iOS](./docs/exporting/ios.md) settings and building
+
+## Games created with Fox
+
+<a href="https://uralys.com/avindi"><img alt="logo" width="128" title="avindi" src="./assets/docs/games/avindi-desktop-512x512.png"/></a>
+<a href="https://apps.apple.com/us/app/battle-squares/id1609783397"><img alt="logo" width="128" title="battle-squares" src="./assets/docs/games/battle-squares-desktop-512x512.png"/>
+<a href="https://uralys.com/lockeyland"><img alt="logo" width="128" title="lockey0" src="./assets/docs/games/lockey0-desktop-512x512.png"></a>
+<a href="https://uralys.com/lockeyland"><img alt="logo" width="128" title="lockey1" src="./assets/docs/games/lockey1-desktop-512x512.png"></a>
