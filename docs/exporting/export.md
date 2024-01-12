@@ -27,7 +27,7 @@ The `Export path` will be generated from the preset name, `bundleId` and `env`
 
 ## define you `env`
 
-Define if your preset is for `release`, `debug`, or `pack` by setting it a `custom_features`.
+Define if your preset is for `release`, `debug` by setting it a `custom_features`.
 
 example:
 
@@ -40,7 +40,7 @@ custom_features="env:debug"
 include_filter="override.cfg"
 ```
 
-Then, when exporting, it will apply Godot CLI option `--export-release`, `--export-debug`, or `--export-pack`.
+Then, when exporting, it will apply Godot CLI option `--export-release` or `--export-debug` depending on the `env` you've set.
 
 ## additional options
 

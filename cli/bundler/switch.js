@@ -3,7 +3,6 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
-import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
@@ -13,7 +12,7 @@ import { toVersionNumber } from './versioning.js';
 // -----------------------------------------------------------------------------
 
 const OVERRIDE_CFG = './override.cfg';
-const ENV = ['debug', 'release', 'pack'];
+const ENV = ['debug', 'release'];
 
 // -----------------------------------------------------------------------------
 
@@ -23,7 +22,7 @@ const extractEnv = (preset) => {
   if (!_env) {
     console.warn(`\n🔴 env:${chalk.red('export_presets.cfg must be edited')}`);
     console.warn(`Missing 'env' in custom_features: "${preset.custom_features}"`);
-    console.warn(`add "env:debug", "env:release" or "env:pack" within the ${chalk.blueBright('custom_features')} list`);
+    console.warn(`add "env:debug" or "env:release" within the ${chalk.blueBright('custom_features')} list`);
     return;
   }
 
@@ -103,18 +102,7 @@ const switchBundle = async (bundles, presets) => {
 
   // ---------
 
-  let override;
-
-  try {
-    override = ini.parse(fs.readFileSync(OVERRIDE_CFG, 'utf8'));
-    if (!override.bundle) override.bundle = {};
-    if (!override.fox) override.fox = {};
-  } catch (e) {
-    shell.touch(OVERRIDE_CFG);
-    override = {bundle: {}, fox: {}};
-    console.log(`\nCould not open ${OVERRIDE_CFG}. Created the file.`);
-  }
-
+  const override = {bundle: {}, fox: {}};
   const appPackageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
 
@@ -124,6 +112,34 @@ const switchBundle = async (bundles, presets) => {
   override.bundle.versionCode = toVersionNumber(appPackageJSON.version);
   override.bundle.platform = preset.platform;
   override.bundle.env = env;
+
+  // ---------
+
+  let overrideByEnv;
+
+  try {
+    overrideByEnv = ini.parse(fs.readFileSync(`./override.${env}.cfg`, 'utf8'));
+  } catch (e) {
+    overrideByEnv = {};
+  }
+
+
+  // ---------
+
+  let secretByEnv;
+
+  try {
+    secretByEnv = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
+  } catch (e) {
+    secretByEnv = {};
+  }
+
+  // ---------
+
+  override.custom = {
+    ...overrideByEnv,
+    ...secretByEnv
+  };
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
