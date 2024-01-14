@@ -26,6 +26,7 @@
       { "name": "iPad_12'9", "resolution": "2732x2048" },
       { "name": "16'9", "resolution": "2160x1215" },
       { "name": "4'3", "resolution": "1440x1080" },
+      { "name": "macOS", "resolution": "2560x1600" },
       { "name": "webp-16'9", "resolution": "2160x1215", "extension": ".webp" }
     ]
   },

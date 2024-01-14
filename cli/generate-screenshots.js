@@ -51,7 +51,7 @@ const generateScreenshots = (config) => {
         `convert ${input}/${fileName} -resize ${resolution}^ -gravity center -extent ${resolution} "${outputPath}"`
       );
 
-      console.log(`Resized images to ${resolution} ${chalk.green('successfully')}.`);
+      console.log(`Resized to ${resolution} ${chalk.green('successfully')}.`);
     });
   });
 };
