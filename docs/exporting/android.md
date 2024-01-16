@@ -2,6 +2,16 @@
 
 Exporting for Android: <https://docs.godotengine.org/en/stable/getting_started/workflow/export/exporting_for_android.html#doc-exporting-for-android>
 
+## permissions
+
+To use HTTP calls to your backend you need to add the following permissions to your android template in `export_presets.cfg`:
+
+```ini
+permissions/internet=true
+```
+
+Otherwise, network communication of any kind will be blocked by the Android OS. (from this [warning in the docs](https://docs.godotengine.org/en/stable/tutorials/networking/http_request_class.html#http-requests-in-godot))
+
 ## debug key
 
 generate debug key for godot:
