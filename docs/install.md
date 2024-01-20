@@ -35,6 +35,8 @@ Leave it as an empty object for now, just know you can fill it to override the [
 
 ### 4 - Declare your main Scene
 
+#### create the main script
+
 Create a `src` folder and Create a new scene with Godot Editor, you can name it `app.tscn`.
 
 Then add attach a `app.gd` script to this scene.
@@ -45,9 +47,11 @@ You can remove the default code and replace with:
 extends 'res://fox/core/app.gd'
 
 func _ready():
-  super._ready()
+  finalizeFoxSetup()
   print(G.BUNDLE_ID + ' is running!')
 ```
+
+Note: `finalizeFoxSetup()` is mandatory to setup Fox core nodes and settings.
 
 #### set as main scene
 
@@ -66,7 +70,7 @@ You must setup a few nodes in your main scene:
 
 by default:
 
-- `app` should be a `Node2D`
+- `app` should be a `CanvasLayer`
 - `app/scene` should also be a `Node2D`
 - `app/hud` should be a `CanvasLayer`
 
@@ -87,6 +91,7 @@ Now you need to setup Fox default paths within the `project.godot` `[autoload]` 
 
 G="*res://fox/core/globals.gd"
 DEBUG="*res://fox/core/debug.gd"
+Gesture="*res://fox/libs/gesture.gd"
 ```
 
 and set few default options
@@ -99,10 +104,9 @@ version="0.0.1"
 versionCode=1
 platform="xxx"
 env="debug"
-
 ```
 
-### 5 - Let's craft
+### Let's craft!
 
 At this point, you should have something like this:
 
@@ -136,7 +140,7 @@ fox run:editor
 
 To extend a Fox default Node, you can do like with did with the main scene: Extend the Node from you script.
 
-For exmaple, to extend Globals and add your own:
+For example, to extend Globals and add your own:
 
 Create a `globals.gd`
 
