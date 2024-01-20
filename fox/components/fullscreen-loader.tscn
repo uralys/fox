@@ -2,7 +2,7 @@
 
 [ext_resource type="Shader" path="res://fox/behaviours/simple-blur.gdshader" id="1_7qld6"]
 [ext_resource type="Script" path="res://fox/components/fullscreen-loader.gd" id="1_sxau7"]
-[ext_resource type="Texture2D" uid="uid://bvvucvxltvypj" path="res://assets/sprites/gui/loader.webp" id="2_b52vk"]
+[ext_resource type="Texture2D" uid="uid://ui8gb78d043n" path="res://assets/sprites/gui/loader.webp" id="2_b52vk"]
 [ext_resource type="Script" path="res://fox/behaviours/rotation.gd" id="3_t5duq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_umrd7"]
