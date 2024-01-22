@@ -29,28 +29,30 @@ static func _createHTTPRequest(caller, options):
 
 # ------------------------------------------------------------------------------
 
-static func Get(caller, options):
+static func _performRequest(caller, options, method):
   var httpRequest = _createHTTPRequest(caller, options)
+  var body = __.GetOr("", 'body', options)
   var http = httpRequest.http
   var url = httpRequest.url
 
   http.request(
     url,
     ['x-api-key:' + API_KEY],
-    HTTPClient.METHOD_GET
+    method,
+    body
   )
 
 # ------------------------------------------------------------------------------
 
-static func Post(caller, options):
-  var httpRequest = _createHTTPRequest(caller, options)
-  var body = __.Get('body', options)
-  var http = httpRequest.http
-  var url = httpRequest.url
+static func Get(caller, options):
+  _performRequest(caller, options, HTTPClient.METHOD_GET)
 
-  http.request(
-    url,
-    ['x-api-key:' + API_KEY],
-    HTTPClient.METHOD_POST,
-    body
-  )
+# ------------------------------------------------------------------------------
+
+static func Post(caller, options):
+  _performRequest(caller, options, HTTPClient.METHOD_POST)
+
+# ------------------------------------------------------------------------------
+
+static func Put(caller, options):
+  _performRequest(caller, options, HTTPClient.METHOD_PUT)
