@@ -28,8 +28,8 @@ var blurring = false
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-  prints('> splashScreen');
-  prints('-------------------------------')
+  G.log('> splashScreen');
+  G.log('-------------------------------')
   var appearDuration = 0.75
   var appearDelay = 0.2
 

@@ -57,7 +57,7 @@ static func toAndBack(object, _options):
 
 static func show(object, duration = 0.3, delay = 0.0, doNotHide = false):
   if(not object):
-    prints('warning: trying to Animate.show a Nil object')
+    G.log('warning: trying to Animate.show a Nil object')
     return
 
   object.modulate.a = 0
@@ -305,7 +305,7 @@ static func _animate(object, options):
     return
 
   if(typeof(object) != TYPE_OBJECT):
-    prints(
+    G.log(
       '🔴 Animate is meant for TYPE_OBJECT, not',
       typeof(object),
       'https://docs.godotengine.org/en/stable/classes/class_%40globalscope.html#enum-globalscope-variant-type'

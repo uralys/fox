@@ -81,16 +81,16 @@ func _play(soundName, delay = 0, volume = 0):
   if(delay > 0):
     await Wait.forSomeTime(___node, delay).timeout
 
-  if(_verbose):prints('[Sound] playing', soundName, 'with delay', delay)
+  if(_verbose):G.log('[Sound] playing', soundName, 'with delay', delay)
 
   var assetPath =__.Get(soundName, OGG)
   if(assetPath):
     if(DEBUG.SOUND_OFF):
-      prints('🎵 >> DEBUG.SOUND_OFF [', soundName, ']');
+      G.log('🎵 >> DEBUG.SOUND_OFF [', soundName, ']');
     else:
       return _playStream(assetPath, volume)
   else:
-    if(_verbose):prints('[Sound] ❌ sound [', soundName, '] has no super.ogg');
+    if(_verbose):G.log('[Sound] ❌ sound [', soundName, '] has no super.ogg');
 
 # ------------------------------------------------------------------------------
 

@@ -12,7 +12,7 @@ func finalizeFoxSetup():
   DEBUG.setup()
   createScreenReference()
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
-  prints('------------------------')
+  G.log('------------------------')
 
 # ------------------------------------------------------------------------------
 

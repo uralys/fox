@@ -32,14 +32,14 @@ func _ready():
   G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
   G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + '.bin'
 
-  prints('========================================')
+  G.log('========================================')
   var foxVersion = ProjectSettings.get_setting('fox/version')
   foxVersion = foxVersion if foxVersion else ''
-  prints('[🦊 Fox]', foxVersion)
-  prints('-------------------------------')
-  prints('bundle/id: ' + G.BUNDLE_ID)
-  prints('bundle/env: ' + G.ENV)
-  prints('bundle/platform: ' + G.PLATFORM)
+  G.log('[🦊 Fox]', foxVersion)
+  G.log('-------------------------------')
+  G.log('bundle/id: ' + G.BUNDLE_ID)
+  G.log('bundle/env: ' + G.ENV)
+  G.log('bundle/platform: ' + G.PLATFORM)
 
 # ------------------------------------------------------------------------------
 

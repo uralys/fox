@@ -30,7 +30,7 @@ func getCurrentScene():
 # ------------------------------------------------------------------------------
 
 func openDefault():
-  prints('openDefault() can be overriden to open your default screen when an error occurs.')
+  G.log('openDefault() can be overriden to open your default screen when an error occurs.')
 
 # ------------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ func _openScene(scene, options = {}):
 
   if(currentScene):
     previousSceneName = str(currentScene.name)
-    prints('[🦊 Router]> leaving', previousSceneName, '> ---------')
+    G.log('[🦊 Router]> leaving', previousSceneName, '> ---------')
 
     if(currentScene.has_method('onLeave')):
       currentScene.onLeave(options)
@@ -67,7 +67,7 @@ func _openScene(scene, options = {}):
 
   if(currentScene.has_method('onOpen')):
     currentScene.onOpen(options)
-  prints('[🦊 Router]> ---------- entered:', str(currentScene.name))
+  G.log('[🦊 Router]> ---------- entered:', str(currentScene.name))
 
 # ------------------------------------------------------------------------------
 
