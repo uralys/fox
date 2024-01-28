@@ -32,7 +32,7 @@ const start = (godotPath, params, config) => {
   console.log('============================================================');
   var {position, screen} = config;
 
-  const parameters = ['local-fox-runner', ...params];
+  const parameters = [...params];
 
   if (screen) {
     parameters.push(['--screen', screen]);
