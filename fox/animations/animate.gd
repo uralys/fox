@@ -280,7 +280,7 @@ static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, time
 static func swing(object, _options = {}):
   var options = _options.duplicate()
   var propertyPath = __.Get('propertyPath', options)
-  var duration = __.Get('duration', options)
+  var duration = __.GetOr(1, 'duration', options)
   var ratio = __.Get('ratio', options)
   var transition = __.GetOr( Tween.TRANS_LINEAR, 'transition', options)
   var easing = __.GetOr(Tween.EASE_OUT, 'ease', options)

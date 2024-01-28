@@ -8,10 +8,10 @@ class_name Wait
 
 # ------------------------------------------------------------------------------
 
-static func forSomeTime(parent, timetoWait: float):
+static func forSomeTime(parent, timeInSec: float):
   var _Timer = Timer.new()
   parent.add_child(_Timer)
-  _Timer.start(timetoWait);
+  _Timer.start(timeInSec);
   return _Timer
 
 # ------------------------------------------------------------------------------
