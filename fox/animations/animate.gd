@@ -197,12 +197,6 @@ static func _zoomIn(object, _options = {}):
     easing = Tween.EASE_OUT
   })
 
-# ------------------------------------------------------------------------------
-
-static func bounce(object, duration = 0.25, upScale = 0.05):
-  var initialScale = object.scale;
-  return await _bounce(object, initialScale, upScale, duration)
-
 # ==============================================================================
 
 static func _processAnimations(objectOrArray, callable: Callable, _options = {}):
@@ -241,6 +235,7 @@ static func _to(object, _options):
   _animate(object, options)
   # await object.options.signalToWait
 
+## TODO: use local meta, see bounce() for example
 static func _getInitialValue(object, property):
   var initialValue = object[property];
   var metaName = 'initial_'+property;
@@ -253,27 +248,34 @@ static func _getInitialValue(object, property):
 
 # ------------------------------------------------------------------------------
 
-static func _bounce(object, fromScale, upScale = 0.06, stepDuration = 0.25, times = 1):
-  var duration = float(stepDuration)/2
+# note: meta fromScale and __bouncer are used to avoid the scale getting bigger
+# and bigger when called multiple times without waiting for the previous to finish
+static func bounce(object, options = {}):
+  var duration = __.GetOr(0.25, 'duration', options)
+  var upScale = __.GetOr(0.05, 'upScale', options)
 
-  to(object, {
-    propertyPath = 'scale',
-    toValue = fromScale + Vector2(upScale, upScale),
-    duration = duration
-  })
+  var fromScale = object.scale
+  if(object.has_meta('fromScale')):
+    fromScale = object.get_meta('fromScale')
+    object.scale = fromScale
 
-  await Wait.forSomeTime(object, duration).timeout
+    if(object.has_meta('__bouncer')):
+      object.get_meta('__bouncer').kill()
+      object.remove_meta('__bouncer')
+  else:
+    object.set_meta('fromScale', object.scale)
 
-  to(object, {
-    propertyPath = 'scale',
-    toValue = fromScale,
-    duration = duration
-  })
+  var tween = object.create_tween()
+  tween.tween_property(object, 'scale', fromScale + Vector2(upScale, upScale), duration*0.5)
+  tween.tween_property(object, 'scale', fromScale, duration*0.5)
 
-  await Wait.forSomeTime(object, duration).timeout
+  object.set_meta('__bouncer', tween)
 
-  if(times > 1):
-    _bounce(object, fromScale, upScale, stepDuration, times - 1)
+  await tween.finished
+  object.remove_meta('fromScale')
+  object.remove_meta('__bouncer')
+  tween.kill()
+
 
 # ------------------------------------------------------------------------------
 
