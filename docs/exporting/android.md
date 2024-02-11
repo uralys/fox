@@ -119,3 +119,10 @@ to test android IAP:
 then the test account can see the SKU even from `debug.apk` generated with `fox export > android debug preset` manually installed with `adb`.
 
 API reference and examples: <https://docs.godotengine.org/en/stable/tutorials/platform/android/android_in_app_purchases.html>
+
+## Notifications:
+
+- install Android plugin <https://github.com/cengiz-pz/godot-android-notification-scheduler-plugin>
+- add `useNotifications: true` to foxConfig.core
+
+When Fox initializes, it will check if the app `useNotifications`. If so, it will instantiate a `NotificationScheduler` singleton and add it to the `root` node.
