@@ -67,7 +67,8 @@ const unzipIPA = (bundleName) => {
 
 // -----------------------------------------------------------------------------
 
-const exportBundle = async (coreConfig, bundles) => {
+const exportBundle = async (settings) => {
+  const {core: coreConfig, bundles} = settings;
   console.log(`⚙️  exporting a ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -108,7 +109,7 @@ const exportBundle = async (coreConfig, bundles) => {
 
   // ---------
 
-  const bundleSettings = await switchBundle(bundles, presets);
+  const bundleSettings = await switchBundle(settings, presets);
   if (!bundleSettings) {
     console.log(chalk.red.bold('🔴 failed during bundle settings preparation.'));
     return;

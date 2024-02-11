@@ -73,7 +73,8 @@ const inquireParams = async (bundles, presets) => {
 
 // -----------------------------------------------------------------------------
 
-const switchBundle = async (bundles, presets) => {
+const switchBundle = async (settings, presets) => {
+  const {core, config, bundles} = settings;
   console.log(`⚙️  switching to another ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -102,7 +103,7 @@ const switchBundle = async (bundles, presets) => {
 
   // ---------
 
-  const override = {bundle: {}, fox: {}};
+  const override = {bundle: {}, fox: {}, custom: {}};
   const appPackageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
 
@@ -112,6 +113,18 @@ const switchBundle = async (bundles, presets) => {
   override.bundle.versionCode = toVersionNumber(appPackageJSON.version);
   override.bundle.platform = preset.platform;
   override.bundle.env = env;
+
+  if(core.useNotifications !== undefined) {
+    override.custom.useNotifications = core.useNotifications;
+  }
+
+  Object.keys(override.bundle).forEach((key) => {
+    console.log(`  ${chalk.red.bold('[bundle]')} ${key} = ${override.bundle[key]}`);
+  })
+
+  Object.keys(override.custom).forEach((key) => {
+    console.log(`  ${chalk.magenta.bold('[custom]')} ${key} = ${override.custom[key]}`);
+  })
 
   // ---------
 
@@ -137,6 +150,7 @@ const switchBundle = async (bundles, presets) => {
   // ---------
 
   override.custom = {
+    ...override.custom,
     ...overrideByEnv,
     ...secretByEnv
   };

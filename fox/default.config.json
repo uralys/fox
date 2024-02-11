@@ -1,7 +1,8 @@
 {
   "core": {
     "applicationName": "Your Game",
-    "godot": "/Applications/Apps/Godot.app/Contents/MacOS/Godot"
+    "godot": "/Applications/Apps/Godot.app/Contents/MacOS/Godot",
+    "useNotifications": false
   },
   "generate:icons": {
     "input": "_release/images/",

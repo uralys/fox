@@ -171,12 +171,12 @@ const cli = async (yargs, params) => {
       return;
     }
     case EXPORT: {
-      exportBundle(core, bundles);
+      exportBundle(settings);
       return;
     }
     case SWITCH: {
       const presets = readPresets();
-      switchBundle(bundles, presets);
+      switchBundle(settings, presets);
       return;
     }
   }
