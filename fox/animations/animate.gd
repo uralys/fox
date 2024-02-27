@@ -323,9 +323,10 @@ static func _animate(object, options):
 
   var delay = __.GetOr(0, 'delay', options)
   var duration = __.GetOr(0.75, 'duration', options)
-  var easing = __.GetOr(Tween.EASE_OUT, 'easing', options)
+  var easing = __.GetOr(null, 'easing', options)
 
-  var transition = options.transition if options.get('transition') else Tween.TRANS_QUAD
+
+  var transition = options.transition if options.get('transition') else null
 
   # --------
 
@@ -354,8 +355,13 @@ static func _animate(object, options):
   # --------
 
   var tween = object.create_tween()
+  var tweener = tween.tween_property(nestedToAnimate, property, toValue, duration)
 
-  tween.tween_property(nestedToAnimate, property, toValue, duration).set_trans(transition).set_ease(easing)
+  if(transition != null):
+    tweener.set_trans(transition)
+
+  if(easing != null):
+    tweener.set_ease(easing)
 
   tween.connect("finished", func onFinished():
     object.emit_signal(SIGNAL_ON_DONE)
