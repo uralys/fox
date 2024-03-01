@@ -4,7 +4,7 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-var ELEMENTS = preload('res://assets/name-elements.json').data
+var ELEMENTS = load('res://assets/name-elements.json').data
 
 # ------------------------------------------------------------------------------
 
