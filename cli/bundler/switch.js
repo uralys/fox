@@ -118,14 +118,6 @@ const switchBundle = async (settings, presets) => {
     override.custom.useNotifications = core.useNotifications;
   }
 
-  Object.keys(override.bundle).forEach((key) => {
-    console.log(`  ${chalk.red.bold('[bundle]')} ${key} = ${override.bundle[key]}`);
-  })
-
-  Object.keys(override.custom).forEach((key) => {
-    console.log(`  ${chalk.magenta.bold('[custom]')} ${key} = ${override.custom[key]}`);
-  })
-
   // ---------
 
   let overrideByEnv;
@@ -135,7 +127,6 @@ const switchBundle = async (settings, presets) => {
   } catch (e) {
     overrideByEnv = {};
   }
-
 
   // ---------
 
@@ -154,6 +145,18 @@ const switchBundle = async (settings, presets) => {
     ...overrideByEnv,
     ...secretByEnv
   };
+
+  // ---------
+
+  Object.keys(override.bundle).forEach((key) => {
+    console.log(`  ${chalk.green.bold('[bundle]')} ${key} = ${override.bundle[key]}`);
+  })
+
+  Object.keys(override.custom).forEach((key) => {
+    console.log(`  ${chalk.magenta.bold('[custom]')} ${key} = ${key.includes('secret') ? 'xxx' : override.custom[key]}`);
+  })
+
+  // ---------
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
