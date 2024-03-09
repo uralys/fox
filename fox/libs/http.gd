@@ -22,9 +22,14 @@ static func _createHTTPRequest(caller, options):
   var http = HTTPRequest.new()
   caller.add_child(http)
 
-  if(onComplete):
-    http.request_completed.connect(onComplete)
+  var _onComplete = func(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
+    if(result != OK):
+      G.log('❌ [b][color=pink]Error with HTTPRequest[/color][/b]', {url=url, result=result}, 'see https://docs.godotengine.org/en/stable/classes/class_httprequest.html#enumerations')
 
+    if(onComplete):
+      onComplete.call(result, response_code, headers, body)
+
+  http.request_completed.connect(_onComplete)
   return {http=http, url=url}
 
 # ------------------------------------------------------------------------------
