@@ -110,4 +110,5 @@ func showLoader():
   $/root/app.add_child(fullscreenLoader)
 
 func hideLoader():
-  fullscreenLoader.remove()
+  if(fullscreenLoader):
+    fullscreenLoader.remove()

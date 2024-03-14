@@ -16,6 +16,7 @@ static var API_KEY = ProjectSettings.get_setting('custom/api-key')
 static func _createHTTPRequest(caller, options):
   var subURL = __.GetOr('', 'url' ,options)
   var onComplete = __.Get('onComplete', options)
+  var onError = __.Get('onError', options)
 
   var url = API_URL + subURL
 
@@ -25,6 +26,9 @@ static func _createHTTPRequest(caller, options):
   var _onComplete = func(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray):
     if(result != OK):
       G.log('❌ [b][color=pink]Error with HTTPRequest[/color][/b]', {url=url, result=result}, 'see https://docs.godotengine.org/en/stable/classes/class_httprequest.html#enumerations')
+      if(onError):
+        onError.call(result, response_code, headers, body)
+        return
 
     if(onComplete):
       onComplete.call(result, response_code, headers, body)

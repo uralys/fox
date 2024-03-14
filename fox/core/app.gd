@@ -9,7 +9,12 @@ var NotificationsScheduler = preload('res://fox/behaviours/notifications.tscn')
 
 # ------------------------------------------------------------------------------
 
-func finalizeFoxSetup():
+# your app must call super._ready() to initialize the game using:
+# ```func _ready():
+#      super._ready()
+#      loadApp()
+# ```
+func _ready():
   DEBUG.setup()
   createScreenReference()
   prepareNotifications()
@@ -24,7 +29,8 @@ func startSplashAnimation():
   var splash = SplashAnimation.instantiate()
   add_child(splash)
 
-  await splash.splashFinished
+  # may await splash.splashFinished
+  return splash
 
 # ------------------------------------------------------------------------------
 
