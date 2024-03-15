@@ -138,7 +138,7 @@ const exportBundle = async (settings) => {
 
   // ---------
 
-  const exportType = `--export-${env}`;
+  const exportType = `--export-${env === 'release' ? 'release' : 'debug'}`;
   console.log(`\n⚙️  Exporting with ${exportType}...`);
 
   const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--headless'], {

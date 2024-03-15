@@ -44,7 +44,7 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bun
   updateMain(preset, 'export_path', `_build/android/${bundleName}${androidExtension(env)}`);
   console.log(`options:`);
 
-  const _applicationName = `${applicationName}${env === 'debug' ? '(debug)' : ''}`;
+  const _applicationName = `${applicationName}${env === 'release' ? '' : `(${env})`}`;
   updateOptions(preset, 'package/name', _applicationName);
 
   const packageUIDKey = 'package/unique_name';
@@ -118,7 +118,7 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
     ? `${coreConfig.applicationName}: ${subtitle}`
     : coreConfig.applicationName;
 
-  const bundleName = `${bundleId}${env === 'debug' ? '-debug' : ''}`;
+  const bundleName = `${bundleId}${env === 'release' ? '' : `-${env}`}`;
 
   switch (platform) {
     case ANDROID:

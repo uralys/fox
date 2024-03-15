@@ -12,7 +12,7 @@ import { toVersionNumber } from './versioning.js';
 // -----------------------------------------------------------------------------
 
 const OVERRIDE_CFG = './override.cfg';
-const ENV = ['debug', 'release'];
+const ENV = ['debug', 'staging', 'release'];
 
 // -----------------------------------------------------------------------------
 
