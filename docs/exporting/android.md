@@ -126,3 +126,7 @@ API reference and examples: <https://docs.godotengine.org/en/stable/tutorials/pl
 - add `useNotifications: true` to foxConfig.core
 
 When Fox initializes, it will check if the app `useNotifications`. If so, it will instantiate a `NotificationScheduler` singleton and add it to the `root` node.
+
+To generate an icon, you may use tools like <https://romannurik.github.io/AndroidAssetStudio/>
+
+The generated icons should be placed in the `android/build/res/drawable*` folders.

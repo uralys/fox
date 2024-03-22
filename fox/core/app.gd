@@ -67,6 +67,7 @@ func prepareNotifications():
     return
 
   scheduler = NotificationsScheduler.instantiate()
+  scheduler.init()
   $/root.add_child.call_deferred(scheduler)
 
   call_deferred('_configureScheduler')
@@ -77,15 +78,18 @@ func _configureScheduler():
   var h = scheduler.has_post_notifications_permission()
   G.log('has_post_notifications_permission:', h);
 
-  var chanId = 'CHAN_BATTLE_ID'
-  scheduler.create_notification_channel(chanId, "My Channel Name", "My channel description")
+  # if(not h):
+  #   scheduler.request_post_notifications_permission()
 
-  var my_notification_data = NotificationData.new()
-  my_notification_data.set_id(1)\
-    .set_channel_id(chanId)\
-    .set_title("Youhou!")\
-    .set_content("Time to gift")\
-    .set_small_icon_name("notification_icon")
+  # var chanId = 'CHAN_BATTLE_ID'
+  # scheduler.create_notification_channel(chanId, "My Channel Name", "My channel description")
+
+  # var my_notification_data = NotificationData.new()
+  # my_notification_data.set_id(1)\
+  #   .set_channel_id(chanId)\
+  #   .set_title("Youhou!")\
+  #   .set_content("Time to gift")\
+  #   .set_small_icon_name("notification_icon")
 
   # G.log('scheduling', {my_notification_data=my_notification_data} );
-  # scheduler.schedule(my_notification_data, 3)
+  # scheduler.schedule(my_notification_data, 7)
