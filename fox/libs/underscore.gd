@@ -63,6 +63,30 @@ static func Set(value, path, obj):
 
 # ------------------------------------------------------------------------------
 
+# example:  __.useColor('#A1553E')
+static func useColor(colorHex: String) -> Color:
+    var cleanHex = colorHex.replace("#", "")
+
+    if cleanHex.length() == 3:
+        cleanHex = "%s%s%s%s%s%s" % [cleanHex[0], cleanHex[0], cleanHex[1], cleanHex[1], cleanHex[2], cleanHex[2]]
+
+    if cleanHex.length() != 6:
+      G.log('❌ [b][color=pink]check your color.[/color][/b] ', {colorHex=colorHex});
+      return Color(0, 0, 0) # Retourne du noir en cas d'erreur.
+
+    # Convertit la chaîne hexadécimale en composantes RGB entières.
+    var r = cleanHex.substr(0, 2).hex_to_int()
+    var g = cleanHex.substr(2, 2).hex_to_int()
+    var b = cleanHex.substr(4, 2).hex_to_int()
+
+    var red = r / 255.0
+    var green = g / 255.0
+    var blue = b / 255.0
+
+    return Color(red, green, blue)
+
+# ------------------------------------------------------------------------------
+
 # from https://github.com/Calinou/godot-bbcode-to-ansi
 static func bbcodeToANSI(bbcode: String) -> String:
   var res = (bbcode

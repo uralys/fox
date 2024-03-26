@@ -42,3 +42,40 @@ static func dateTimeToReadableDate(datetime: Dictionary):
   )
 
   return readableDate
+
+# ------------------------------------------------------------------------------
+
+static func getTimeRemainingForSeason():
+  var timestampUTCSec = Time.get_unix_time_from_system()
+  var datetime = Time.get_datetime_dict_from_unix_time(timestampUTCSec)
+
+  datetime.month += 1
+  if datetime.month > 12:
+      datetime.month = 1
+      datetime.year += 1
+
+  datetime.day = 1
+  datetime.hour = 0
+  datetime.minute = 0
+  datetime.second = 0
+
+  var nextSeasonStartTimestamp = Time.get_unix_time_from_datetime_dict(datetime)
+  var diffSec = int(floor(nextSeasonStartTimestamp - timestampUTCSec))
+
+  @warning_ignore("integer_division")
+  var days = int(diffSec / (60 * 60 * 24))
+  @warning_ignore("integer_division")
+  var hours = int((diffSec % (60 * 60 * 24)) / (60 * 60))
+  @warning_ignore("integer_division")
+  var minutes = int((diffSec % (60 * 60)) / 60)
+  var seconds = int(diffSec) % 60
+
+
+  return {
+    nbDays = days,
+    timeBeforeMidnight = (
+     str(hours).pad_zeros(2) + ':'
+    + str(minutes).pad_zeros(2) + ':'
+    + str(seconds).pad_zeros(2))
+  }
+
