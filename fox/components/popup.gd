@@ -48,7 +48,8 @@ func _physics_process(delta):
 func close():
   closing = true
 
-  Sound.play(Sound.PRESS)
+  if(__.Get('PRESS', Sound)):
+    Sound.play(Sound.PRESS)
 
   if(thisPopupPauseEngine):
     get_tree().paused = false
