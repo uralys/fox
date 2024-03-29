@@ -22,6 +22,10 @@ func _ready():
   blur.material.set_shader_parameter('blur_amount', 0)
 
   closeButton.connect('pressed', close)
+
+  if(closeButton.has_node('interactiveArea2D')):
+    closeButton.get_node('interactiveArea2D').connect('pressed', close)
+
   Animate.show(panel)
 
 func _physics_process(delta):
