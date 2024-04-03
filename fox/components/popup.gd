@@ -7,6 +7,8 @@ extends ReferenceRect
 
 @onready var closeButton = $panel/closeButton
 
+# ------------------------------------------------------------------------------
+
 var closing = false
 var showing = false
 
@@ -21,12 +23,15 @@ func _ready():
   showing = true
   blur.material.set_shader_parameter('blur_amount', 0)
 
-  closeButton.connect('pressed', close)
-
-  if(closeButton.has_node('interactiveArea2D')):
-    closeButton.get_node('interactiveArea2D').connect('pressed', close)
+  if(closeButton):
+    if(closeButton.has_node('interactiveArea2D')):
+      closeButton.get_node('interactiveArea2D').connect('pressed', close)
+    else:
+      closeButton.connect('pressed', close)
 
   Animate.show(panel)
+
+# ------------------------------------------------------------------------------
 
 func _physics_process(delta):
   var current = blur.material.get_shader_parameter('blur_amount')
