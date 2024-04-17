@@ -6,6 +6,8 @@ extends Node
 
 var ScreenFader = preload("res://fox/components/screen-fader.tscn")
 var FullscreenLoader = preload("res://fox/components/fullscreen-loader.tscn")
+var SettingsPopup = preload('res://src/popups/settings.tscn')
+var LanguagesPopup = preload('res://src/popups/languages.tscn')
 
 # ------------------------------------------------------------------------------
 
@@ -112,3 +114,18 @@ func showLoader():
 func hideLoader():
   if(fullscreenLoader):
     fullscreenLoader.remove()
+
+# ------------------------------------------------------------------------------
+
+func openSettings():
+  var settings = SettingsPopup.instantiate()
+  $/root/app/popups.add_child(settings)
+  settings.show()
+
+func openLanguages(options = {}):
+  var languages = LanguagesPopup.instantiate()
+  languages.onClose = __.Get('onClose', options)
+  languages.welcome = __.Get('welcome', options)
+
+  $/root/app/popups.add_child(languages)
+  languages.show()

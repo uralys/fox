@@ -9,6 +9,7 @@ var _verbose = true
 
 # ------------------------------------------------------------------------------
 
+var CURRENT_MUSIC_CURSOR = -1
 var CURRENT_MUSIC
 var MUSIC_ON
 var SOUNDS_ON
@@ -29,6 +30,21 @@ func init(musicOn = true, soundsOn = true):
   ___node = Node.new()
   ___node.process_mode = PROCESS_MODE_ALWAYS
   $'/root/app'.add_child(___node)
+
+# ------------------------------------------------------------------------------
+
+func playMusicsInLoop(options):
+  var delay = __.GetOr(0, 'delay', options)
+  if(delay > 0):
+    await Wait.forSomeTime(___node, delay).timeout
+
+  CURRENT_MUSIC_CURSOR = (CURRENT_MUSIC_CURSOR+1) % Sound.MUSICS.size()
+  var musicName = Sound.MUSICS[CURRENT_MUSIC_CURSOR]
+  await playMusic(musicName)
+
+  CURRENT_MUSIC.connect('finished', func():
+    playMusicsInLoop(options)
+  )
 
 # ------------------------------------------------------------------------------
 
