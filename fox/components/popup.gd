@@ -57,7 +57,9 @@ func _physics_process(delta):
 func close():
   closing = true
 
-  if(__.Get('PRESS', Sound)):
+  if(__.Get('CONFIRMATION', Sound)):
+    Sound.play(Sound.CONFIRMATION)
+  elif(__.Get('PRESS', Sound)):
     Sound.play(Sound.PRESS)
 
   if(thisPopupPauseEngine):

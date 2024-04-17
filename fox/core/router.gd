@@ -69,6 +69,7 @@ func _openScene(scene, options = {}):
 
   if(currentScene.has_method('onOpen')):
     currentScene.onOpen(options)
+
   G.log('[🦊 Router]> ---------- entered:', str(currentScene.name))
 
 # ------------------------------------------------------------------------------

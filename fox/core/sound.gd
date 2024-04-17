@@ -42,7 +42,10 @@ func playMusicsInLoop(options):
   var musicName = Sound.MUSICS[CURRENT_MUSIC_CURSOR]
   await playMusic(musicName)
 
+  # CURRENT_MUSIC.seek(145) # to debug .ogg encoding
+
   CURRENT_MUSIC.connect('finished', func():
+    stopMusic()
     playMusicsInLoop(options)
   )
 
