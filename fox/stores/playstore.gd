@@ -146,6 +146,7 @@ func onPurchasesUpdated(purchases):
     var purchaseToken = _purchase.purchase_token
     storePurchaseToken(purchaseToken, sku)
 
+  queryingPurchasesAtStart = false
   playStore.queryPurchases('inapp')
 
 # ==============================================================================
@@ -177,26 +178,26 @@ func storePurchaseToken(purchaseToken, sku):
   Player.save()
 
 func _getSKUFromPurchaseToken(purchaseToken):
-  var sku = Player.state.purchasesProcessing[purchaseToken]
+  var sku = Player.state.purchasesToConsume[purchaseToken]
   return sku
 
-func setPurchaseProcessed(purchaseToken):
-  Player.state.purchasesProcessing.erase(purchaseToken)
+func _eraseTokenSincePurchaseHasBeenConsumed(purchaseToken):
+  Player.state.purchasesToConsume.erase(purchaseToken)
   Player.save()
 
 # ---------------
 
 func onPurchaseCompleted(purchaseToken):
-  setPurchaseProcessed(purchaseToken)
   var sku = _getSKUFromPurchaseToken(purchaseToken)
   Player.bought(sku)
+  _eraseTokenSincePurchaseHasBeenConsumed(purchaseToken)
 
 # ---------------
 
 func foundPreviousPurchase(purchaseToken):
-  setPurchaseProcessed(purchaseToken)
   var sku = _getSKUFromPurchaseToken(purchaseToken)
   Player.previouslyBought(sku)
+  _eraseTokenSincePurchaseHasBeenConsumed(purchaseToken)
 
 # ------------------------------------------------------------------------------
 
@@ -204,7 +205,8 @@ func onPurchaseAcknowledged(purchaseToken):
   var sku = _getSKUFromPurchaseToken(purchaseToken)
   var storeItem = G.STORE[sku]
 
-  if(storeItem.isConsumable):
+  if(__.GetOr(false, 'isConsumable', storeItem)):
+    G.log('consuming', sku);
     playStore.consumePurchase(purchaseToken)
   else:
     onPurchaseDone(purchaseToken)
