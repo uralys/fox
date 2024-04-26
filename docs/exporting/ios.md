@@ -40,3 +40,16 @@ ios/plugins
     ├── inappstore.gdip
     └── inappstore.release.xcframework
 ```
+
+## install and run a debug build on a device
+
+```sh
+> xcrun devicectl list devices
+> xcrun devicectl device install app --device XXXXXXX _build/iOS/battle-squares-debug.app
+> xcrun devicectl device process launch --device XXXXXXX com.uralys.battlesquares
+```
+
+```sh
+> brew install libimobiledevice
+> idevicesyslog
+```

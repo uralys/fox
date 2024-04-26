@@ -12,6 +12,7 @@ extends Node
 
 var playStore
 var queryingPurchasesAtStart = false
+var purchasesToConsume = {}
 
 # ------------------------------------------------------------------------------
 
@@ -22,7 +23,7 @@ signal skuDetailsReceived
 func _ready():
   if Engine.has_singleton('GodotGooglePlayBilling'):
     G.log('-------------------------------')
-    G.log('✅ PlayStore starting: GodotGooglePlayBilling was found')
+    G.log('✅ GodotGooglePlayBilling was found, connecting PlayStore.')
     playStore = Engine.get_singleton('GodotGooglePlayBilling')
     connectPlayStore()
 
@@ -94,7 +95,7 @@ func receivedPurchases(query_result):
 
       # _purchase is_acknowledged but not consumed => either not consumed or not consumable
       elif _purchase.purchase_state == 1:
-        Player.storePurchaseToken(_purchase.purchase_token, _purchase.sku)
+        storePurchaseToken(_purchase.purchase_token, _purchase.sku)
         onPurchaseAcknowledged(_purchase.purchase_token)
 
   else:
@@ -103,27 +104,6 @@ func receivedPurchases(query_result):
       ' debug message: ',
       query_result.debug_message
     )
-
-# ==============================================================================
-
-func onPurchaseAcknowledged(purchaseToken):
-  var sku = Player.getSKUFromPurchaseToken(purchaseToken)
-  var storeItem = G.STORE[sku]
-
-  if(storeItem.isConsumable):
-    playStore.consumePurchase(purchaseToken)
-  else:
-    onPurchaseDone(purchaseToken)
-
-# ------------------------------------------------------------------------------
-
-func onPurchaseAcknowledgementError(id, message, purchaseToken):
-  Router.hideLoader()
-  G.log('🔴 Purchase acknowledgement error:', {
-    id = id,
-    message = message,
-    purchaseToken = purchaseToken
-  })
 
 # ==============================================================================
 
@@ -164,7 +144,7 @@ func onPurchasesUpdated(purchases):
   for _purchase in purchases:
     var sku = JSON.parse_string(_purchase.original_json).productId
     var purchaseToken = _purchase.purchase_token
-    Player.storePurchaseToken(purchaseToken, sku)
+    storePurchaseToken(purchaseToken, sku)
 
   playStore.queryPurchases('inapp')
 
@@ -184,6 +164,57 @@ func onPurchaseDone(purchaseToken):
   Router.hideLoader()
 
   if(queryingPurchasesAtStart):
-    Player.foundPreviousPurchase(purchaseToken)
+    foundPreviousPurchase(purchaseToken)
   else:
-    Player.onPurchaseCompleted(purchaseToken)
+    onPurchaseCompleted(purchaseToken)
+
+# ==============================================================================
+# android purchases backup waiting to be acknowleged
+# ==============================================================================
+
+func storePurchaseToken(purchaseToken, sku):
+  Player.state.purchasesToConsume[purchaseToken] = sku
+  Player.save()
+
+func _getSKUFromPurchaseToken(purchaseToken):
+  var sku = Player.state.purchasesProcessing[purchaseToken]
+  return sku
+
+func setPurchaseProcessed(purchaseToken):
+  Player.state.purchasesProcessing.erase(purchaseToken)
+  Player.save()
+
+# ---------------
+
+func onPurchaseCompleted(purchaseToken):
+  setPurchaseProcessed(purchaseToken)
+  var sku = _getSKUFromPurchaseToken(purchaseToken)
+  Player.bought(sku)
+
+# ---------------
+
+func foundPreviousPurchase(purchaseToken):
+  setPurchaseProcessed(purchaseToken)
+  var sku = _getSKUFromPurchaseToken(purchaseToken)
+  Player.previouslyBought(sku)
+
+# ------------------------------------------------------------------------------
+
+func onPurchaseAcknowledged(purchaseToken):
+  var sku = _getSKUFromPurchaseToken(purchaseToken)
+  var storeItem = G.STORE[sku]
+
+  if(storeItem.isConsumable):
+    playStore.consumePurchase(purchaseToken)
+  else:
+    onPurchaseDone(purchaseToken)
+
+# ---------------
+
+func onPurchaseAcknowledgementError(id, message, purchaseToken):
+  Router.hideLoader()
+  G.log('🔴 Purchase acknowledgement error:', {
+    id = id,
+    message = message,
+    purchaseToken = purchaseToken
+  })
