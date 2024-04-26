@@ -44,8 +44,7 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bun
   updateMain(preset, 'export_path', `_build/android/${bundleName}${androidExtension(env)}`);
   console.log(`options:`);
 
-  const _applicationName = `${applicationName}${env === 'release' ? '' : `(${env})`}`;
-  updateOptions(preset, 'package/name', _applicationName);
+  updateOptions(preset, 'package/name', applicationName);
 
   const packageUIDKey = 'package/unique_name';
   const packageUID = (bundle[ANDROID] && bundle[ANDROID][packageUIDKey]) || bundle.uid;
@@ -114,10 +113,11 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
   console.log('⚙️  updating the preset:');
   const {subtitle} = bundle;
 
-  const applicationName = subtitle
+  const _applicationName = subtitle
     ? `${coreConfig.applicationName}: ${subtitle}`
     : coreConfig.applicationName;
 
+  const applicationName = `${_applicationName}${env === 'release' ? '' : `(${env})`}`;
   const bundleName = `${bundleId}${env === 'release' ? '' : `-${env}`}`;
 
   switch (platform) {

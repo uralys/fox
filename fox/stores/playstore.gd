@@ -132,7 +132,7 @@ func purchase(sku):
   Router.showLoader()
   var response = playStore.purchase(sku)
   if response.status != OK:
-    G.log('🔴 Purchase error %s: %s' % [
+    G.log('🔴 Purchase could not be sent: error %s: %s' % [
       response.response_code,
       response.debug_message
     ])
