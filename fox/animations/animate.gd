@@ -199,6 +199,60 @@ static func _zoomIn(object, _options = {}):
 
 # ==============================================================================
 
+static func collect(object, options = {}):
+  var fromPosition = __.GetOr(Vector2(G.W * 0.5, G.H * 0.5), 'fromPosition', options)
+  var toPosition = __.GetOr(fromPosition, 'toPosition', options)
+  var myNum = __.GetOr(0, 'myNum', options)
+  var nbCollectables = __.GetOr(1, 'nbCollectables', options)
+  var gatherDurationSec = __.GetOr(3, 'gatherDurationSec', options)
+  var spreadDuration = __.GetOr(0.3, 'spreadDuration', options)
+  var spreadRadius = __.GetOr(100, 'spreadRadius', options)
+  var onFinished = __.Get('onFinished', options)
+
+  await _positionInCircle(object, fromPosition - 0.5 *  object.size, myNum, nbCollectables, spreadRadius)
+  await Wait.forSomeTime(object, spreadDuration + 0.01 * (myNum + 1)).timeout
+
+  to(object, {
+    propertyPath = 'modulate:a',
+    toValue = 0.5,
+    duration = gatherDurationSec,
+    delay = 0.2
+  })
+
+  var tween = object.create_tween()
+  var tweener = tween.tween_property(object, 'position', toPosition, gatherDurationSec)
+  tween.parallel().tween_property(object, 'scale', object.scale * 0.4, gatherDurationSec)
+  tweener.set_trans(Tween.TRANS_BACK)
+  tweener.set_ease(Tween.EASE_IN)
+
+  tween.connect("finished", func onFinished():
+    object.queue_free()
+
+    to(object, {
+      propertyPath = 'modulate:a',
+      toValue = 0.0001,
+      duration = 0.1
+    })
+
+    if(onFinished):
+      onFinished.call()
+  )
+
+static func _positionInCircle(object, centerPosition, myNum, nbCollectables, spreadRadius = 100):
+  var angle = 2 * PI / nbCollectables * myNum
+  var x = centerPosition.x + spreadRadius * cos(angle)
+  var y = centerPosition.y + spreadRadius * sin(angle)
+  object.position = Vector2(x, y)
+
+  from(object, {
+    propertyPath = 'position',
+    fromValue = centerPosition,
+    duration = 0.3,
+    delay = 0.01 * (myNum + 1)
+  })
+
+# ==============================================================================
+
 static func _processAnimations(objectOrArray, callable: Callable, _options = {}):
   if(typeof(_options) != TYPE_DICTIONARY):
     G.log('❌ [b][color=pink] Animate options must be of TYPE_DICTIONARY[/color][/b] ');
