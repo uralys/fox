@@ -2,6 +2,8 @@
 
 Exporting for Android: <https://docs.godotengine.org/en/stable/getting_started/workflow/export/exporting_for_android.html#doc-exporting-for-android>
 
+- configure to build with gradle, and install the build template: `Project > Install android build template`. It will generate a root `android` folder.
+
 ## permissions
 
 To use HTTP calls to your backend you need to add the following permissions to your android template in `export_presets.cfg`:
@@ -96,16 +98,30 @@ all steps: <https://proandroiddev.com/install-google-play-store-in-an-android-em
 
 ## IAP
 
-- configure to build with gradle: it will generate a root `android` folder
-- install android plugins within `android/plugins`
+### setting up android plugins
+
+- To keep your plugins whenever you update (and erase the `android` folder), you can install them next to your game folder, and symlink to the `android/plugins` folder each time you reinstall the latest android template.
+
+- install android plugins next to `/fox` and `/yourgame`
+
+for example in my case:
 
 ```sh
-android/plugins
-├── GodotGooglePlayBilling.x.x.x.release.aar
-└── GodotGooglePlayBilling.gdap
+~/Projects/uralys/gamedev/
+└── fox
+└── yourgame
+└── godot.android-plugins
+  ├── GodotGooglePlayBilling.x.x.x.release.aar
+  └── GodotGooglePlayBilling.gdap
+```
+
+```sh
+> ln -s ~/Projects/uralys/gamedev/godot.android-plugins android/plugins
 ```
 
 note: currently using `godot-lib.4.1.3.stable.template_release.aar` and building `assembleRelease` from Android Studio
+
+### testing IAP
 
 to test android IAP:
 
