@@ -128,7 +128,7 @@ static func getTimeRemainingForToday():
   var datetime = Time.get_datetime_dict_from_unix_time(timestampUTCSec)
 
   datetime.day += 1
-  if datetime.day > 31:
+  if datetime.day > nbDaysInMonth(datetime.month, datetime.year):
       datetime.day = 1
       datetime.month += 1
       if datetime.month > 12:
