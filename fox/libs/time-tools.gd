@@ -97,10 +97,11 @@ static func getTimeRemainingForThisWeek():
   if days_until_next_monday == 0:
       days_until_next_monday = 7  # Si aujourd'hui est lundi, le prochain lundi est dans 7 jours
 
+
   var nextMonday = datetime
   nextMonday.day += days_until_next_monday
   if nextMonday.day > nbDaysInMonth(nextMonday.month, nextMonday.year):
-      nextMonday.day = 1
+      nextMonday.day = nextMonday.day - nbDaysInMonth(nextMonday.month, nextMonday.year)
       nextMonday.month += 1
       if nextMonday.month > 12:
           nextMonday.month = 1

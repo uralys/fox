@@ -307,6 +307,9 @@ static func _getInitialValue(object, property):
 static func bounce(object, options = {}):
   var duration = __.GetOr(0.25, 'duration', options)
   var upScale = __.GetOr(0.05, 'upScale', options)
+  var delay = __.GetOr(0, 'delay', options)
+
+  await Wait.forSomeTime(object, delay).timeout
 
   var fromScale = object.scale
   if(object.has_meta('fromScale')):
