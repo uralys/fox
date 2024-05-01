@@ -4,7 +4,7 @@ extends CanvasLayer
 
 # ------------------------------------------------------------------------------
 
-var SplashAnimation = preload('res://fox/animations/splash-animation.tscn')
+var IntroAnimation = preload('res://fox/animations/intro-animation.tscn')
 var NotificationsScheduler = preload('res://fox/behaviours/notifications.tscn')
 
 # ------------------------------------------------------------------------------
@@ -22,15 +22,15 @@ func _ready():
 
 # ------------------------------------------------------------------------------
 
-func startSplashAnimation():
-  if(DEBUG.NO_SPLASH_ANIMATION):
+func startIntroAnimation():
+  if(DEBUG.NO_INTRO_ANIMATION):
     return
 
-  var splash = SplashAnimation.instantiate()
-  add_child(splash)
+  var intro = IntroAnimation.instantiate()
+  add_child(intro)
 
-  # may await splash.splashFinished
-  return splash
+  # may await intro.introFinished
+  return intro
 
 # ------------------------------------------------------------------------------
 

@@ -12,7 +12,6 @@ var blurring = false
 # ------------------------------------------------------------------------------
 
 @onready var blur = $blur
-@onready var bg = $bg
 @onready var logo = $logo
 @onready var letters = $letters
 

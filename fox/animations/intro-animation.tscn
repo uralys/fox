@@ -1,0 +1,81 @@
+[gd_scene load_steps=10 format=3 uid="uid://cdceudy16q3st"]
+
+[ext_resource type="Script" path="res://fox/animations/intro-animation.gd" id="1_ubxrs"]
+[ext_resource type="Texture2D" uid="uid://cbim7dv1kofo4" path="res://fox/assets/splash/uralys-banner.webp" id="2_01e2g"]
+[ext_resource type="Texture2D" uid="uid://cg7fbtk88iqkf" path="res://fox/assets/splash/u.png" id="3_w0kbj"]
+[ext_resource type="Texture2D" uid="uid://dsbll0xbc4qu8" path="res://fox/assets/splash/r.png" id="4_4qfkm"]
+[ext_resource type="Texture2D" uid="uid://dv47yowudwflp" path="res://fox/assets/splash/a.png" id="5_pmoyp"]
+[ext_resource type="Texture2D" uid="uid://m57u8kqidkga" path="res://fox/assets/splash/l.png" id="6_pyk4c"]
+[ext_resource type="Texture2D" uid="uid://daj0n7uiyq5fj" path="res://fox/assets/splash/y.png" id="7_jsixp"]
+[ext_resource type="Texture2D" uid="uid://c6u3p83wmrca4" path="res://fox/assets/splash/s.png" id="8_x6n67"]
+[ext_resource type="Texture2D" uid="uid://cbcdpk2whiio" path="res://fox/assets/splash/dot.png" id="9_logd5"]
+
+[node name="intro" type="CanvasLayer"]
+layer = 128
+script = ExtResource("1_ubxrs")
+
+[node name="logo" type="TextureRect" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -301.0
+offset_top = -281.0
+offset_right = 299.0
+offset_bottom = 57.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(296, 198)
+texture = ExtResource("2_01e2g")
+expand_mode = 1
+
+[node name="letters" type="ReferenceRect" parent="."]
+modulate = Color(0.876843, 0.430274, 0.300823, 1)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -393.0
+offset_top = 18.0
+offset_right = 386.0
+offset_bottom = 171.0
+grow_horizontal = 2
+grow_vertical = 2
+border_width = 0.0
+
+[node name="u" type="Sprite2D" parent="letters"]
+position = Vector2(143.996, 65.532)
+scale = Vector2(0.490155, 0.490155)
+texture = ExtResource("3_w0kbj")
+
+[node name="r" type="Sprite2D" parent="letters"]
+position = Vector2(267.996, 63.5319)
+scale = Vector2(0.500939, 0.507)
+texture = ExtResource("4_4qfkm")
+
+[node name="a" type="Sprite2D" parent="letters"]
+position = Vector2(390, 64.9999)
+scale = Vector2(0.131745, 0.132874)
+texture = ExtResource("5_pmoyp")
+
+[node name="l" type="Sprite2D" parent="letters"]
+position = Vector2(497, 64.9999)
+scale = Vector2(0.507002, 0.507002)
+texture = ExtResource("6_pyk4c")
+
+[node name="y" type="Sprite2D" parent="letters"]
+position = Vector2(576.152, 66.0321)
+scale = Vector2(0.474107, 0.474107)
+texture = ExtResource("7_jsixp")
+
+[node name="s" type="Sprite2D" parent="letters"]
+position = Vector2(675.152, 66.032)
+scale = Vector2(0.461651, 0.461651)
+texture = ExtResource("8_x6n67")
+
+[node name="dot" type="Sprite2D" parent="letters"]
+position = Vector2(742.152, 90.0321)
+scale = Vector2(0.325746, 0.325746)
+texture = ExtResource("9_logd5")
