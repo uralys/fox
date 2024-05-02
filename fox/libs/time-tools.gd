@@ -45,6 +45,15 @@ static func dateTimeToReadableDate(datetime: Dictionary):
 
 # ------------------------------------------------------------------------------
 
+# returns today as yyyymmdd number: e.g: 20240820
+static func getDeviceTodayNumUTC():
+  var unixTimeUTCSec = Time.get_unix_time_from_system()
+  var datetimeUTC = Time.get_datetime_dict_from_unix_time(unixTimeUTCSec)
+  var todayNum = dateTimeToYYYYMMDDNumber(datetimeUTC)
+  return todayNum
+
+# ------------------------------------------------------------------------------
+
 static func getTimeRemainingForSeason():
   var timestampUTCSec = Time.get_unix_time_from_system()
   var datetime = Time.get_datetime_dict_from_unix_time(timestampUTCSec)

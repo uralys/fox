@@ -44,10 +44,11 @@ func playMusicsInLoop(options):
 
   # CURRENT_MUSIC.seek(145) # to debug .ogg encoding
 
-  CURRENT_MUSIC.connect('finished', func():
-    stopMusic()
-    playMusicsInLoop(options)
-  )
+  if(CURRENT_MUSIC):
+    CURRENT_MUSIC.connect('finished', func():
+      stopMusic()
+      playMusicsInLoop(options)
+    )
 
 # ------------------------------------------------------------------------------
 
