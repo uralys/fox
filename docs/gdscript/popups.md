@@ -22,3 +22,35 @@ func openShop():
   var shop = ShopPopup.instantiate()
   $/root/app/popups.add_child(shop)
 ```
+
+## Blur and Panel
+
+- You can add a `components/blur.tscn`, name it `blur`, to blur the background, the popup will automatically show/hide the blur.
+
+- You can add a `Panel`, name it `panel`, to automatically show/hide your content.
+
+- Inside this panel, you can add a `closeButton` with a `pressed` signal to automatically call the `close` function.
+
+example:
+
+```gd
+extends 'res://fox/components/popup.gd'
+
+# ------------------------------------------------------------------------------
+
+func _ready():
+  super._ready()
+
+  Animate.from(panel, {
+    propertyPath = 'position',
+    fromValue = panel.position + Vector2(0, G.H),
+    duration = 1,
+    transition= Tween.TRANS_QUAD,
+    easing = Tween.EASE_OUT
+  })
+
+# ------------------------------------------------------------------------------
+
+func close():
+  Router.openHome()
+```
