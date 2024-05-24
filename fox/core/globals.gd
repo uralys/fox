@@ -46,6 +46,10 @@ func _ready():
 func __ansi(o):
   return __.bbcodeToANSI(o) if o is String else o
 
+func debug(a, b=null,c=null,d=null,e=null,f=null,g=null):
+  if(G.ENV == 'release'): return
+  G.log('🫧  [color=magenta](debug)[/color]', a, b, c, d, e, f, g)
+
 func log(a, b=null,c=null,d=null,e=null,f=null,g=null,h=null):
   prints(__ansi(a),
     __ansi(b) if b != null else '',
