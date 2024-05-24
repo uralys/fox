@@ -53,14 +53,14 @@ func playMusicsInLoop(options):
 # ------------------------------------------------------------------------------
 
 func playMusic(musicName, delay = 0):
-  CURRENT_MUSIC = await _play(musicName, delay, -5)
+  CURRENT_MUSIC = await _play(musicName, delay)
   _refreshMusicVolume()
 
 # ------------------------------------------------------------------------------
 
-func play(soundName, delay = 0, volume = 0):
+func play(soundName, delay = 0):
   if(SOUNDS_ON):
-    _play(soundName, delay, volume)
+    _play(soundName, delay)
 
 # ------------------------------------------------------------------------------
 
@@ -97,7 +97,7 @@ func isMusicOn():
 
 # ------------------------------------------------------------------------------
 
-func _play(soundName, delay = 0, volume = 0):
+func _play(soundName, delay = 0):
   if(delay > 0):
     await Wait.forSomeTime(___node, delay).timeout
 
@@ -108,13 +108,13 @@ func _play(soundName, delay = 0, volume = 0):
     if(DEBUG.SOUND_OFF):
       G.debug('🎵 >> DEBUG.SOUND_OFF [', soundName, ']');
     else:
-      return _playStream(assetPath, volume)
+      return _playStream(assetPath)
   else:
     if(_verbose):G.debug('[Sound] ❌ sound [', soundName, '] has no super.ogg');
 
 # ------------------------------------------------------------------------------
 
-func _playStream(path, volume = 0):
+func _playStream(path):
   var sound = AudioStreamPlayer.new()
   sound.process_mode = PROCESS_MODE_ALWAYS
 
@@ -123,7 +123,6 @@ func _playStream(path, volume = 0):
   ___node.add_child(sound)
 
   sound.play()
-  sound.set_volume_db(volume)
 
   return sound
 
