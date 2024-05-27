@@ -56,8 +56,8 @@ static func toAndBack(object, _options):
 # ------------------------------------------------------------------------------
 
 static func show(object, duration = 0.3, delay = 0.0, doNotHide = false):
-  if(not object):
-    G.log('warning: trying to Animate.show a Nil object')
+  if(object == null):
+    G.debug('warning: trying to Animate.show a Nil object')
     return
 
   object.modulate.a = 0

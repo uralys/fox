@@ -48,6 +48,7 @@ const generateIcons = (config) => {
     );
     return null;
   }
+  console.log('input:', `${input}/${base}`);
 
   SIZES.forEach((size) => {
     console.log(` > ${chalk.magenta.italic(size)}`);

@@ -25,10 +25,14 @@ func _ready():
     get_tree().paused = true
 
   showing = true
-  blur.material.set_shader_parameter('blur_amount', 0)
+
+  if(blur != null):
+    blur.mouse_filter = Control.MOUSE_FILTER_STOP
+    blur.material.set_shader_parameter('blur_amount', 0)
 
   if(closeButton):
     if(closeButton.has_node('interactiveArea2D')):
+      closeButton.get_node('interactiveArea2D').inputPriority = -1
       closeButton.get_node('interactiveArea2D').connect('pressed', close)
     else:
       closeButton.connect('pressed', close)
