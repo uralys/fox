@@ -14,11 +14,12 @@ static var API_KEY = ProjectSettings.get_setting('custom/api-key')
 # ------------------------------------------------------------------------------
 
 static func _createHTTPRequest(caller, options):
-  var subURL = __.GetOr('', 'url' ,options)
+  var _url = __.Get('url' ,options)
+  var endpoint = __.GetOr('', 'endpoint' ,options)
   var onComplete = __.Get('onComplete', options)
   var onError = __.Get('onError', options)
 
-  var url = API_URL + subURL
+  var url = _url if(_url != null) else API_URL + endpoint
 
   var http = HTTPRequest.new()
   caller.add_child(http)
@@ -44,9 +45,15 @@ static func _performRequest(caller, options, method):
   var http = httpRequest.http
   var url = httpRequest.url
 
+  if(typeof(body) == TYPE_DICTIONARY):
+    body = JSON.stringify(body)
+
   http.request(
     url,
-    ['x-api-key:' + API_KEY],
+    [
+      'x-api-key:' + API_KEY,
+      'Content-Type: application/json'
+    ],
     method,
     body
   )
