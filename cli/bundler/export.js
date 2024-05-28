@@ -53,7 +53,7 @@ const verifyBuildFolder = () => {
 // -----------------------------------------------------------------------------
 
 const unzipIPA = (bundleName) => {
-  console.log(`\n⚙️  Unzipping ${bundleName}.app...`);
+  console.log(`⚙️  Unzipping ${bundleName}.app...`);
 
   const absolutePath = `${path.resolve(process.cwd())}/_build/iOS`
   shell.exec(`tar -xf ${absolutePath}/${bundleName}.ipa -C _build/iOS`)
@@ -61,8 +61,8 @@ const unzipIPA = (bundleName) => {
   shell.exec(`mv ${absolutePath}/Payload/${bundleName}.app ${absolutePath}/${bundleName}.app`)
   shell.rm('-rf', `${absolutePath}/Payload`)
 
-  console.log(`\n${chalk.blue.bold(`_build/iOS/${bundleName}.app`)} is ready for ${chalk.bold('ios-deploy')}`);
-  console.log(`ios-deploy --debug --bundle _build/iOS/${bundleName}.app`);
+  console.log(`\n${chalk.blue.bold(`_build/iOS/${bundleName}.app`)} is ready for your device, read https://github.com/uralys/fox/blob/master/docs/exporting/ios.md#install-and-run-a-debug-build-on-a-device`);
+  console.log(`xcrun devicectl device install app _build/iOS/${bundleName}.app --device XXX`);
 };
 
 // -----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ const exportBundle = async (settings) => {
     console.log(`✅ Exported ${bundleInfo} successfully!`);
 
     if (preset.platform === 'iOS') {
-      if(env === 'debug') {
+      if(env === 'debug' || env === 'staging') {
         unzipIPA(bundleName);
       }
 
