@@ -68,7 +68,8 @@ const getSettings = async (command, defaultConfig) => {
       config = defaultConfig;
     }
   } catch (e) {
-    console.log(chalk.red.bold('🔴 failed:'), `could not find ${chalk.blue.bold(CONFIG_FILE)}`);
+    console.log(`could not find ${chalk.blue.bold(CONFIG_FILE)} > ${chalk.green(`Using default config for command "${command}"`)}`);
+    config = defaultConfig;
     return;
   }
 

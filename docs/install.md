@@ -23,16 +23,6 @@ cd your-game
 ln -s ../fox/fox fox
 ```
 
-### 3 - Add fox.config.json
-
-Create a file `fox.config.json` a your project's root
-
-Leave it as an empty object for now, just know you can fill it to override the [default configuration](./fox/default.config.json):
-
-```json
-{}
-```
-
 ### 4 - Declare your main Scene
 
 #### create the main script
