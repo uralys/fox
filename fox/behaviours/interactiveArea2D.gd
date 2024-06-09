@@ -10,6 +10,8 @@ var mouseStartPosition
 var screenStartPosition
 var useBoundaries ## usually the draggable itself to use its size
 
+# ------------------------------------------------------------------------------
+
 @export var inputPriority: int = 0 # the lower the more priority
 @export var minDragTime: int = 20
 @export var minPressTime: int = 150
@@ -18,6 +20,8 @@ var useBoundaries ## usually the draggable itself to use its size
 @export var dragAfterLongPress: bool = false
 @export var useManualDragStart: bool = false
 @export var type = 'default'
+
+# ------------------------------------------------------------------------------
 
 var _dragging = false
 var _pressing = false
@@ -30,6 +34,7 @@ var lastPress = Time.get_ticks_msec()
 
 signal pressed
 signal pressing
+signal stopPressing
 signal longPress
 
 signal droppedOnDroppable
@@ -147,6 +152,9 @@ func _startDragging():
 # ------------------------------------------------------------------------------
 
 func resetInteraction():
+  if(isPressing):
+    emit_signal('stopPressing')
+
   _dragging = false
   _pressing = false
 
