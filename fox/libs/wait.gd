@@ -8,7 +8,10 @@ class_name Wait
 
 # ------------------------------------------------------------------------------
 
-static func forSomeTime(parent, timeInSec: float):
+static func forSomeTime(parent, timeInSec: float = 0):
+  if(timeInSec <= 0):
+    return {timeout = true}
+
   var _Timer = Timer.new()
   parent.add_child(_Timer)
   _Timer.start(timeInSec);
