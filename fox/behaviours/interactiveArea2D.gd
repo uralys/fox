@@ -136,12 +136,10 @@ func onInput(_viewport, event, _shape_idx):
       zIndex = get_parent().z_index,
       touchable = self,
       from = get_parent(),
-      touchDistance = touchDistance,
-      mouseStartPosition = mouseStartPosition
+      touchDistance = touchDistance
     }
 
     Gesture.addPressedItem(pressEvent)
-    return
 
 # ------------------------------------------------------------------------------
 

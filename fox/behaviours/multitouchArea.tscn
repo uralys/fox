@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://deby4crwkq0he"]
+
+[ext_resource type="Script" path="res://fox/behaviours/multitouchArea.gd" id="1_pvvd6"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wk3sr"]
+size = Vector2(282, 306)
+
+[node name="multitouchArea" type="Area2D"]
+script = ExtResource("1_pvvd6")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_wk3sr")
+debug_color = Color(0.108357, 0.509663, 0.158947, 0.721569)
