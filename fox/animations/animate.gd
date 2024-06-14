@@ -36,6 +36,19 @@ static func to(object, _options):
 
 # ------------------------------------------------------------------------------
 
+## https://www.reddit.com/r/godot/comments/y8n1wa/comment/it28u5g
+static func flash(object, options = {}):
+  var duration = __.GetOr(0.2, 'duration', options)
+  var tween: Tween = object.create_tween()
+  tween.tween_property(object, 'modulate:v', 1, duration).from(15)
+
+  tween.connect('finished', func onFinished():
+    if(options.get('onFinished')):
+      options.onFinished.call()
+  )
+
+# ------------------------------------------------------------------------------
+
 # mandatory options = {propertyPath, toValue}
 static func toAndBack(object, _options):
   var options = _options.duplicate()
