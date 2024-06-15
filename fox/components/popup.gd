@@ -13,6 +13,10 @@ signal closed
 
 # ------------------------------------------------------------------------------
 
+@export var blurAmount: int = 60
+
+# ------------------------------------------------------------------------------
+
 var closing = false
 var showing = false
 
@@ -55,7 +59,7 @@ func _physics_process(delta):
   elif(showing):
     var newValue = current + delta * 200
 
-    if(newValue < 60):
+    if(newValue < blurAmount):
       blur.material.set_shader_parameter('blur_amount', newValue)
     else:
       showing = false
