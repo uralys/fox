@@ -22,6 +22,18 @@ const INCREASE_SEMVER_LEVELS = ['patch', 'minor', 'major'];
 
 export const androidExtension = (env) => env === 'release' ? '.aab' : '.apk'
 
+export const getApplicationName = (coreConfig, bundle) => {
+  const {title} = coreConfig;
+  const {subtitle} = bundle;
+  return subtitle ? `${title}: ${subtitle}` : title;
+}
+
+export const getTitle = (coreConfig) => coreConfig.title;
+export const getSubtitle = (bundle) => {
+  const {subtitle} = bundle;
+  return subtitle;
+}
+
 // -----------------------------------------------------------------------------
 
 const inquireVersioning = async (currentVersion) => {

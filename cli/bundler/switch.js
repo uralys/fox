@@ -8,6 +8,7 @@ import inquirer from 'inquirer';
 
 import ini from './ini.js';
 import { toVersionNumber } from './versioning.js';
+import { getApplicationName, getSubtitle, getTitle } from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -74,7 +75,7 @@ const inquireParams = async (bundles, presets) => {
 // -----------------------------------------------------------------------------
 
 const switchBundle = async (settings, presets) => {
-  const {core, config, bundles} = settings;
+  const {core, bundles} = settings;
   console.log(`⚙️  switching to another ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -107,12 +108,19 @@ const switchBundle = async (settings, presets) => {
   const appPackageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
 
+  const subtitle = getSubtitle(bundles[bundleId])
+
   override.fox.version = foxPackageJSON.version;
   override.bundle.id = bundleId;
+  override.bundle.title = getTitle(core);
   override.bundle.version = appPackageJSON.version;
   override.bundle.versionCode = toVersionNumber(appPackageJSON.version);
   override.bundle.platform = preset.platform;
   override.bundle.env = env;
+
+  if(subtitle) {
+    override.bundle.subtitle = getSubtitle(bundles[bundleId]);
+  }
 
   if(core.useNotifications !== undefined) {
     override.custom.useNotifications = core.useNotifications;

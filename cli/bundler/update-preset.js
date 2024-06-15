@@ -1,7 +1,7 @@
 // -----------------------------------------------------------------------------
 
 import chalk from 'chalk';
-import { androidExtension } from './export.js';
+import { androidExtension, getApplicationName } from './export.js';
 import { toVersionNumber } from './versioning.js';
 
 // -----------------------------------------------------------------------------
@@ -111,11 +111,8 @@ export const updateVersionInPreset = (preset, newVersion) => {
 const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
   const {platform} = preset;
   console.log('⚙️  updating the preset:');
-  const {subtitle} = bundle;
 
-  const _applicationName = subtitle
-    ? `${coreConfig.applicationName}: ${subtitle}`
-    : coreConfig.applicationName;
+  const _applicationName = getApplicationName(coreConfig, bundle);
 
   const applicationName = `${_applicationName}${env === 'release' ? '' : `(${env})`}`;
   const bundleName = `${bundleId}${env === 'release' ? '' : `-${env}`}`;

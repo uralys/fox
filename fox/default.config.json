@@ -1,6 +1,6 @@
 {
   "core": {
-    "applicationName": "Your Game",
+    "title": "Your Game",
     "godot": "/Applications/Apps/Godot.app/Contents/MacOS/Godot",
     "useNotifications": false
   },
