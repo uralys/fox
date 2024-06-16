@@ -117,6 +117,7 @@ for example in my case:
 
 ```sh
 > ln -s ~/Projects/uralys/gamedev/godot.android-plugins android/plugins
+> ln -s ~/Projects/uralys/gamedev/godot.addons addons
 ```
 
 note: currently using `godot-lib.4.1.3.stable.template_release.aar` and building `assembleRelease` from Android Studio
