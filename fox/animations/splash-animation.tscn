@@ -10,12 +10,12 @@
 [ext_resource type="Texture2D" uid="uid://dv47yowudwflp" path="res://fox/assets/splash/a.png" id="8"]
 [ext_resource type="Texture2D" uid="uid://dsbll0xbc4qu8" path="res://fox/assets/splash/r.png" id="9"]
 
-[sub_resource type="Gradient" id="Gradient_xy75g"]
+[sub_resource type="Gradient" id="Gradient_yyett"]
 offsets = PackedFloat32Array(0.0876623, 0.248227, 0.347518)
 colors = PackedColorArray(0.627451, 0.27451, 0.278431, 1, 0.113172, 0.140508, 0.209619, 1, 0.0208125, 0.051448, 0.0946116, 1)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_enrcg"]
-gradient = SubResource("Gradient_xy75g")
+gradient = SubResource("Gradient_yyett")
 fill = 1
 fill_from = Vector2(0.509174, 0.577982)
 fill_to = Vector2(0.922018, 0.0894495)

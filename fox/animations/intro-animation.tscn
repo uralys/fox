@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cdceudy16q3st"]
+[gd_scene load_steps=12 format=3 uid="uid://cdceudy16q3st"]
 
 [ext_resource type="Script" path="res://fox/animations/intro-animation.gd" id="1_ubxrs"]
 [ext_resource type="Texture2D" uid="uid://cbim7dv1kofo4" path="res://fox/assets/splash/uralys-banner.webp" id="2_01e2g"]
@@ -10,9 +10,30 @@
 [ext_resource type="Texture2D" uid="uid://c6u3p83wmrca4" path="res://fox/assets/splash/s.png" id="8_x6n67"]
 [ext_resource type="Texture2D" uid="uid://cbcdpk2whiio" path="res://fox/assets/splash/dot.png" id="9_logd5"]
 
+[sub_resource type="Gradient" id="Gradient_xy75g"]
+offsets = PackedFloat32Array(0)
+colors = PackedColorArray(0.0208125, 0.051448, 0.0946116, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_i0gxd"]
+gradient = SubResource("Gradient_xy75g")
+fill = 1
+fill_from = Vector2(0.509174, 0.577982)
+fill_to = Vector2(0.922018, 0.0894495)
+
 [node name="intro" type="CanvasLayer"]
 layer = 128
 script = ExtResource("1_ubxrs")
+
+[node name="bg" type="TextureRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(966, 557)
+texture = SubResource("GradientTexture2D_i0gxd")
+expand_mode = 1
+metadata/_edit_lock_ = true
 
 [node name="logo" type="TextureRect" parent="."]
 anchors_preset = 8
