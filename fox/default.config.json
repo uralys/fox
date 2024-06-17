@@ -44,7 +44,14 @@
   },
   "bundles": {
     "yourApp": {
-      "uid": "com.your.app.id"
+      "uid": "com.your.app.id",
+      "Android": {
+        "storeUrl": "https://play.google.com/store/apps/details?id=com.xxx.xxx"
+      },
+      "iOS": {
+        "appId": "idxxx",
+        "storeUrl": "https://apps.apple.com/us/app/idxxx"
+      }
     }
   }
 }

@@ -26,8 +26,17 @@ static func getPlatform():
 
 # ------------------------------------------------------------------------------
 
-static func getStoreUrl(bundle):
+static func getAppId():
+  var bundleId = ProjectSettings.get_setting('bundle/id')
+  var bundles = Files.getBundles()
+  return bundles[bundleId].iOS.appId
+
+# ------------------------------------------------------------------------------
+
+static func getStoreUrl():
   var platform = getPlatform()
-  return bundle[platform].storeUrl
+  var bundleId = ProjectSettings.get_setting('bundle/id')
+  var bundles = Files.getBundles()
+  return bundles[bundleId][platform].storeUrl
 
 # ------------------------------------------------------------------------------
