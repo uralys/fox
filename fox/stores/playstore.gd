@@ -95,15 +95,16 @@ func receivedPurchases(response):
     for _purchase in response.purchases_list:
       # We must acknowledge all purchases.
       # See https://developer.android.com/google/play/billing/integrate#process for more information
+      var sku =  _purchase.products[0]
 
       if not _purchase.is_acknowledged:
-        G.log('Purchase ' + str(_purchase.products[0]) + ' has not been acknowledged. Acknowledging...')
+        G.log('Purchase ' + str(sku) + ' has not been acknowledged. Acknowledging...')
         playStore.acknowledgePurchase(_purchase.purchase_token)
 
       # _purchase is_acknowledged but not consumed => either not consumed or not consumable
       elif _purchase.purchase_state == 1:
-        storePurchaseToken(_purchase.purchase_token, _purchase.sku)
-        onPurchaseAcknowledged(_purchase.purchase_token)
+        storePurchaseToken(_purchase.purchase_token, sku)
+        onPurchaseAcknowledged({purchase_token = _purchase.purchase_token})
 
   else:
     G.log('🔴 PlayStore: queryPurchases failed, response code: ',
@@ -132,7 +133,6 @@ func onPurchaseCancelled(_response):
 func onPurchaseError(response):
   Router.hideLoader()
   var code = response.response_code
-  var id = response.product_id
   var debug_message = response.debug_message
   match(code):
     3:
@@ -142,7 +142,10 @@ func onPurchaseError(response):
       G.log('> player already owns this sku')
       return
     _:
-      G.log('🔴 Error during purchase', {id=id, message=debug_message})
+      G.log('🔴 Error during purchase', {
+        id = __.Get('product_id', response),
+        message = debug_message
+      })
 
 # ------------------------------------------------------------------------------
 
@@ -186,6 +189,9 @@ func onPurchaseDone(response):
 # ==============================================================================
 
 func storePurchaseToken(purchaseToken, sku):
+  if(!__.Get('purchasesToConsume', Player.state)):
+    Player.state.purchasesToConsume = {}
+
   Player.state.purchasesToConsume[purchaseToken] = sku
   Player.save()
 
@@ -223,7 +229,7 @@ func onPurchaseAcknowledged(response):
     G.log('consuming', sku);
     playStore.consumePurchase(purchaseToken)
   else:
-    onPurchaseDone(purchaseToken)
+    onPurchaseDone({purchase_token = purchaseToken})
 
 # ---------------
 
