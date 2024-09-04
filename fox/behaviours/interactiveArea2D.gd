@@ -37,12 +37,19 @@ signal pressing
 signal stopPressing
 signal longPress
 
-signal droppedOnDroppable
-signal droppedIntheWild
-signal foundDroppable
-signal leftDroppable
-
 signal startedDragging
+
+@warning_ignore("UNUSED_SIGNAL")
+signal droppedOnDroppable
+
+@warning_ignore("UNUSED_SIGNAL")
+signal droppedIntheWild
+
+@warning_ignore("UNUSED_SIGNAL")
+signal foundDroppable
+
+@warning_ignore("UNUSED_SIGNAL")
+signal leftDroppable
 
 # ------------------------------------------------------------------------------
 
@@ -80,7 +87,7 @@ func _physics_process(_delta):
       var _accepted = Gesture.acceptTouchable(self)
       if(_accepted):
         isPressing = true
-        emit_signal('pressing')
+        pressing.emit()
       else:
         resetInteraction()
 
@@ -88,7 +95,7 @@ func _physics_process(_delta):
       var _accepted = Gesture.acceptTouchable(self)
       if(_accepted):
         isLongPressing = true
-        emit_signal('longPress')
+        longPress.emit()
 
         if(draggable \
           and minMouseDragTresholdReached \
@@ -145,13 +152,13 @@ func onInput(_viewport, event, _shape_idx):
 
 func _startDragging():
   manualStartDragging()
-  emit_signal('startedDragging')
+  startedDragging.emit()
 
 # ------------------------------------------------------------------------------
 
 func resetInteraction():
   if(isPressing):
-    emit_signal('stopPressing')
+    stopPressing.emit()
 
   _dragging = false
   _pressing = false
@@ -174,7 +181,7 @@ func _unhandled_input(event):
     else:
       var _accepted = Gesture.acceptTouchable(self)
       if(_accepted):
-        emit_signal('pressed')
+        pressed.emit()
 
     resetInteraction()
 

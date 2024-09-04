@@ -6,11 +6,11 @@ extends Area2D
 
 # ------------------------------------------------------------------------------
 
-signal pressed
-signal pressing
-signal dragging
-signal stopPressing
-signal longPress
+signal pressed(event)
+signal pressing(event)
+signal dragging(event)
+signal stopPressing(event)
+signal longPress(latestPressEvent)
 
 # ------------------------------------------------------------------------------
 
@@ -54,33 +54,33 @@ func _input(_event):
   if _event is InputEventMouseButton \
   and _event.button_index == MOUSE_BUTTON_LEFT:
     if(event.pressed):
-      emit_signal('pressing', event)
+      pressing.emit(event)
       lastPress = Time.get_ticks_msec()
       latestPressEvent = event
     else:
       isLongPressing = false
-      emit_signal('pressed', event)
-      emit_signal('stopPressing', event)
+      pressed.emit(event)
+      stopPressing.emit(event)
 
     _pressing = event.pressed
 
   elif _event is InputEventScreenTouch:
     if(event.pressed):
-      emit_signal('pressing', event)
+      pressing.emit(event)
       lastPress = Time.get_ticks_msec()
       latestPressEvent = event
     else:
       isLongPressing = false
-      emit_signal('pressed', event)
-      emit_signal('stopPressing', event)
+      pressed.emit(event)
+      stopPressing.emit(event)
 
   elif(_event is InputEventMouseMotion):
     if(_pressing):
-      emit_signal('dragging', event)
+      dragging.emit(event)
 
   elif(_event is InputEventScreenDrag):
     if(_pressing):
-      emit_signal('dragging', event)
+      dragging.emit(event)
 
   else:
     G.debug('⚡ event:', _event)
@@ -94,4 +94,4 @@ func _physics_process(_delta):
 
     if(not isLongPressing and elapsedTime > longPressTime):
       isLongPressing = true
-      emit_signal('longPress', latestPressEvent)
+      longPress.emit(latestPressEvent)

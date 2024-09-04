@@ -86,7 +86,7 @@ func finishedLoadingResource():
   _loadedResources[_loadedResources.__loading] = resource
   _loadedResources.__loading = null
   resourceLoader = null
-  emit_signal('loaded')
+  loaded.emit()
   return resource
 
 func getLoadingProgress():

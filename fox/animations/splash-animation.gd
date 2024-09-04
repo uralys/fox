@@ -110,6 +110,6 @@ func _physics_process(delta):
 # ------------------------------------------------------------------------------
 
 func exitSplashAnimation():
-  emit_signal('splashFinished')
+  splashFinished.emit()
   get_parent().remove_child(self)
   queue_free()

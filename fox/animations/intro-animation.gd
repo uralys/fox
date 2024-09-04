@@ -55,7 +55,7 @@ func _ready():
 # ------------------------------------------------------------------------------
 
 func exitIntro():
-  emit_signal('introFinished')
+  introFinished.emit()
   get_parent().remove_child(self)
   queue_free()
 

@@ -57,7 +57,7 @@ func _input(event):
       tweening = false
       smoothing = false
       pressing = true
-      emit_signal('startPressing')
+      startPressing.emit()
 
     # ------- mouse up
     else:
@@ -70,8 +70,7 @@ func _input(event):
 
       if(dragging):
         dragging = false
-
-        emit_signal('stopDragging')
+        stopDragging.emit()
 
         if(boundaries):
           var outOfBoundaries = checkBoundaries({reposition=true})
@@ -95,12 +94,11 @@ func _input(event):
           dragging = true
           mouse_start_pos = event.position
           screen_start_position = camera.position
-
-          emit_signal('startDragging')
+          startDragging.emit()
 
         var mouseDiff = mouse_start_pos - event.position
         camera.position = mouseDiff / ZOOM + screen_start_position
-        emit_signal('draggingCamera')
+        draggingCamera.emit()
         get_viewport().set_input_as_handled()
 
 # ------------------------------------------------------------------------------

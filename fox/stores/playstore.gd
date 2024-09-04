@@ -73,7 +73,7 @@ func receivedProductDetails(response):
     # https://github.com/code-with-max/godot-google-play-iapp/blob/be71531d191ad2a4989ba8658e40bee2f3367790/AndroidIAPP/src/main/java/one/allme/plugin/androidiapp/utils/IAPP_utils.kt#L93
     item.price = receivedItem.one_time_purchase_offer_details.formatted_price
 
-  emit_signal('skuDetailsReceived')
+  skuDetailsReceived.emit()
 
 # ------------------------------------------------------------------------------
 
