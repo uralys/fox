@@ -43,7 +43,10 @@ func formatEvent(event):
   return {
     position = __.Get('position', event),
     pressed = __.Get('pressed', event),
-    index = __.GetOr(__.Get('button_index', event), 'index', event)
+    index = __.GetOr(__.GetOr(__.Get(
+      'button_mask', event),
+      'button_index', event),
+      'index', event)
   }
 
 # ------------------------------------------------------------------------------

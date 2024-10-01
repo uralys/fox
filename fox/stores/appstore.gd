@@ -41,7 +41,7 @@ func checkEvents():
             var item = G.STORE[sku]
             item.price = price
 
-          emit_signal('skuDetailsReceived')
+          skuDetailsReceived.emit()
           return
 
         'purchase':
