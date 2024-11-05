@@ -1,19 +1,56 @@
 # Interactive Area2D
 
-An `Area2D` able to listen for mouse / touch events.
-The Node where this interactive `Area2D` is attached can be touched and/or dragged.
+This is an `Area2D` able to listen for mouse / touch events.
+The Node where this interactive `Area2D` is attached can be touched, dragged, used as a drop area.
+
+An `interactiveArea2D` uses [Gesture](../../fox/libs/gesture.gd) behind the hood.
+
 
 ## Setup
 
-- Attach the [interactiveArea2D](../../fox/behaviours/interactiveArea2D.tscn) Scene as child to your Node.
+- Attach the [interactiveArea2D](../../fox/behaviours/interactiveArea2D.tscn) **Scene** as child to your Node.
 
 - Add a `CollisionShape2D` to the `interactiveArea` Node and set its shape e.g(`RectangleShape2D`).
 
 - Set your shape size and position.
 
-**important note**: be sure you have no `Control` in the parent tree, it could intercept the  events. Read the doc about [Godot Input Events](https://docs.godotengine.org/en/stable/tutorials/inputs/inputevent.html#how-does-it-work)
+**important note**: be sure you have no `Control` in the parent tree, it could intercept the  events. Or You can also set `mouse: ignore` to the `Control` to avoid it to intercept the events.
 
-## Code
+Read the doc about [Godot Input Events](https://docs.godotengine.org/en/stable/tutorials/inputs/inputevent.html#how-does-it-work)
+
+## Simple dragArea
+
+To drag an image around, create a `Sprite2D` and attach the **scene** `interactiveArea2D` to it.
+
+Then connect the `dragged` signal using this .
+
+```gdscript
+@onready var sprite2D = $sprite2D
+@onready var dragArea = $sprite2D/interactiveArea2D
+
+func _ready():
+  dragArea.prepareDraggable({
+    draggable = sprite2D
+  })
+```
+
+## Boundaries, for maps for example
+
+You can add boundaries to limit the dragging to the window size.
+To do so, you need to position your Sprite2D at `(0,0)`
+
+Then just use your sprite to define the boundaries size.
+
+```gdscript
+dragArea.prepareDraggable({
+  draggable = sprite2D,
+  useBoundaries = sprite2D
+})
+```
+
+You may want to define the boundaries using another Rectangle instead: change `useBoundaries = yourNode`.
+
+## API
 
 Declare the `area` in your script to allow connecting listeners:
 
