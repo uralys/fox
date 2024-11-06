@@ -112,7 +112,7 @@ void fragment()
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_dbgb7"]
 shader = SubResource("Shader_i0x2f")
-shader_parameter/uv_scale = 1.4
+shader_parameter/uv_scale = 0.4
 shader_parameter/color_alpha = 1.0
 
 [node name="pool" type="Panel"]
