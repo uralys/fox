@@ -66,24 +66,35 @@ static func Set(value, path, obj):
 # example:  __.useColor('#A1553E')
 static func useColor(colorHex: String) -> Color:
     var cleanHex = colorHex.replace("#", "")
+    var r = 0; var b = 0; var g = 0; var a = 255;
 
     if cleanHex.length() == 3:
         cleanHex = "%s%s%s%s%s%s" % [cleanHex[0], cleanHex[0], cleanHex[1], cleanHex[1], cleanHex[2], cleanHex[2]]
 
-    if cleanHex.length() != 6:
-      G.log('❌ [b][color=pink]check your color.[/color][/b] ', {colorHex=colorHex});
-      return Color(0, 0, 0) # Retourne du noir en cas d'erreur.
+    elif cleanHex.length() == 4:
+        cleanHex = "%s%s%s%s%s%s" % [cleanHex[0], cleanHex[0], cleanHex[1], cleanHex[1], cleanHex[2], cleanHex[2] , cleanHex[3], cleanHex[3]]
 
-    # Convertit la chaîne hexadécimale en composantes RGB entières.
-    var r = cleanHex.substr(0, 2).hex_to_int()
-    var g = cleanHex.substr(2, 2).hex_to_int()
-    var b = cleanHex.substr(4, 2).hex_to_int()
+    elif cleanHex.length() == 6:
+      r = cleanHex.substr(0, 2).hex_to_int()
+      g = cleanHex.substr(2, 2).hex_to_int()
+      b = cleanHex.substr(4, 2).hex_to_int()
+
+    elif cleanHex.length() == 8:
+      r = cleanHex.substr(0, 2).hex_to_int()
+      g = cleanHex.substr(2, 2).hex_to_int()
+      b = cleanHex.substr(4, 2).hex_to_int()
+      a = cleanHex.substr(6, 2).hex_to_int()
+
+    else:
+      G.log('❌ [b][color=pink]check your color.[/color][/b] ', {colorHex=colorHex});
+      return Color(r, b, g) # Retourne du noir en cas d'erreur.
 
     var red = r / 255.0
     var green = g / 255.0
     var blue = b / 255.0
+    var alpha = a / 255.0
 
-    return Color(red, green, blue)
+    return Color(red, green, blue, alpha)
 
 # ------------------------------------------------------------------------------
 
