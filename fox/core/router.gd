@@ -37,7 +37,7 @@ func openDefault():
 # ------------------------------------------------------------------------------
 
 func onOpenScene():
-  return null
+  return 0
 
 # ------------------------------------------------------------------------------
 
@@ -54,9 +54,8 @@ func _openScene(scene, options = {}):
     if(currentScene.has_method('onLeave')):
       currentScene.onLeave(options)
 
-    var timerOnOpenScene = onOpenScene()
-    if(timerOnOpenScene):
-      await timerOnOpenScene.timeout
+    var timeToWaitOnOpenScene = onOpenScene()
+    await Wait.forSomeTime($/root, timeToWaitOnOpenScene).timeout
 
     $'/root/app/scene'.remove_child(currentScene)
     currentScene.queue_free()
