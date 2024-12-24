@@ -5,10 +5,10 @@ import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
-import {spawn} from 'child_process';
+import { spawn } from 'child_process';
 import yargsFactory from 'yargs';
 
-import pkg from '../package.json' assert { type: 'json' };
+import pkg from '../package.json' with { type: 'json' };
 
 // -----------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ import generateIcons from './generate-icons.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateScreenshots from './generate-screenshots.js';
 import exportBundle from './bundler/export.js';
-import {readPresets} from './bundler/read-presets.js';
+import { readPresets } from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
 import runGame from './run-game.js';
 
@@ -61,7 +61,7 @@ const getSettings = async (command, defaultConfig) => {
 
   try {
     console.log(`⚙️  reading ${chalk.blue.bold(CONFIG_FILE)}`);
-    config = (await import(configPath, {assert: {type: "json"}})).default;
+    config = (await import(configPath, { with: { type: "json" } })).default;
 
     if (!config[command] && defaultConfig[command]) {
       console.log(chalk.green(`Using default config for command "${command}"`));
@@ -74,8 +74,8 @@ const getSettings = async (command, defaultConfig) => {
   }
 
   return {
-    config: {...defaultConfig[command], ...config[command]},
-    core: {...defaultConfig.core, ...config.core},
+    config: { ...defaultConfig[command], ...config[command] },
+    core: { ...defaultConfig.core, ...config.core },
     bundles: config.bundles
   };
 };
@@ -94,7 +94,7 @@ const verifyConfig = (config, defaultConfig) => {
     }
   });
 
-  if(config.output) {
+  if (config.output) {
     const projectPath = path.resolve(process.cwd(), './');
     const output = `${projectPath}/${config.output}`;
 
@@ -116,7 +116,7 @@ const cli = async (yargs, params) => {
   let defaultConfig;
 
   try {
-    defaultConfig = (await import (defaultConfigPath, { assert: { type: "json" } })).default;
+    defaultConfig = (await import(defaultConfigPath, { with: { type: "json" } })).default;
   } catch (e) {
     console.log(
       chalk.red.bold('🔴 failed:'),
@@ -145,7 +145,7 @@ const cli = async (yargs, params) => {
     return;
   }
 
-  const {core, config, bundles} = settings;
+  const { core, config, bundles } = settings;
 
   // -------- Godot commands
 
@@ -153,12 +153,12 @@ const cli = async (yargs, params) => {
     case RUN_EDITOR: {
       console.log('----------------------------');
       console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
-      const {resolution, position} = config;
+      const { resolution, position } = config;
 
       const editorProcess = spawn(
         core.godot,
         ['-e', '--windowed', '--resolution', resolution, '--position', position],
-        {stdio: [process.stdin, process.stdout, process.stderr]}
+        { stdio: [process.stdin, process.stdout, process.stderr] }
       );
 
       editorProcess.on('close', () => {
@@ -196,7 +196,7 @@ const cli = async (yargs, params) => {
       break;
     }
     case UPDATE_PO_FILES: {
-      const {poFiles, potTemplate} = config;
+      const { poFiles, potTemplate } = config;
       console.log(`⚙️  using ${chalk.blue.bold('msgmerge')} on your .po files`);
       shell.exec(`for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`);
       break;
