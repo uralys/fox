@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://deby4crwkq0he"]
 
-[ext_resource type="Script" path="res://fox/behaviours/multitouchArea.gd" id="1_pvvd6"]
+[ext_resource type="Script" uid="uid://bood0egphfhms" path="res://fox/behaviours/multitouchArea.gd" id="1_pvvd6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wk3sr"]
 size = Vector2(282, 306)

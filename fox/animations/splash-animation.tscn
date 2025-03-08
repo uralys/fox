@@ -1,7 +1,7 @@
 [gd_scene load_steps=14 format=3 uid="uid://ck66wwckc70bf"]
 
 [ext_resource type="Texture2D" uid="uid://cg7fbtk88iqkf" path="res://fox/assets/splash/u.png" id="1"]
-[ext_resource type="Script" path="res://fox/animations/splash-animation.gd" id="2"]
+[ext_resource type="Script" uid="uid://4v862tos0pey" path="res://fox/animations/splash-animation.gd" id="2"]
 [ext_resource type="Texture2D" uid="uid://cbim7dv1kofo4" path="res://fox/assets/splash/uralys-banner.webp" id="2_g3k34"]
 [ext_resource type="Texture2D" uid="uid://m57u8kqidkga" path="res://fox/assets/splash/l.png" id="4"]
 [ext_resource type="Texture2D" uid="uid://daj0n7uiyq5fj" path="res://fox/assets/splash/y.png" id="5"]

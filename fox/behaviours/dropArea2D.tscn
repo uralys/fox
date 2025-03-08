@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://bqbex8ooxkxnm"]
 
-[ext_resource type="Script" path="res://fox/behaviours/dropArea2D.gd" id="1_wu3mr"]
+[ext_resource type="Script" uid="uid://dvym6oee54kvq" path="res://fox/behaviours/dropArea2D.gd" id="1_wu3mr"]
 
 [node name="dropArea" type="Area2D"]
 script = ExtResource("1_wu3mr")

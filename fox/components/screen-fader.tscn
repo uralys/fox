@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dl2vjdb3s0ara"]
 
-[ext_resource type="Script" path="res://fox/components/screen-fader.gd" id="1"]
+[ext_resource type="Script" uid="uid://be8qq1r8fy4bx" path="res://fox/components/screen-fader.gd" id="1"]
 
 [node name="screenFader" type="CanvasLayer"]
 layer = 127

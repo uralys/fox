@@ -1,13 +1,13 @@
 [gd_scene load_steps=12 format=3 uid="uid://bj67pe0dynrrv"]
 
-[ext_resource type="Script" path="res://fox/components/review/ask-for-review.gd" id="1_apqeu"]
+[ext_resource type="Script" uid="uid://bsxy6s4tdxebg" path="res://fox/components/review/ask-for-review.gd" id="1_apqeu"]
 [ext_resource type="PackedScene" uid="uid://7qqtdv7ky8f5" path="res://fox/components/blur.tscn" id="2_xfdfm"]
 [ext_resource type="Theme" uid="uid://b2i8gu5fcqb0u" path="res://assets/resources/theme.tres" id="3_jboxj"]
 [ext_resource type="Texture2D" uid="uid://cpkmf6vqfvy03" path="res://assets/sprites/gui/logo.webp" id="4_en82v"]
 [ext_resource type="Texture2D" uid="uid://c5chklvwjmdwo" path="res://assets/sprites/gui/buttons/button-green.webp" id="5_cbnxi"]
 [ext_resource type="Texture2D" uid="uid://dkjigasbdj0yg" path="res://assets/sprites/gui/buttons/cross.webp" id="5_jinkx"]
 [ext_resource type="Texture2D" uid="uid://6jnsybiu5cft" path="res://assets/sprites/gui/buttons/button-green-pressed.webp" id="6_1s1cy"]
-[ext_resource type="Script" path="res://addons/InappReviewPlugin/InappReview.gd" id="8_f8j5i"]
+[ext_resource type="Script" uid="uid://dxchmnb708xh8" path="res://addons/InappReviewPlugin/InappReview.gd" id="8_f8j5i"]
 
 [sub_resource type="Shader" id="Shader_gni6t"]
 code = "shader_type canvas_item;

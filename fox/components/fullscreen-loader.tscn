@@ -1,9 +1,9 @@
 [gd_scene load_steps=6 format=3 uid="uid://taju5q2s32ku"]
 
-[ext_resource type="Shader" path="res://fox/behaviours/simple-blur.gdshader" id="1_7qld6"]
-[ext_resource type="Script" path="res://fox/components/fullscreen-loader.gd" id="1_sxau7"]
+[ext_resource type="Shader" uid="uid://deqbvp0mjxxwq" path="res://fox/behaviours/simple-blur.gdshader" id="1_7qld6"]
+[ext_resource type="Script" uid="uid://d2aok60hmh3gv" path="res://fox/components/fullscreen-loader.gd" id="1_sxau7"]
 [ext_resource type="Texture2D" uid="uid://bvvucvxltvypj" path="res://fox/assets/gui/loader.webp" id="3_de0gn"]
-[ext_resource type="Script" path="res://fox/behaviours/rotation.gd" id="3_t5duq"]
+[ext_resource type="Script" uid="uid://lf6jlvs8yo1t" path="res://fox/behaviours/rotation.gd" id="3_t5duq"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_umrd7"]
 shader = ExtResource("1_7qld6")
