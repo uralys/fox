@@ -8,7 +8,7 @@ import inquirer from 'inquirer';
 
 import ini from './ini.js';
 import { toVersionNumber } from './versioning.js';
-import { getApplicationName, getSubtitle, getTitle } from './export.js';
+import { getSubtitle, getTitle } from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -65,17 +65,17 @@ const inquireParams = async (bundles, presets) => {
   }
 
   const answers = await inquirer.prompt(questions);
-  const {bundleId = singleBundleId, presetNum} = answers;
+  const { bundleId = singleBundleId, presetNum } = answers;
   const preset = presets[presetNum];
   const bundle = bundles[bundleId];
 
-  return {bundleId, bundle, preset};
+  return { bundleId, bundle, preset };
 };
 
 // -----------------------------------------------------------------------------
 
 const switchBundle = async (settings, presets) => {
-  const {core, bundles} = settings;
+  const { core, bundles } = settings;
   console.log(`⚙️  switching to another ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
@@ -89,7 +89,7 @@ const switchBundle = async (settings, presets) => {
     return;
   }
 
-  const {bundleId, preset} = await inquireParams(bundles, presets);
+  const { bundleId, preset } = await inquireParams(bundles, presets);
 
   // ---------
 
@@ -104,7 +104,7 @@ const switchBundle = async (settings, presets) => {
 
   // ---------
 
-  const override = {bundle: {}, fox: {}, custom: {}};
+  const override = { bundle: {}, fox: {}, custom: {} };
   const appPackageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
 
@@ -118,11 +118,11 @@ const switchBundle = async (settings, presets) => {
   override.bundle.platform = preset.platform;
   override.bundle.env = env;
 
-  if(subtitle) {
+  if (subtitle) {
     override.bundle.subtitle = getSubtitle(bundles[bundleId]);
   }
 
-  if(core.useNotifications !== undefined) {
+  if (core.useNotifications !== undefined) {
     override.custom.useNotifications = core.useNotifications;
   }
 
@@ -168,7 +168,7 @@ const switchBundle = async (settings, presets) => {
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
 
-  return {bundleId, preset, env};
+  return { bundleId, preset, env };
 };
 
 // -----------------------------------------------------------------------------

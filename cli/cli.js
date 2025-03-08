@@ -155,6 +155,7 @@ const cli = async (yargs, params) => {
       console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
       const { resolution, position } = config;
 
+      // '-e' runs editor
       const editorProcess = spawn(
         core.godot,
         ['-e', '--windowed', '--resolution', resolution, '--position', position],
