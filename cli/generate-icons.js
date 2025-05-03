@@ -39,7 +39,7 @@ const SIZES = [
 // -----------------------------------------------------------------------------
 
 const generateIcons = (config) => {
-  console.log(`⚙️  generating ${chalk.blue.bold('icons')}...`);
+  console.log(`⚙️ generating ${chalk.blue.bold('icons')}...`);
   const {input, output, base, background, foreground, desktop} = config;
 
   if (!fs.existsSync(`${input}/${base}`)) {

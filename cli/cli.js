@@ -60,7 +60,7 @@ const getSettings = async (command, defaultConfig) => {
   const configPath = path.resolve(process.cwd(), `./${CONFIG_FILE}`);
 
   try {
-    console.log(`⚙️  reading ${chalk.blue.bold(CONFIG_FILE)}`);
+    console.log(`⚙️ reading ${chalk.blue.bold(CONFIG_FILE)}`);
     config = (await import(configPath, { with: { type: "json" } })).default;
 
     if (!config[command] && defaultConfig[command]) {
@@ -98,7 +98,7 @@ const verifyConfig = (config, defaultConfig) => {
     const projectPath = path.resolve(process.cwd(), './');
     const output = `${projectPath}/${config.output}`;
 
-    console.log(`⚙️  ${chalk.blue.bold('verifying output path')}`);
+    console.log(`⚙️ ${chalk.blue.bold('verifying output path')}`);
     console.log(output);
 
     if (!fs.existsSync(output)) {
@@ -138,7 +138,7 @@ const cli = async (yargs, params) => {
   // --------
 
   console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
-  console.log(`🦊 ${chalk.italic('started command')} ${chalk.cyan(command)}`);
+  console.log(`🦊 ${chalk.italic('> command')} ${chalk.cyan(command)}`);
   const settings = await getSettings(command, defaultConfig);
 
   if (!settings) {
@@ -198,7 +198,7 @@ const cli = async (yargs, params) => {
     }
     case UPDATE_PO_FILES: {
       const { poFiles, potTemplate } = config;
-      console.log(`⚙️  using ${chalk.blue.bold('msgmerge')} on your .po files`);
+      console.log(`⚙️ using ${chalk.blue.bold('msgmerge')} on your .po files`);
       shell.exec(`for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`);
       break;
     }

@@ -28,7 +28,7 @@ const restart = (godotPath, params, config) => {
 const start = (godotPath, params, config) => {
   console.log('============================================================');
   console.log(`🦊 ${chalk.italic('restarting Godot')}`);
-  console.log(`⚙️  running ${chalk.blue.bold('game')}`);
+  console.log(`⚙️ running ${chalk.blue.bold('game')}`);
   console.log('============================================================');
   var {position, screen} = config;
 
@@ -52,21 +52,22 @@ const runGame = (godotPath, params, config) => {
 
   process.stdin.setRawMode(true);
 
-  const watcher = chokidar.watch([
-    '**/*.gd',
-    '**/*.tscn',
-    '**/*.cfg',
-    '**/*.json',
-    '**/*.yml'
-  ], {
-    ignored: ['.godot/**']
+  const watcher = chokidar.watch('.', {
+    ignored: (path, stats) => {
+      if (!stats) return false; // Si stats est null (par exemple au démarrage), ne pas ignorer
+
+      const validExtensions = ['.gd', '.tscn', '.cfg', '.json', '.yml'];
+      const isWantedFile = validExtensions.some(ext => path.endsWith(ext));
+
+      const isInGodotFolder = path.includes('.godot/');
+
+      return stats.isFile() && (!isWantedFile || isInGodotFolder);
+    }
   });
 
   start(godotPath, params, config);
 
   watcher.on('change', (path, stats) => {
-  console.log('path', path);
-  if (stats) console.log(`File ${path} changed size to ${stats.size}`);
     restart(godotPath, params, config);
   });
 

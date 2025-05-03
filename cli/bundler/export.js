@@ -65,7 +65,7 @@ const verifyBuildFolder = () => {
 // -----------------------------------------------------------------------------
 
 const unzipIPA = (bundleName) => {
-  console.log(`⚙️  Unzipping ${bundleName}.app...`);
+  console.log(`⚙️ Unzipping ${bundleName}.app...`);
 
   const absolutePath = `${path.resolve(process.cwd())}/_build/iOS`
   shell.exec(`tar -xf ${absolutePath}/${bundleName}.ipa -C _build/iOS`)
@@ -81,7 +81,7 @@ const unzipIPA = (bundleName) => {
 
 const exportBundle = async (settings) => {
   const {core: coreConfig, bundles} = settings;
-  console.log(`⚙️  exporting a ${chalk.blue.bold('bundle')}...`);
+  console.log(`⚙️ exporting a ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
     console.log('\nmissing bundles in fox.config.json');
@@ -135,7 +135,7 @@ const exportBundle = async (settings) => {
     newVersion
   )}) for ${chalk.blue.bold(preset.name)}`;
 
-  console.log(`\n⚙️  Ready to bundle ${bundleInfo}`);
+  console.log(`\n⚙️ Ready to bundle ${bundleInfo}`);
 
   const {applicationName, bundleName} = updatePreset(
     bundleId,
@@ -151,7 +151,7 @@ const exportBundle = async (settings) => {
   // ---------
 
   const exportType = `--export-${env === 'release' ? 'release' : 'debug'}`;
-  console.log(`\n⚙️  Exporting with ${exportType}...`);
+  console.log(`\n⚙️ Exporting with ${exportType}...`);
 
   const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--headless'], {
     stdio: [process.stdin, process.stdout, process.stderr]

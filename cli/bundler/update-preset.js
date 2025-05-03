@@ -110,7 +110,7 @@ export const updateVersionInPreset = (preset, newVersion) => {
 
 const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
   const {platform} = preset;
-  console.log('⚙️  updating the preset:');
+  console.log('⚙️ updating the preset:');
 
   const _applicationName = getApplicationName(coreConfig, bundle);
 

@@ -76,7 +76,7 @@ const inquireParams = async (bundles, presets) => {
 
 const switchBundle = async (settings, presets) => {
   const { core, bundles } = settings;
-  console.log(`⚙️  switching to another ${chalk.blue.bold('bundle')}...`);
+  console.log(`⚙️ switching to another ${chalk.blue.bold('bundle')}...`);
 
   if (!bundles) {
     console.log('\nmissing bundles in fox.config.json');
@@ -100,7 +100,7 @@ const switchBundle = async (settings, presets) => {
     return;
   }
 
-  console.log(`⚙️  env: ${env}`);
+  console.log(`⚙️ env: ${env}`);
 
   // ---------
 

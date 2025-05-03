@@ -16,7 +16,7 @@ const generateScreenshots = (config) => {
   const {orientation, input, output, sizes} = config;
   const projectPath = path.resolve(process.cwd(), './');
 
-  console.log(`\n⚙️  veryfing folders ...`);
+  console.log(`\n⚙️ veryfing folders ...`);
 
   sizes.forEach(({name}) => {
     const sizeFolder = `${projectPath}/${output}/${name}`;
@@ -28,8 +28,8 @@ const generateScreenshots = (config) => {
   })
 
 
-  console.log(`\n⚙️  resizing ${chalk.blue.bold('screenshots')}...`);
-  console.log(`⚙️  orientation: ${chalk.blue.bold(orientation)}`);
+  console.log(`\n⚙️ resizing ${chalk.blue.bold('screenshots')}...`);
+  console.log(`⚙️ orientation: ${chalk.blue.bold(orientation)}`);
 
   const files = fs.readdirSync(input);
 

@@ -51,7 +51,7 @@ const toVersionNumber = (semver) => {
 // -----------------------------------------------------------------------------
 
 const increasePackageVersion = (newVersion, versionLevel) => {
-  console.log(`⚙️  npm version ${chalk.blue.bold(versionLevel)}`);
+  console.log(`⚙️ npm version ${chalk.blue.bold(versionLevel)}`);
 
   try {
     console.log('git add');
