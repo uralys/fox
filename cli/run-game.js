@@ -62,12 +62,11 @@ const runGame = (godotPath, params, config) => {
     ignored: ['.godot/**']
   });
 
-  watcher.on('ready', (event, path) => {
-    start(godotPath, params, config);
-  });
+  start(godotPath, params, config);
 
-  watcher.on('change', (event, path) => {
-    console.log('restart on change');
+  watcher.on('change', (path, stats) => {
+  console.log('path', path);
+  if (stats) console.log(`File ${path} changed size to ${stats.size}`);
     restart(godotPath, params, config);
   });
 
