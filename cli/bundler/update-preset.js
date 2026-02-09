@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
+import {presetLogger} from '../logger.js';
 import { androidExtension, getApplicationName } from './export.js';
 import { toVersionNumber } from './versioning.js';
 
@@ -14,12 +14,12 @@ const ANDROID = 'Android';
 
 const updateOptions = (preset, key, value) => {
   preset.options[key] = value;
-  console.log(`  - ${chalk.bold(key)}=${chalk.yellow.italic(value)}`);
+  presetLogger.log(`${key} = ${value}`);
 };
 
 const updateMain = (preset, key, value) => {
   preset[key] = value;
-  console.log(`  - ${chalk.bold(key)}=${chalk.yellow.italic(value)}`);
+  presetLogger.log(`${key} = ${value}`);
 };
 
 // -----------------------------------------------------------------------------
@@ -40,9 +40,7 @@ const updateIcons = (preset, bundleId) => {
 // -----------------------------------------------------------------------------
 
 const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
-  console.log(`main:`);
   updateMain(preset, 'export_path', `_build/android/${bundleName}${androidExtension(env)}`);
-  console.log(`options:`);
 
   updateOptions(preset, 'package/name', applicationName);
 
@@ -60,9 +58,7 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bun
 // -----------------------------------------------------------------------------
 
 const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
-  console.log(`main:`);
   updateMain(preset, 'export_path', `_build/iOS/${bundleName}.ipa`);
-  console.log(`options:`);
 
   updateOptions(preset, 'application/name', applicationName);
 
@@ -75,9 +71,7 @@ const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleN
 // -----------------------------------------------------------------------------
 
 const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName) => {
-  console.log(`main:`);
   updateMain(preset, 'export_path', `_build/macOS/${bundleName}`);
-  console.log(`options:`);
 
   updateOptions(preset, 'application/name', applicationName);
 
@@ -91,7 +85,7 @@ const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName) => {
 
 export const updateVersionInPreset = (preset, newVersion) => {
   const {platform, name} = preset;
-  console.log('> updating version for', name);
+  presetLogger.log(`Updating version for ${name}`);
 
   switch (platform) {
     case ANDROID:
@@ -110,7 +104,7 @@ export const updateVersionInPreset = (preset, newVersion) => {
 
 const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
   const {platform} = preset;
-  console.log('⚙️ updating the preset:');
+  presetLogger.log(`Updating ${platform} preset`);
 
   const _applicationName = getApplicationName(coreConfig, bundle);
 
@@ -128,12 +122,11 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
       updateMacOSPreset(env, preset, bundle, bundleId, applicationName, bundleName);
       break;
     default:
-      console.log(`\n> platform ${platform} has no preset specificity.`);
-      console.log(`> applying default preset options:`);
+      presetLogger.warn(`Platform ${platform} has no preset specificity, applying defaults`);
       updateOptions(preset, 'application/name', applicationName);
   }
 
-  console.log('✅ preset successfully updated.');
+  presetLogger.success('Preset updated');
 
   return {
     applicationName,

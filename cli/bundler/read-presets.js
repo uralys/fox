@@ -1,8 +1,11 @@
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
+
+// -----------------------------------------------------------------------------
+
+import {presetsLogger} from '../logger.js';
 import ini from './ini.js';
 
 // -----------------------------------------------------------------------------
@@ -18,9 +21,8 @@ const readPresets = () => {
     const presetsCFG = fs.readFileSync(path.resolve(PRESETS_CFG), 'utf8');
     presets = ini.parse(presetsCFG).preset;
   } catch (e) {
-    console.log(e);
-    console.log(`\nCould not open ${path.resolve(PRESETS_CFG)}`);
-    console.log(chalk.red.bold('🔴 failed: use Godot editor > Project > Export to define your export config.'));
+    presetsLogger.error(`Could not open ${path.resolve(PRESETS_CFG)}`);
+    presetsLogger.error('Use Godot editor > Project > Export to define your export config');
     return;
   }
 

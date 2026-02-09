@@ -1,11 +1,11 @@
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import chokidar from 'chokidar';
 import shelljs from 'shelljs';
 import {spawn} from 'child_process';
 
 import keypress from 'keypress';
+import {godotLogger, foxLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -26,10 +26,8 @@ const restart = (godotPath, params, config) => {
 // -----------------------------------------------------------------------------
 
 const start = (godotPath, params, config) => {
-  console.log('============================================================');
-  console.log(`🦊 ${chalk.italic('restarting Godot')}`);
-  console.log(`⚙️ running ${chalk.blue.bold('game')}`);
-  console.log('============================================================');
+  godotLogger.reset();
+  godotLogger.log('Starting game');
   var {position, screen} = config;
 
   const parameters = [...params];
@@ -65,6 +63,12 @@ const runGame = (godotPath, params, config) => {
     }
   });
 
+  godotLogger.data({
+    position: config.position || config.screen,
+    watching: '.gd .tscn .cfg .json .yml',
+    keys: 'r = reload, ctrl+c = exit',
+  });
+
   start(godotPath, params, config);
 
   watcher.on('change', (path, stats) => {
@@ -81,7 +85,7 @@ const runGame = (godotPath, params, config) => {
     }
 
     if(key.name === 'c' && key.ctrl === true) {
-      console.log('🦊 bye');
+      foxLogger.done('bye!');
 
       if (childProcess) {
         childProcess.kill();

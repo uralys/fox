@@ -1,8 +1,11 @@
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import path from 'path';
 import shell from 'shelljs';
+
+// -----------------------------------------------------------------------------
+
+import {versionLogger} from '../logger.js';
 import { updateVersionInPreset } from "./update-preset.js";
 import { PRESETS_CFG, writePresets } from './read-presets.js';
 
@@ -51,16 +54,16 @@ const toVersionNumber = (semver) => {
 // -----------------------------------------------------------------------------
 
 const increasePackageVersion = (newVersion, versionLevel) => {
-  console.log(`⚙️ npm version ${chalk.blue.bold(versionLevel)}`);
+  versionLogger.log(`npm version ${versionLevel}`);
 
   try {
-    console.log('git add');
+    versionLogger.step(0, 'git add presets');
     shell.exec(`git add ${path.resolve(PRESETS_CFG)}`);
     shell.exec(`git commit -m "bump presets version to ${newVersion}"`);
     shell.exec(`npm version ${versionLevel}`);
+    versionLogger.success(`Version bumped to ${newVersion}`);
   } catch (e) {
-    console.log(e);
-    console.log(chalk.red.bold('🔴 failed during versioning, check "git status"'));
+    versionLogger.error(`Failed during versioning, check "git status"`);
     return;
   }
 };

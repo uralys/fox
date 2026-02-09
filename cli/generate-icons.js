@@ -7,9 +7,9 @@
 // based on 🍒 https://github.com/chrisdugne/cherry/blob/master/prepare-icons.sh
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import fs from 'fs';
 import shell from 'shelljs';
+import {iconsLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -39,39 +39,38 @@ const SIZES = [
 // -----------------------------------------------------------------------------
 
 const generateIcons = (config) => {
-  console.log(`⚙️ generating ${chalk.blue.bold('icons')}...`);
   const {input, output, base, background, foreground, desktop} = config;
 
   if (!fs.existsSync(`${input}/${base}`)) {
-    console.log(
-      `${chalk.bold('input')} base ${chalk.red.bold('does not exist')}, please check your config`
-    );
+    iconsLogger.error(`Input base does not exist: ${input}/${base}`);
     return null;
   }
-  console.log('input:', `${input}/${base}`);
+
+  iconsLogger.log(`Generating from ${base}`);
+  iconsLogger.data({input: `${input}/${base}`, output});
 
   SIZES.forEach((size) => {
-    console.log(` > ${chalk.magenta.italic(size)}`);
     shell.exec(
       `convert ${input}/${base} -resize '${size}' -unsharp 1x4 "${output}/icon-${size}.png"`
     );
+    iconsLogger.successCompact(size);
   });
 
-  console.log(`\n> copying ${chalk.blue.bold('base')} icon`);
+  iconsLogger.step(0, 'Copying base icon');
   shell.cp(`${input}/${base}`, `${output}/${base}`);
 
   if (background) {
-    console.log(`> copying ${chalk.blue.bold('android adaptive')} elements`);
+    iconsLogger.step(1, 'Copying android adaptive elements');
     shell.cp(`${input}/${background}`, `${output}/${background}`);
     shell.cp(`${input}/${foreground}`, `${output}/${foreground}`);
   }
 
   if (desktop) {
-    console.log(`> copying ${chalk.blue.bold('desktop')} icon`);
+    iconsLogger.step(2, 'Copying desktop icon');
     shell.cp(`${input}/${desktop}`, `${output}/${desktop}`);
   }
 
-  console.log(`\n Created ${chalk.green(SIZES.length)} icons ${chalk.green('successfully')}.`);
+  iconsLogger.done(`${SIZES.length} icons created`);
 };
 
 // -----------------------------------------------------------------------------

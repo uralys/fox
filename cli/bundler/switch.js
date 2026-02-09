@@ -1,11 +1,11 @@
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import fs from 'fs';
 import inquirer from 'inquirer';
 
 // -----------------------------------------------------------------------------
 
+import {switchLogger} from '../logger.js';
 import ini from './ini.js';
 import { toVersionNumber } from './versioning.js';
 import { getSubtitle, getTitle } from './export.js';
@@ -21,16 +21,16 @@ const extractEnv = (preset) => {
   const _env = preset.custom_features.split(',').find((feature) => feature.includes('env:'));
 
   if (!_env) {
-    console.warn(`\n🔴 env:${chalk.red('export_presets.cfg must be edited')}`);
-    console.warn(`Missing 'env' in custom_features: "${preset.custom_features}"`);
-    console.warn(`add "env:debug" or "env:release" within the ${chalk.blueBright('custom_features')} list`);
+    switchLogger.error('export_presets.cfg must be edited');
+    switchLogger.warn(`Missing 'env' in custom_features: "${preset.custom_features}"`);
+    switchLogger.warn('Add "env:debug" or "env:release" within the custom_features list');
     return;
   }
 
   const env = _env.split('env:')[1];
 
   if (!ENV.includes(env)) {
-    console.warn(`env:${chalk.yellow(env)} is not supported, use one of [${ENV}]`);
+    switchLogger.warn(`env:${env} is not supported, use one of [${ENV}]`);
     return;
   }
 
@@ -76,16 +76,15 @@ const inquireParams = async (bundles, presets) => {
 
 const switchBundle = async (settings, presets) => {
   const { core, bundles } = settings;
-  console.log(`⚙️ switching to another ${chalk.blue.bold('bundle')}...`);
+  switchLogger.log('Selecting bundle...');
 
   if (!bundles) {
-    console.log('\nmissing bundles in fox.config.json');
-    console.log(chalk.red.bold('🔴 failed: you can use default config for bundles'));
+    switchLogger.error('Missing bundles in fox.config.json');
     return;
   }
 
   if (!presets) {
-    console.log(chalk.red.bold('🔴 failed: missing presets'));
+    switchLogger.error('Missing presets');
     return;
   }
 
@@ -96,11 +95,11 @@ const switchBundle = async (settings, presets) => {
   const env = extractEnv(preset);
 
   if (!env) {
-    console.log(chalk.red.bold('🔴 failed: could not find env'));
+    switchLogger.error('Could not find env');
     return;
   }
 
-  console.log(`⚙️ env: ${env}`);
+  switchLogger.log(`env: ${env}`);
 
   // ---------
 
@@ -156,17 +155,19 @@ const switchBundle = async (settings, presets) => {
 
   // ---------
 
+  const dataDisplay = {};
   Object.keys(override.bundle).forEach((key) => {
-    console.log(`  ${chalk.green.bold('[bundle]')} ${key} = ${override.bundle[key]}`);
-  })
-
+    dataDisplay[`[bundle] ${key}`] = override.bundle[key];
+  });
   Object.keys(override.custom).forEach((key) => {
-    console.log(`  ${chalk.magenta.bold('[custom]')} ${key} = ${key.includes('secret') ? 'xxx' : override.custom[key]}`);
-  })
+    dataDisplay[`[custom] ${key}`] = key.includes('secret') ? 'xxx' : override.custom[key];
+  });
+  switchLogger.data(dataDisplay);
 
   // ---------
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
+  switchLogger.success('Bundle ready');
 
   return { bundleId, preset, env };
 };

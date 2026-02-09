@@ -1,7 +1,8 @@
 // -----------------------------------------------------------------------------
 
 import fs from 'fs';
-import chalk from 'chalk';
+
+import {foxLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -45,22 +46,22 @@ const resolveGodotPath = (configPath) => {
       return configPath;
     }
 
-    console.log(chalk.red.bold(`🔴 Godot not found at: ${configPath}`));
-    console.log(`Override ${chalk.blue.bold('core.godot')} in your fox.config.json`);
+    foxLogger.error(`Godot not found at: ${configPath}`);
+    foxLogger.log('Override core.godot in your fox.config.json');
     return null;
   }
 
   const godotPath = DEFAULT_PATHS[platform];
-  console.log(`⚙️ platform detected: ${chalk.blue.bold(platform)}`);
-  console.log(`⚙️ using Godot at: ${chalk.blue.bold(godotPath)}`);
+  foxLogger.log(`Platform: ${platform}`);
+  foxLogger.log(`Godot: ${godotPath}`);
 
   if (platform === 'linux') {
     return godotPath;
   }
 
   if (!fs.existsSync(godotPath)) {
-    console.log(chalk.red.bold(`🔴 Godot not found at: ${godotPath}`));
-    console.log(`Install Godot there or set ${chalk.blue.bold('core.godot')} in your fox.config.json`);
+    foxLogger.error(`Godot not found at: ${godotPath}`);
+    foxLogger.log('Install Godot or set core.godot in your fox.config.json');
     return null;
   }
 

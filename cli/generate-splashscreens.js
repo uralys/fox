@@ -5,8 +5,8 @@
 // OSX: brew install imagemagick
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import shell from 'shelljs';
+import {splashLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -25,32 +25,29 @@ const PORTRAIT_SIZES = [
 // -----------------------------------------------------------------------------
 
 const convert = (inputFile, backgroundColor, outputPath) => (size) => {
-  console.log(`   ${chalk.magenta.italic(size)}`);
   shell.exec(
     `convert ${inputFile} -gravity center -background '${backgroundColor}' -extent ${size} "${outputPath}/splashscreen-${size}.png"`
   );
+  splashLogger.successCompact(size);
 };
 
 // -----------------------------------------------------------------------------
 
 const generateSplashscreens = (config) => {
   const {input, output, backgroundColor = '#181818'} = config;
-  console.log(`---> generating ${chalk.blue.bold('splashscreens')}...`);
+
+  splashLogger.log('Generating splashscreens');
+  splashLogger.data({input, output, backgroundColor});
 
   const applyConversion = convert(input, backgroundColor, output);
 
-  console.log(` > creating ${chalk.magenta.italic('landscape')} launch screens...`);
+  splashLogger.step(0, 'Creating landscape launch screens');
   LANDSCAPE_SIZES.forEach(applyConversion);
 
-  console.log(` > creating ${chalk.magenta.italic('portrait')}  launch screens...`);
+  splashLogger.step(1, 'Creating portrait launch screens');
   PORTRAIT_SIZES.forEach(applyConversion);
 
-  console.log(
-    `\nCreated ${chalk.green(
-      LANDSCAPE_SIZES.length + PORTRAIT_SIZES.length
-    )} splashscreens ${chalk.green('successfully')}.`
-  );
-  console.log(`--->  ${chalk.blue.bold('output:')} ${output}`);
+  splashLogger.done(`${LANDSCAPE_SIZES.length + PORTRAIT_SIZES.length} splashscreens created`);
 };
 
 // -----------------------------------------------------------------------------

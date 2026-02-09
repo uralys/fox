@@ -1,7 +1,6 @@
 #!/usr/bin/env -S node --no-warnings
 // -----------------------------------------------------------------------------
 
-import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
@@ -9,6 +8,7 @@ import { spawn } from 'child_process';
 import yargsFactory from 'yargs';
 
 import pkg from '../package.json' with { type: 'json' };
+import { foxLogger, godotLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -47,7 +47,7 @@ const commands = [
   RUN_GAME
 ];
 
-const commandMessage = `choose a command above, example:\n${chalk.italic(`fox ${RUN_EDITOR}`)}`;
+const commandMessage = `choose a command above, example:\nfox ${RUN_EDITOR}`;
 
 // -----------------------------------------------------------------------------
 
@@ -61,15 +61,15 @@ const getSettings = async (command, defaultConfig) => {
   const configPath = path.resolve(process.cwd(), `./${CONFIG_FILE}`);
 
   try {
-    console.log(`⚙️ reading ${chalk.blue.bold(CONFIG_FILE)}`);
+    foxLogger.log(`Reading ${CONFIG_FILE}`);
     config = (await import(configPath, { with: { type: "json" } })).default;
 
     if (!config[command] && defaultConfig[command]) {
-      console.log(chalk.green(`Using default config for command "${command}"`));
+      foxLogger.warn(`Using default config for command "${command}"`);
       config = defaultConfig;
     }
   } catch (e) {
-    console.log(`could not find ${chalk.blue.bold(CONFIG_FILE)} > ${chalk.green(`Using default config for command "${command}"`)}`);
+    foxLogger.warn(`Could not find ${CONFIG_FILE}, using default config for "${command}"`);
     config = defaultConfig;
     return;
   }
@@ -89,9 +89,8 @@ const verifyConfig = (config, defaultConfig) => {
   requirements.forEach((requirement) => {
     const value = config[requirement];
     if (!value) {
-      const message = `${chalk.red.bold(`${requirement} not provided`)} in your config.`;
-      console.log(message);
-      throw new Error(message);
+      foxLogger.error(`${requirement} not provided in your config`);
+      throw new Error(`${requirement} not provided in your config`);
     }
   });
 
@@ -99,12 +98,12 @@ const verifyConfig = (config, defaultConfig) => {
     const projectPath = path.resolve(process.cwd(), './');
     const output = `${projectPath}/${config.output}`;
 
-    console.log(`⚙️ ${chalk.blue.bold('verifying output path')}`);
-    console.log(output);
+    foxLogger.log(`Verifying output path`);
+    foxLogger.data({output});
 
     if (!fs.existsSync(output)) {
       shell.mkdir('-p', output);
-      console.log('✅ created output.');
+      foxLogger.success('Created output directory');
     }
   }
 };
@@ -119,11 +118,7 @@ const cli = async (yargs, params) => {
   try {
     defaultConfig = (await import(defaultConfigPath, { with: { type: "json" } })).default;
   } catch (e) {
-    console.log(
-      chalk.red.bold('🔴 failed:'),
-      chalk.blue.bold(process.cwd()),
-      'is not a project using Fox'
-    );
+    foxLogger.error(`${process.cwd()} is not a project using Fox`);
     return;
   }
 
@@ -138,8 +133,7 @@ const cli = async (yargs, params) => {
 
   // --------
 
-  console.log(chalk.bold.green(`Fox CLI v${pkg.version}`));
-  console.log(`🦊 ${chalk.italic('> command')} ${chalk.cyan(command)}`);
+  foxLogger.log(`v${pkg.version} ${command}`);
   const settings = await getSettings(command, defaultConfig);
 
   if (!settings) {
@@ -162,11 +156,10 @@ const cli = async (yargs, params) => {
 
   switch (command) {
     case RUN_EDITOR: {
-      console.log('----------------------------');
-      console.log(`🦊 ${chalk.italic('opening Godot editor')}`);
       const { resolution, position } = config;
+      godotLogger.log('Opening editor');
+      godotLogger.data({resolution, position});
 
-      // '-e' runs editor
       const editorProcess = spawn(
         core.godot,
         ['-e', '--windowed', '--resolution', resolution, '--position', position],
@@ -174,7 +167,7 @@ const cli = async (yargs, params) => {
       );
 
       editorProcess.on('close', () => {
-        console.log(`🦊 ${chalk.italic('bye!')}`);
+        foxLogger.done('bye!');
       });
 
       return;
@@ -209,7 +202,7 @@ const cli = async (yargs, params) => {
     }
     case UPDATE_PO_FILES: {
       const { poFiles, potTemplate } = config;
-      console.log(`⚙️ using ${chalk.blue.bold('msgmerge')} on your .po files`);
+      foxLogger.log('Using msgmerge on .po files');
       shell.exec(`for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`);
       break;
     }
@@ -218,8 +211,7 @@ const cli = async (yargs, params) => {
       break;
     }
     default: {
-      console.log(command);
-      console.log(chalk.red.bold('🔴 not handled'));
+      foxLogger.error(`${command} not handled`);
     }
   }
 
@@ -250,7 +242,7 @@ const execute = async () => {
     .demandCommand(1, 1, commandMessage, commandMessage)
     .help('h')
     .version(pkg.version)
-    .alias('version', 'v').epilog(`${chalk.bold.green(`🦊 Fox CLI v${pkg.version}`)}
+    .alias('version', 'v').epilog(`Fox CLI v${pkg.version}
       Documentation: https://github.com/uralys/fox
       Icons, splashscreens and screenshots commands require ImageMagick https://imagemagick.org/index.php`);
 
@@ -259,11 +251,10 @@ const execute = async () => {
   try {
     const result = await cli(yargs, params);
     if (result) {
-      console.log(`🦊 ${chalk.italic('done.')}`);
+      foxLogger.done('done.');
     }
   } catch (e) {
-    console.log(e);
-    console.log(chalk.red.bold('🔴 failed'));
+    foxLogger.error(e.message || String(e));
   }
 }
 
