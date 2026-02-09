@@ -1,4 +1,4 @@
-#!/usr/bin/env node --no-warnings
+#!/usr/bin/env -S node --no-warnings
 // -----------------------------------------------------------------------------
 
 import chalk from 'chalk';
@@ -19,6 +19,7 @@ import exportBundle from './bundler/export.js';
 import { readPresets } from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
 import runGame from './run-game.js';
+import resolveGodotPath from './resolve-godot.js';
 
 // -----------------------------------------------------------------------------
 
@@ -146,6 +147,16 @@ const cli = async (yargs, params) => {
   }
 
   const { core, config, bundles } = settings;
+
+  // -------- resolve Godot path
+
+  const godotCommands = [RUN_EDITOR, RUN_GAME, EXPORT];
+
+  if (godotCommands.includes(command)) {
+    const godotPath = resolveGodotPath(core.godot);
+    if (!godotPath) return;
+    core.godot = godotPath;
+  }
 
   // -------- Godot commands
 

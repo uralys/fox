@@ -12,19 +12,28 @@ To use the CLI you'll need NodeJS installed
 
 ### prepare the executable
 
-Install the dev dependencies:
+Install the dev dependencies from the fox folder:
 
 ```sh
+cd path/to/fox
 npm install
 ```
 
 link the `fox` executable:
 
+macOS:
+
 ```sh
 ln -s ~/Projects/uralys/gamedev/fox/cli/cli.js /usr/local/bin/fox
 ```
 
-You may have to reload your termilnal to have `fox` in your path;
+WSL/Linux:
+
+```sh
+sudo ln -s /home/user/Projects/uralys/gamedev/fox/cli/cli.js /usr/local/bin/fox
+```
+
+You may have to reload your terminal to have `fox` in your path;
 
 You can now execute fox commands from your terminal:
 
