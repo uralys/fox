@@ -23,6 +23,12 @@ cd your-game
 ln -s ../fox/fox fox
 ```
 
+> **WSL (Windows Subsystem for Linux):** Relative symlinks may not resolve correctly in WSL. Use absolute paths instead:
+>
+> ```sh
+> ln -s /home/user/Projects/uralys/gamedev/fox/fox /home/user/Projects/uralys/gamedev/your-game/fox
+> ```
+
 ### 4 - Declare your main Scene
 
 #### create the main script
