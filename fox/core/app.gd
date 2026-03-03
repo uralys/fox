@@ -5,7 +5,6 @@ extends CanvasLayer
 # ------------------------------------------------------------------------------
 
 var IntroAnimation = preload('res://fox/animations/intro-animation.tscn')
-var NotificationsScheduler = preload('res://fox/behaviours/notifications.tscn')
 
 # ------------------------------------------------------------------------------
 
@@ -64,6 +63,11 @@ var scheduler
 func prepareNotifications():
   var useNotifications = ProjectSettings.get_setting('custom/useNotifications')
   if(not useNotifications):
+    return
+
+  var NotificationsScheduler = load('res://fox/behaviours/notifications.tscn')
+  if NotificationsScheduler == null:
+    push_warning('fox: notifications.tscn not found, skipping notifications')
     return
 
   scheduler = NotificationsScheduler.instantiate()

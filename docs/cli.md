@@ -33,6 +33,14 @@ WSL/Linux:
 sudo ln -s /home/user/Projects/uralys/gamedev/fox/cli/cli.js /usr/local/bin/fox
 ```
 
+Windows (PowerShell):
+
+Add a function to your PowerShell profile (`$PROFILE`):
+
+```powershell
+function fox { node "C:\Users\chris\Projects\uralys\gamedev\fox\cli\cli.js" @args }
+```
+
 You may have to reload your terminal to have `fox` in your path;
 
 You can now execute fox commands from your terminal:

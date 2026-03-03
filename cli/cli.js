@@ -3,6 +3,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
 import shell from 'shelljs';
 import { spawn } from 'child_process';
 import yargsFactory from 'yargs';
@@ -62,7 +63,7 @@ const getSettings = async (command, defaultConfig) => {
 
   try {
     foxLogger.log(`Reading ${CONFIG_FILE}`);
-    config = (await import(configPath, { with: { type: "json" } })).default;
+    config = (await import(pathToFileURL(configPath), { with: { type: "json" } })).default;
 
     if (!config[command] && defaultConfig[command]) {
       foxLogger.warn(`Using default config for command "${command}"`);
@@ -116,7 +117,7 @@ const cli = async (yargs, params) => {
   let defaultConfig;
 
   try {
-    defaultConfig = (await import(defaultConfigPath, { with: { type: "json" } })).default;
+    defaultConfig = (await import(pathToFileURL(defaultConfigPath), { with: { type: "json" } })).default;
   } catch (e) {
     foxLogger.error(`${process.cwd()} is not a project using Fox`);
     return;

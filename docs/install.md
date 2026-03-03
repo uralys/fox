@@ -18,15 +18,26 @@ git clone https://github.com/uralys/fox
 
 To keep same paths and `res://`, symlink godot elements in the `/fox` folder like this:
 
+**macOS / Linux:**
+
 ```sh
 cd your-game
 ln -s ../fox/fox fox
 ```
 
-> **WSL (Windows Subsystem for Linux):** Relative symlinks may not resolve correctly in WSL. Use absolute paths instead:
+**Windows / WSL:**
+
+On WSL, `ln -s` creates a Linux symlink that Godot (running as a native Windows app) cannot resolve. You must use a Windows NTFS junction instead:
+
+```sh
+cmd.exe /c "mklink /J C:\path\to\your-game\fox C:\path\to\fox\fox"
+```
+
+> **Note:** To use [check-projects](https://github.com/uralys/check-projects) on WSL, symlink your `/mnt/c/` repos into your Linux home:
 >
 > ```sh
-> ln -s /home/user/Projects/uralys/gamedev/fox/fox /home/user/Projects/uralys/gamedev/your-game/fox
+> ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/fox ~/Projects/uralys/gamedev/fox
+> ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/your-game ~/Projects/uralys/gamedev/your-game
 > ```
 
 ### 4 - Declare your main Scene
