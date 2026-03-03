@@ -21,7 +21,7 @@ static func from(object, _options):
   var propertyPath = options.propertyPath
   var fromValue = options.fromValue
 
-  options.toValue = __.Get(propertyPath, object)
+  options.toValue = object.get_indexed(propertyPath)
   __.Set(fromValue, propertyPath, object)
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
