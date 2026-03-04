@@ -21,7 +21,7 @@ static func from(object, _options):
   var propertyPath = options.propertyPath
   var fromValue = options.fromValue
 
-  options.toValue = object.get_indexed(propertyPath)
+  options.toValue = object.get_indexed(NodePath(propertyPath))
   __.Set(fromValue, propertyPath, object)
   if(not options.get('signalToWait')): options.signalToWait = ANIMATION_DONE
 
@@ -388,6 +388,9 @@ static func _animate(object, options):
   var toValue = options.get('toValue')
   var fromValue = options.get('fromValue')
 
+  if(toValue == null):
+    toValue = object.get_indexed(NodePath(propertyPath))
+
   if(fromValue != null):
     object.set_indexed(propertyPath, fromValue)
 
@@ -426,6 +429,10 @@ static func _animate(object, options):
 
   var tween = object.create_tween()
   var tweener = tween.tween_property(nestedToAnimate, property, toValue, duration)
+
+  if(tweener == null):
+    tween.kill()
+    return
 
   if(transition != null):
     tweener.set_trans(transition)
