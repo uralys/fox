@@ -39,6 +39,9 @@ func openDefault():
 func onOpenScene():
   return 0
 
+func onSceneReady():
+  pass
+
 # ------------------------------------------------------------------------------
 
 func openScene(scene, options = {}):
@@ -62,6 +65,8 @@ func _openScene(scene, options = {}):
 
   currentScene = scene.instantiate()
   $'/root/app/scene'.add_child(currentScene)
+
+  onSceneReady()
 
   if(__.Get('onOpen',options) != null):
     options.onOpen.call()
