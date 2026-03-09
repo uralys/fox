@@ -33,10 +33,11 @@ const start = (godotPath, params, config) => {
   const parameters = [...params];
 
   if (screen) {
-    parameters.push(['--screen', screen]);
+    parameters.push('--screen', screen);
   }
-  else{
-    parameters.push(['--position', position]);
+
+  if (position) {
+    parameters.push('--position', position);
   }
 
   childProcess = spawn(godotPath, parameters, {stdio: 'inherit'});
