@@ -119,7 +119,6 @@ func showLoader():
 func hideLoader():
   if(fullscreenLoader):
     fullscreenLoader.remove()
-    fullscreenLoader.queue_free()
     fullscreenLoader = null
 
 # ------------------------------------------------------------------------------

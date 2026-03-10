@@ -45,3 +45,4 @@ func _physics_process(delta):
 
     if(current <= 0):
       get_parent().remove_child(self)
+      queue_free()
