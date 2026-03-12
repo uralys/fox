@@ -350,6 +350,9 @@ static func bounce(object, options = {}):
 # ------------------------------------------------------------------------------
 
 static func swing(object, _options = {}):
+  if not is_instance_valid(object):
+    return
+
   var options = _options.duplicate()
   var propertyPath = __.Get('propertyPath', options)
   var duration = __.GetOr(1, 'duration', options)
