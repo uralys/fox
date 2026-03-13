@@ -361,6 +361,8 @@ static func swing(object, _options = {}):
   var easing = __.GetOr(Tween.EASE_OUT, 'ease', options)
 
   var fromValue = __.Get(propertyPath, object)
+  if fromValue == null:
+    return
   var toValue = fromValue * ratio if(ratio != null) else __.Get('toValue', options)
 
   var tween = object.create_tween()
@@ -370,6 +372,8 @@ static func swing(object, _options = {}):
   await tween.finished
   tween.kill()
 
+  if not is_instance_valid(object):
+    return
   swing(object, options)
 
 # ------------------------------------------------------------------------------
