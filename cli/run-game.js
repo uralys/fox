@@ -3,6 +3,7 @@
 import chokidar from 'chokidar';
 import shelljs from 'shelljs';
 import {spawn} from 'child_process';
+import {writeFileSync} from 'fs';
 
 import keypress from 'keypress';
 import {godotLogger, foxLogger} from './logger.js';
@@ -10,8 +11,14 @@ import {godotLogger, foxLogger} from './logger.js';
 // -----------------------------------------------------------------------------
 
 let childProcess = null;
+const HOT_RELOAD_TRIGGER = '.hot-reload';
 
 // -----------------------------------------------------------------------------
+
+const hotReload = (changedPath) => {
+  godotLogger.log(`hot reload: ${changedPath}`);
+  writeFileSync(HOT_RELOAD_TRIGGER, changedPath);
+};
 
 const restart = (godotPath, params, config) => {
   shelljs.exec('clear');
@@ -67,13 +74,14 @@ const runGame = (godotPath, params, config) => {
   godotLogger.data({
     position: config.position || config.screen,
     watching: '.gd .tscn .cfg .json .yml',
-    keys: 'r = reload, ctrl+c = exit',
+    keys: 'r = full restart, ctrl+c = exit',
+    hotReload: 'scene reload on file change',
   });
 
   start(godotPath, params, config);
 
   watcher.on('change', (path, stats) => {
-    restart(godotPath, params, config);
+    hotReload(path);
   });
 
   process.stdin.on('keypress', (ch, key) => {
