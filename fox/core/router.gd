@@ -8,6 +8,7 @@ var ScreenFader = preload("res://fox/components/screen-fader.tscn")
 var FullscreenLoader = preload("res://fox/components/fullscreen-loader.tscn")
 var SettingsPopup = preload('res://src/popups/settings.tscn')
 var LanguagesPopup = preload('res://src/popups/languages.tscn')
+var _NavState = preload('res://fox/core/nav-state.gd')
 
 # ------------------------------------------------------------------------------
 
@@ -20,6 +21,10 @@ signal loaded
 # ------------------------------------------------------------------------------
 
 var currentScene = null
+var _lastScene = null
+var _lastOptions = {}
+var _navState = null
+var _navFilePath: String = ''
 
 # ------------------------------------------------------------------------------
 
@@ -43,16 +48,62 @@ func onSceneReady():
   pass
 
 # ------------------------------------------------------------------------------
+# Navigation state
+# ------------------------------------------------------------------------------
+
+func getNavPath() -> Array:
+  if _navState:
+    return _navState.path
+  return []
+
+func setNavPath(path: Array):
+  if _navState:
+    _navState.path = path.duplicate()
+    _persistNavState()
+
+# ------------------------------------------------------------------------------
+# Scene navigation
+# ------------------------------------------------------------------------------
+
+func restoreOrDefault(defaultAction: Callable):
+  var state = _loadPersistedNavState()
+  if state:
+    var scene = load(state.scene_path)
+    _navState = state
+    G.log('[Router]> restoring:', state.scene_path, state.path)
+    openScene(scene, {})
+  else:
+    defaultAction.call()
+
+func reloadCurrentScene():
+  var state = _loadPersistedNavState()
+  if state:
+    var scene = load(state.scene_path)
+    _navState = state
+    G.log('[Router]> hot reloading:', state.scene_path, state.path)
+    openScene(scene, {})
+  elif _lastScene:
+    G.log('[Router]> hot reloading scene...')
+    openScene(_lastScene, _lastOptions)
 
 func openScene(scene, options = {}):
   call_deferred("_openScene", scene, options)
 
 func _openScene(scene, options = {}):
+  _lastScene = scene
+  _lastOptions = options
+
+  var scene_path = scene.resource_path
+  if not _navState or _navState.scene_path != scene_path:
+    _navState = _NavState.new()
+    _navState.scene_path = scene_path
+    _persistNavState()
+
   var previousSceneName = 'none'
 
   if(currentScene):
     previousSceneName = str(currentScene.name)
-    G.log('[🦊 Router]> leaving', previousSceneName, '> ---------')
+    G.log('[Router]> leaving', previousSceneName, '> ---------')
 
     if(currentScene.has_method('onLeave')):
       currentScene.onLeave(options)
@@ -74,8 +125,36 @@ func _openScene(scene, options = {}):
   if(currentScene.has_method('onOpen')):
     currentScene.onOpen(options)
 
-  G.log('[🦊 Router]> ---------- entered:', str(currentScene.name))
+  G.log('[Router]> ---------- entered:', str(currentScene.name))
 
+# ------------------------------------------------------------------------------
+# Nav state persistence
+# ------------------------------------------------------------------------------
+
+func _getNavFilePath() -> String:
+  if _navFilePath.is_empty():
+    _navFilePath = ProjectSettings.globalize_path('res://') + '.nav-state'
+  return _navFilePath
+
+func _persistNavState():
+  if not _navState:
+    return
+  var file = FileAccess.open(_getNavFilePath(), FileAccess.WRITE)
+  if file:
+    file.store_string(_navState.to_json())
+
+func _loadPersistedNavState():
+  var fpath = _getNavFilePath()
+  if not FileAccess.file_exists(fpath):
+    return null
+  var content = FileAccess.get_file_as_string(fpath)
+  var state = _NavState.new()
+  if state.load_json(content):
+    return state
+  return null
+
+# ------------------------------------------------------------------------------
+# Resource loading
 # ------------------------------------------------------------------------------
 
 func startLoadingResource(path):
@@ -103,6 +182,8 @@ func getLoadedResource(path):
     return _loadedResources[path]
   return null
 
+# ------------------------------------------------------------------------------
+# UI overlays
 # ------------------------------------------------------------------------------
 
 func useScreenFader(duration:float = 0.75):

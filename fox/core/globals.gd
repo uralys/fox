@@ -43,6 +43,18 @@ func _ready():
 
 # ------------------------------------------------------------------------------
 
+func screenSize() -> Vector2:
+  if W and H:
+    return Vector2(W, H)
+  return $/root.get_viewport().get_visible_rect().size
+
+func screenCenter() -> Vector2:
+  if SCREEN_CENTER:
+    return SCREEN_CENTER
+  return screenSize() / 2.0
+
+# ------------------------------------------------------------------------------
+
 func __ansi(o):
   return __.bbcodeToANSI(o) if o is String else o
 
