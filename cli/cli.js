@@ -124,8 +124,6 @@ const cli = async (yargs, params) => {
 
   // --------
 
-  foxLogger.log(`v${pkg.version} ${command}`);
-
   if (command === TAG) {
     const levelArg = SEMVER_LEVELS.includes(params[0]) ? params[0] : null;
     await tagVersion(levelArg);
@@ -133,6 +131,8 @@ const cli = async (yargs, params) => {
   }
 
   // --------
+
+  foxLogger.log(`v${pkg.version} ${command}`);
 
   const defaultConfigPath = path.resolve(process.cwd(), `${DEFAULT_CONFIG_FILE}`);
 

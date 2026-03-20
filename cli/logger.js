@@ -56,7 +56,7 @@ const createLogger = ({name, color}) => {
   const log = (message) => {
     if (!started) {
       started = true;
-      console.log(`${gutter(SYMBOLS.parent)}  ${tag} ${message}`);
+      console.log(`${gutter(SYMBOLS.parent)} ${tag} ${message}`);
     } else {
       console.log(`${gutter(SYMBOLS.child)} ${tag} ${message}`);
     }
@@ -65,7 +65,7 @@ const createLogger = ({name, color}) => {
   const step = (index, message) => {
     if (!started) {
       started = true;
-      console.log(`${gutter(SYMBOLS.parent)}  ${tag} ${message}`);
+      console.log(`${gutter(SYMBOLS.parent)} ${tag} ${message}`);
     } else {
       console.log(`${gutter(SYMBOLS.child)} [${index}] ${tag} ${message}`);
     }

@@ -1,12 +1,12 @@
 // -----------------------------------------------------------------------------
 
 import fs from 'fs';
-import inquirer from 'inquirer';
+import readline from 'readline';
 import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
-import {versionLogger} from '../logger.js';
+import {createLogger} from '../logger.js';
 import {getNextVersion, toVersionNumber} from './versioning.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
 import {updateVersionInPreset} from './update-preset.js';
@@ -18,16 +18,16 @@ const SEMVER_LEVELS = ['patch', 'minor', 'major'];
 
 // -----------------------------------------------------------------------------
 
-const readProjectVersion = () => {
+const readProjectGodot = () => {
   const content = fs.readFileSync(PROJECT_GODOT, 'utf8');
-  const match = content.match(/^version="(.+)"$/m);
 
-  if (!match) {
-    versionLogger.error('No version found in project.godot [bundle] section');
-    return null;
-  }
+  const versionMatch = content.match(/^version="(.+)"$/m);
+  const nameMatch = content.match(/^config\/name="(.+)"$/m);
 
-  return match[1];
+  return {
+    version: versionMatch ? versionMatch[1] : null,
+    name: nameMatch ? nameMatch[1] : null
+  };
 };
 
 // -----------------------------------------------------------------------------
@@ -40,45 +40,45 @@ const writeProjectVersion = (newVersion) => {
   content = content.replace(/^versionCode=.*$/m, `versionCode=${versionCode}`);
 
   fs.writeFileSync(PROJECT_GODOT, content);
-  versionLogger.success(`project.godot updated to ${newVersion} (code: ${versionCode})`);
 };
 
 // -----------------------------------------------------------------------------
 
 const inquireVersionLevel = async (currentVersion) => {
-  const {versionLevel} = await inquirer.prompt([
-    {
-      message: 'version',
-      name: 'versionLevel',
-      type: 'list',
-      choices: [`${currentVersion}`, ...SEMVER_LEVELS]
-    }
-  ]);
+  const versions = SEMVER_LEVELS.map(level => getNextVersion(currentVersion, level));
 
-  return versionLevel;
+  console.log('Select next version:');
+  versions.forEach((v, i) => console.log(`  ${i + 1}) ${v}`));
+
+  const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+
+  const answer = await new Promise(resolve => {
+    rl.question('Enter choice [1-3] (default: 1): ', resolve);
+  });
+
+  rl.close();
+
+  const index = parseInt(answer || '1') - 1;
+  return SEMVER_LEVELS[index] || SEMVER_LEVELS[0];
 };
 
 // -----------------------------------------------------------------------------
 
 const tagVersion = async (levelArg) => {
-  const currentVersion = readProjectVersion();
+  const {version: currentVersion, name: projectName} = readProjectGodot();
+  const logger = createLogger({name: projectName || 'Tag', color: 'blue'});
 
   if (!currentVersion) {
+    logger.error('No version found in project.godot [bundle] section');
     return null;
   }
 
-  versionLogger.log(`Current version: ${currentVersion}`);
+  logger.log(`Current version: ${currentVersion}`);
 
   const versionLevel = levelArg || await inquireVersionLevel(currentVersion);
-  const keepCurrent = versionLevel === currentVersion;
-
-  if (keepCurrent) {
-    versionLogger.log(`Keeping version ${currentVersion}`);
-    return currentVersion;
-  }
-
   const newVersion = getNextVersion(currentVersion, versionLevel);
   writeProjectVersion(newVersion);
+  logger.success(`project.godot updated to ${newVersion} (code: ${toVersionNumber(newVersion)})`);
 
   const filesToCommit = [PROJECT_GODOT];
 
@@ -93,17 +93,19 @@ const tagVersion = async (levelArg) => {
     }
   }
 
-  versionLogger.step(0, 'git commit');
+  logger.step(0, 'git commit');
   shell.exec(`git add ${filesToCommit.join(' ')}`);
   shell.exec(`git commit -m 'v${newVersion}'`);
 
-  versionLogger.step(1, 'git tag');
+  logger.step(1, 'git tag');
   shell.exec(`git tag v${newVersion}`);
 
-  versionLogger.done(`Tagged v${newVersion}`);
+  logger.done(`Tagged v${newVersion}`);
   return newVersion;
 };
 
 // -----------------------------------------------------------------------------
+
+const readProjectVersion = () => readProjectGodot().version;
 
 export {readProjectVersion, writeProjectVersion, tagVersion, SEMVER_LEVELS};
