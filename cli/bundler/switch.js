@@ -7,8 +7,9 @@ import inquirer from 'inquirer';
 
 import {switchLogger} from '../logger.js';
 import ini from './ini.js';
-import { toVersionNumber } from './versioning.js';
-import { getSubtitle, getTitle } from './export.js';
+import {toVersionNumber} from './versioning.js';
+import {readProjectVersion} from './tag.js';
+import {getSubtitle, getTitle} from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -104,16 +105,16 @@ const switchBundle = async (settings, presets) => {
   // ---------
 
   const override = { bundle: {}, fox: {}, custom: {} };
-  const appPackageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
+  const appVersion = readProjectVersion();
 
   const subtitle = getSubtitle(bundles[bundleId])
 
   override.fox.version = foxPackageJSON.version;
   override.bundle.id = bundleId;
   override.bundle.title = getTitle(core);
-  override.bundle.version = appPackageJSON.version;
-  override.bundle.versionCode = toVersionNumber(appPackageJSON.version);
+  override.bundle.version = appVersion;
+  override.bundle.versionCode = toVersionNumber(appVersion);
   override.bundle.platform = preset.platform;
   override.bundle.env = env;
 

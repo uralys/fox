@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import inquirer from 'inquirer';
 import shell from 'shelljs';
 import {spawn} from 'child_process';
 
@@ -12,11 +11,7 @@ import {foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
 import switchBundle from './switch.js';
 import {readPresets, writePresets} from './read-presets.js';
-import { getNextVersion, increasePackageVersion, increasePresetsVersion } from './versioning.js';
-
-// -----------------------------------------------------------------------------
-
-const INCREASE_SEMVER_LEVELS = ['patch', 'minor', 'major'];
+import {tagVersion} from './tag.js';
 
 // -----------------------------------------------------------------------------
 
@@ -33,23 +28,6 @@ export const getSubtitle = (bundle) => {
   const {subtitle} = bundle;
   return subtitle;
 }
-
-// -----------------------------------------------------------------------------
-
-const inquireVersioning = async (currentVersion) => {
-  const questions = [
-    {
-      message: 'version',
-      name: 'versionLevel',
-      type: 'list',
-      choices: [`${currentVersion}`, ...INCREASE_SEMVER_LEVELS]
-    }
-  ];
-
-  const answers = await inquirer.prompt(questions);
-  const {versionLevel} = answers;
-  return {versionLevel};
-};
 
 // -----------------------------------------------------------------------------
 
@@ -94,8 +72,12 @@ const exportBundle = async (settings) => {
 
   // ---------
 
-  const packageJSON = JSON.parse(fs.readFileSync('./package.json', 'utf8'));
-  const currentVersion = packageJSON.version;
+  const newVersion = await tagVersion();
+
+  if (!newVersion) {
+    foxLogger.error('Failed during versioning');
+    return;
+  }
 
   // ---------
 
@@ -103,19 +85,6 @@ const exportBundle = async (settings) => {
   if (!presets) {
     foxLogger.error('Failed during reading presets');
     return;
-  }
-
-  // ---------
-
-  const {versionLevel} = await inquireVersioning(currentVersion);
-  const upgrading = versionLevel !== currentVersion;
-
-  let newVersion = currentVersion
-
-  if(upgrading) {
-    newVersion = getNextVersion(currentVersion, versionLevel)
-    increasePresetsVersion(newVersion, presets)
-    increasePackageVersion(newVersion, versionLevel)
   }
 
   // ---------

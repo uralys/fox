@@ -19,11 +19,13 @@ import generateScreenshots from './generate-screenshots.js';
 import exportBundle from './bundler/export.js';
 import { readPresets } from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
+import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
 import runGame from './run-game.js';
 import resolveGodotPath from './resolve-godot.js';
 
 // -----------------------------------------------------------------------------
 
+const TAG = 'tag';
 const EXPORT = 'export';
 const SWITCH = 'switch';
 
@@ -38,6 +40,7 @@ const RUN_GAME = 'run:game';
 // -----------------------------------------------------------------------------
 
 const commands = [
+  TAG,
   EXPORT,
   SWITCH,
   GENERATE_ICONS,
@@ -112,6 +115,25 @@ const verifyConfig = (config, defaultConfig) => {
 // -----------------------------------------------------------------------------
 
 const cli = async (yargs, params) => {
+  const command = yargs.argv._[0];
+
+  if (!commands.includes(command)) {
+    yargs.showHelp();
+    return;
+  }
+
+  // --------
+
+  foxLogger.log(`v${pkg.version} ${command}`);
+
+  if (command === TAG) {
+    const levelArg = SEMVER_LEVELS.includes(params[0]) ? params[0] : null;
+    await tagVersion(levelArg);
+    return true;
+  }
+
+  // --------
+
   const defaultConfigPath = path.resolve(process.cwd(), `${DEFAULT_CONFIG_FILE}`);
 
   let defaultConfig;
@@ -123,18 +145,6 @@ const cli = async (yargs, params) => {
     return;
   }
 
-  // --------
-
-  const command = yargs.argv._[0];
-
-  if (!commands.includes(command)) {
-    yargs.showHelp();
-    return;
-  }
-
-  // --------
-
-  foxLogger.log(`v${pkg.version} ${command}`);
   const settings = await getSettings(command, defaultConfig);
 
   if (!settings) {
@@ -226,6 +236,7 @@ const execute = async () => {
 
   const yargs = yargsFactory(process.argv.splice(2))
     .usage('Usage: fox <command> [options]')
+    .command(TAG, 'bump version in project.godot and create git tag (fox tag [patch|minor|major])')
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(EXPORT, 'export a bundle for one of your presets')

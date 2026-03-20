@@ -1,30 +1,5 @@
 // -----------------------------------------------------------------------------
 
-import path from 'path';
-import shell from 'shelljs';
-
-// -----------------------------------------------------------------------------
-
-import {versionLogger} from '../logger.js';
-import { updateVersionInPreset } from "./update-preset.js";
-import { PRESETS_CFG, writePresets } from './read-presets.js';
-
-// -----------------------------------------------------------------------------
-
-const getNextVersion = (currentVersion, versionLevel) => {
-  const [major, minor, patch] = currentVersion.split('.');
-
-  switch(versionLevel) {
-    case 'major':
-      return `${parseInt(major) + 1}.0.0`;
-    case 'minor':
-      return `${major}.${parseInt(minor) + 1}.0`;
-    case 'patch':
-      return `${major}.${minor}.${parseInt(patch) + 1}`;
-  }
-}
-
-// -----------------------------------------------------------------------------
 // from https://github.com/chrisdugne/cherry/blob/master/cherry/libs/version-number.lua
 // -----------------------------------------------------------------------------
 /*
@@ -53,36 +28,19 @@ const toVersionNumber = (semver) => {
 
 // -----------------------------------------------------------------------------
 
-const increasePackageVersion = (newVersion, versionLevel) => {
-  versionLogger.log(`npm version ${versionLevel}`);
+const getNextVersion = (currentVersion, versionLevel) => {
+  const [major, minor, patch] = currentVersion.split('.');
 
-  try {
-    versionLogger.step(0, 'git add presets');
-    shell.exec(`git add ${path.resolve(PRESETS_CFG)}`);
-    shell.exec(`git commit -m "bump presets version to ${newVersion}"`);
-    shell.exec(`npm version ${versionLevel}`);
-    versionLogger.success(`Version bumped to ${newVersion}`);
-  } catch (e) {
-    versionLogger.error(`Failed during versioning, check "git status"`);
-    return;
+  switch(versionLevel) {
+    case 'major':
+      return `${parseInt(major) + 1}.0.0`;
+    case 'minor':
+      return `${major}.${parseInt(minor) + 1}.0`;
+    case 'patch':
+      return `${major}.${minor}.${parseInt(patch) + 1}`;
   }
 };
 
 // -----------------------------------------------------------------------------
 
-const increasePresetsVersion = (newVersion, presets) => {
-  Object.keys(presets).forEach(num => {
-    updateVersionInPreset(presets[num], newVersion);
-  })
-
-  writePresets(presets);
-};
-
-// -----------------------------------------------------------------------------
-
-export {
-  getNextVersion,
-  toVersionNumber,
-  increasePackageVersion,
-  increasePresetsVersion
-};
+export {getNextVersion, toVersionNumber};
