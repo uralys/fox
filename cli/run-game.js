@@ -60,7 +60,9 @@ const runGame = (godotPath, params, config) => {
 
   const watcher = chokidar.watch('.', {
     ignored: (path, stats) => {
-      if (!stats) return false; // Si stats est null (par exemple au démarrage), ne pas ignorer
+      if (!stats) return false;
+
+      if (path.includes('.worktrees/')) return true;
 
       const validExtensions = ['.gd', '.tscn', '.cfg', '.json', '.yml'];
       const isWantedFile = validExtensions.some(ext => path.endsWith(ext));
