@@ -106,7 +106,7 @@ static func hide(object:Variant, duration:float = 0.3, delay:float = 0):
 
 # maybe too specific to Lockey Land
 static func appear(object, delay = 0):
-  var initialScale = _getInitialValue(object, object.scale);
+  var initialScale = _getInitialValue(object, 'scale');
   var aimY = object.position.y
 
   object.modulate.a = 0
@@ -127,13 +127,13 @@ static func appear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = object.scale,
+    propertyPath = 'scale',
     fromValue = Vector2(0.01,0.01),
     toValue = initialScale,
     duration = 0.2,
     transition = Tween.TRANS_LINEAR,
     easing = Tween.EASE_OUT,
-    signalToWait = 'appeared' # the elastic checked y is only smoothing, 'appear' is visually done at this point
+    signalToWait = 'appeared'
   })
 
   _animate(object, {
@@ -145,7 +145,7 @@ static func appear(object, delay = 0):
     easing = Tween.EASE_OUT,
   })
 
-  await object.appeared
+  await Signal(object, 'appeared')
   if(object.has_method('onAppear')):
     object.onAppear()
 
@@ -155,7 +155,7 @@ static func appear(object, delay = 0):
 
 # maybe too specific to Lockey Land
 static func disappear(object, delay = 0):
-  var initialScale = _getInitialValue(object, object.scale);
+  var initialScale = _getInitialValue(object, 'scale');
 
   _animate(object, {
     propertyPath = 'modulate:a',
@@ -169,7 +169,7 @@ static func disappear(object, delay = 0):
   })
 
   _animate(object, {
-    propertyPath = object.scale,
+    propertyPath = 'scale',
     fromValue = initialScale,
     toValue = Vector2(0.01,0.01),
     delay = delay + 0.3,
@@ -186,7 +186,7 @@ static func disappear(object, delay = 0):
     delay = delay
   })
 
-  await object.disappeared
+  await Signal(object, 'disappeared')
   if(object.has_method('onDisappear')):
     object.onDisappear()
 
@@ -365,9 +365,10 @@ static func swing(object, _options = {}):
     return
   var toValue = fromValue * ratio if(ratio != null) else __.Get('toValue', options)
 
+  var tweenPath = propertyPath.replace('.', ':')
   var tween = object.create_tween()
-  tween.tween_property(object, propertyPath, toValue, duration).set_trans(transition).set_ease(easing).from(fromValue)
-  tween.tween_property(object, propertyPath, fromValue, duration).set_trans(transition).set_ease(easing)
+  tween.tween_property(object, tweenPath, toValue, duration).set_trans(transition).set_ease(easing).from(fromValue)
+  tween.tween_property(object, tweenPath, fromValue, duration).set_trans(transition).set_ease(easing)
 
   await tween.finished
   tween.kill()

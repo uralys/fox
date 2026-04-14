@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" uid="uid://intgbyls1skk" path="res://fox/animations/framer.gd" id="1"]
 
-[node name="framer" type="Tween"]
+[node name="framer" type="Node"]
 script = ExtResource("1")

@@ -4,12 +4,22 @@
 # https://www.youtube.com/watch?v=duDk9ICkKWI
 # ------------------------------------------------------------------------------
 
-extends CanvasLayer
+extends Camera2D
 
 # ------------------------------------------------------------------------------
 
-@onready var camera = $camera
-@onready var boundaries = $boundaries
+const Gesture = preload("res://fox/libs/gesture.gd")
+
+@onready var camera = self
+@onready var boundaries = _resolveBoundaries()
+
+func _resolveBoundaries():
+  var node = get_node_or_null("boundaries")
+  if node == null:
+    node = get_node_or_null("../boundaries")
+  if node and node is Control:
+    node.visible = false
+  return node
 
 # ------------------------------------------------------------------------------
 
@@ -20,8 +30,9 @@ signal draggingCamera
 
 # ------------------------------------------------------------------------------
 
-@export var pan_smooth: float = -3
-@export var dragDelay: float = 80
+@export var pan_smooth: float = -1
+@export var dragDelay: float = 30
+@export var dragDistanceThreshold: float = 15
 
 # ------------------------------------------------------------------------------
 
@@ -33,6 +44,7 @@ var screen_start_position
 var tweening = false
 var pressing = false
 var dragging = false
+var dragged = false
 var smoothing = false
 var moving = false
 var startPressingTime = 0
@@ -42,6 +54,7 @@ var startPressingPosition
 
 var draggingVelocity := Vector2(0,0)
 var _last_cam_pos := Vector2(0,0)
+var _activeTween: Tween = null
 
 # ------------------------------------------------------------------------------
 
@@ -54,9 +67,12 @@ func _input(event):
       var now = Time.get_ticks_msec()
       startPressingTime = now
       startPressingPosition = event.position
+      _killActiveTween()
       tweening = false
       smoothing = false
+      draggingVelocity = Vector2.ZERO
       pressing = true
+      dragged = false
       startPressing.emit()
 
     # ------- mouse up
@@ -72,10 +88,12 @@ func _input(event):
         dragging = false
         stopDragging.emit()
 
+        var outOfBoundaries = false
         if(boundaries):
-          var outOfBoundaries = checkBoundaries({reposition=true})
-          if(not outOfBoundaries):
-            smoothing = true
+          outOfBoundaries = checkBoundaries({reposition=true})
+
+        if(not outOfBoundaries):
+          smoothing = true
 
   # ------- mouse mmotion
   elif event is InputEventMouseMotion:
@@ -87,11 +105,15 @@ func _input(event):
       var now = Time.get_ticks_msec()
       if(now - startPressingTime > dragDelay):
         var startDiff = startPressingPosition - event.position
-        if(startDiff.length() < 50):
+        if(startDiff.length() < dragDistanceThreshold):
           return
 
         if(not dragging):
           dragging = true
+          dragged = true
+          _killActiveTween()
+          tweening = false
+          smoothing = false
           mouse_start_pos = event.position
           screen_start_position = camera.position
           startDragging.emit()
@@ -127,6 +149,11 @@ func _process(delta):
 
 func update_vel(delta : float):
   var move = _last_cam_pos - camera.position
+
+  # don't decay velocity on idle frames; preserve last-known momentum
+  if move.length() < 1:
+    return
+
   var move_speed:Vector2 = move / delta
 
   draggingVelocity = (draggingVelocity + move_speed  ) / 2.0
@@ -141,12 +168,21 @@ func toPosition(from: Vector2, to : Vector2, duration: float = 1):
 
   tweening = true
 
-  var tween = create_tween()
+  _killActiveTween()
+  _activeTween = create_tween()
 
   camera.position = from
-  tween.tween_property(camera, "position", to, duration).connect("finished", func():
+  _activeTween.tween_property(camera, "position", to, duration).connect("finished", func():
     tweening = false
+    _activeTween = null
   )
+
+# ------------------------------------------------------------------------------
+
+func _killActiveTween():
+  if _activeTween and _activeTween.is_valid():
+    _activeTween.kill()
+  _activeTween = null
 
 # ------------------------------------------------------------------------------
 
@@ -162,6 +198,11 @@ func smooth(delta : float):
       return
 
   var l = draggingVelocity.length()
+  if(l < 10):
+    smoothing = false
+    draggingVelocity = Vector2.ZERO
+    return
+
   var move_frame = 10 * exp(pan_smooth * ((log(l/10) / pan_smooth)+delta))
   draggingVelocity = draggingVelocity.normalized() * move_frame
   camera.position -= draggingVelocity * delta
@@ -172,10 +213,28 @@ func checkBoundaries(options = {}):
   var reposition = options.reposition if options.has('reposition') else false
   var _offset = options.offset if options.has('offset') else 0
 
-  var boundariesLeft = boundaries.position.x - _offset
-  var boundariesRight = boundaries.position.x + boundaries.size[0] + _offset
-  var boundariesTop = boundaries.position.y - _offset
-  var boundariesBottom = boundaries.position.y + boundaries.size[1] + _offset
+  # inset by half viewport / zoom so viewport edges stay within the rect
+  var halfView = get_viewport_rect().size / (2.0 * camera.zoom.x)
+
+  var rectLeft = boundaries.position.x
+  var rectRight = boundaries.position.x + boundaries.size.x
+  var rectTop = boundaries.position.y
+  var rectBottom = boundaries.position.y + boundaries.size.y
+
+  var boundariesLeft = rectLeft + halfView.x - _offset
+  var boundariesRight = rectRight - halfView.x + _offset
+  var boundariesTop = rectTop + halfView.y - _offset
+  var boundariesBottom = rectBottom - halfView.y + _offset
+
+  # if the rect is smaller than the viewport on an axis, keep camera centered on it
+  if boundariesLeft > boundariesRight:
+    var cx = (rectLeft + rectRight) / 2.0
+    boundariesLeft = cx
+    boundariesRight = cx
+  if boundariesTop > boundariesBottom:
+    var cy = (rectTop + rectBottom) / 2.0
+    boundariesTop = cy
+    boundariesBottom = cy
 
   var outOnLeft = camera.position.x < boundariesLeft
   var outOnRight = camera.position.x > boundariesRight
@@ -213,7 +272,7 @@ func setZoom(_zoom: float):
   ZOOM = _zoom
   camera.zoom = Vector2(_zoom, _zoom)
 
-func zoom():
+func zoomIn():
   camera.zoom = Vector2(ZOOM * 0.7, ZOOM * 0.7)
 
   Animate.to(camera, {

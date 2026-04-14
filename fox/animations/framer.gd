@@ -1,13 +1,14 @@
-extends Tween
+extends Node
 
 # ------------------------------------------------------------------------------
 
 var nextAnimation
+var _tween: Tween
 
 # ------------------------------------------------------------------------------
 
 func _ready():
-  connect('finished',Callable(self,'onAnimationfinished'))
+  pass
 
 # ------------------------------------------------------------------------------
 
@@ -18,7 +19,6 @@ func animateFrames(
   maxNbFrames: int = 0,
   _totalDuration = 0.3,
   _duration = null,
-  # delay = 0
 ):
 
   nextAnimation = null
@@ -62,29 +62,31 @@ func animateFrames(
     nextAnimation.totalDuration = _totalDuration
 
   # -----------
-  # 🏗️ note as of refacting with Godot4: Tween is no longer a Node
-  # get_parent() is irrelevant; there is surely a better way to do implement this frame animation
-  # unplugging this for now / lockey land is not working anymore with this update.
 
-  # if(is_running()):
-  #   stop(get_parent(), 'frame')
+  if _tween and _tween.is_running():
+    _tween.kill()
 
-  # # -----------
+  var sprite = get_parent()
+  sprite.frame = from
 
-  # interpolate_property(
-  #   get_parent(),
-  #   'frame',
-  #   from, to,
-  #   duration,
-  #   Tween.TRANS_LINEAR, Tween.EASE_OUT,
-  #   delay
-  # )
+  if duration <= 0:
+    sprite.frame = to
+    _onAnimationFinished()
+    return
 
-  play()
+  _tween = sprite.create_tween()
+  _tween.tween_property(
+    sprite,
+    'frame',
+    to,
+    duration
+  ).set_trans(Tween.TRANS_LINEAR).set_ease(Tween.EASE_OUT)
+
+  _tween.finished.connect(_onAnimationFinished)
 
 # ------------------------------------------------------------------------------
 
-func onAnimationfinished(_object, _key):
+func _onAnimationFinished():
   if(nextAnimation):
     animateFrames(
       nextAnimation.from,

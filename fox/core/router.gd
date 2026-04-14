@@ -6,8 +6,8 @@ extends Node
 
 var ScreenFader = preload("res://fox/components/screen-fader.tscn")
 var FullscreenLoader = preload("res://fox/components/fullscreen-loader.tscn")
-var SettingsPopup = preload('res://src/popups/settings.tscn')
-var LanguagesPopup = preload('res://src/popups/languages.tscn')
+var SettingsPopup = null
+var LanguagesPopup = null
 var _NavState = preload('res://fox/core/nav-state.gd')
 
 # ------------------------------------------------------------------------------
@@ -87,7 +87,7 @@ func reloadCurrentScene():
     openScene(_lastScene, _lastOptions)
 
 func openScene(scene, options = {}):
-  call_deferred("_openScene", scene, options)
+  (func(): await _openScene(scene, options)).call_deferred()
 
 func _openScene(scene, options = {}):
   _lastScene = scene
@@ -108,7 +108,7 @@ func _openScene(scene, options = {}):
     if(currentScene.has_method('onLeave')):
       currentScene.onLeave(options)
 
-    var timeToWaitOnOpenScene = onOpenScene()
+    var timeToWaitOnOpenScene = await onOpenScene()
     await Wait.forSomeTime($/root, timeToWaitOnOpenScene).timeout
 
     $'/root/app/scene'.remove_child(currentScene)

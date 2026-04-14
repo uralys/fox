@@ -4,7 +4,7 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-var state = {
+static var state = {
   dragArea = null,
   draggable = null,
   droppable = null,
@@ -14,7 +14,7 @@ var state = {
 
 # ------------------------------------------------------------------------------
 
-func findPressEvent(touchable):
+static func findPressEvent(touchable):
   var pressEvents = state.PRESS_EVENTS.filter(func(_event):
     return _event.touchable == touchable
   )
@@ -24,7 +24,7 @@ func findPressEvent(touchable):
 
 # ------------------------------------------------------------------------------
 
-func addPressedItem(pressEvent):
+static func addPressedItem(pressEvent):
   state.PRESS_EVENTS.append(pressEvent)
   state.PRESS_EVENTS.sort_custom(func(evA, evB):
     if(evA.zIndex > evA.zIndex): return true
@@ -33,7 +33,7 @@ func addPressedItem(pressEvent):
 
 # ------------------------------------------------------------------------------
 
-func removePressedItem(touchable):
+static func removePressedItem(touchable):
   # another touchable has already claimed acceptation
   if(state.PRESS_EVENTS.size() == 0):
     return
@@ -45,7 +45,7 @@ func removePressedItem(touchable):
 
 # ------------------------------------------------------------------------------
 
-func shouldConcedePriority(touchable):
+static func shouldConcedePriority(touchable):
   if(state.PRESS_EVENTS.size() > 0):
     for pressEvent in state.PRESS_EVENTS:
       var priority = __.GetOr(10000, 'touchable.inputPriority', pressEvent)
@@ -56,7 +56,7 @@ func shouldConcedePriority(touchable):
 
 # ------------------------------------------------------------------------------
 
-func acceptTouchable(touchable):
+static func acceptTouchable(touchable):
   # another touchable has already been accepted
   if(state.PRESS_EVENTS.size() == 0):
     return false
@@ -72,24 +72,24 @@ func acceptTouchable(touchable):
 
 # ------------------------------------------------------------------------------
 
-func isDragging():
+static func isDragging():
   return state.DRAGGING_DATA != null
 
-func getDraggingData():
+static func getDraggingData():
   return state.DRAGGING_DATA
 
-func currentDragArea():
+static func currentDragArea():
   return __.Get('DRAGGING_DATA.dragArea', state)
 
-func currentDraggable():
+static func currentDraggable():
   return __.Get('DRAGGING_DATA.draggable', state)
 
-func currentDroppable():
+static func currentDroppable():
   return __.Get('DRAGGING_DATA.droppable', state)
 
 # ------------------------------------------------------------------------------
 
-func startDragging(dragArea, draggable, additionalDragData):
+static func startDragging(dragArea, draggable, additionalDragData):
   state.DRAGGING_DATA = {
     dragArea = dragArea,
     draggable = draggable
@@ -102,7 +102,7 @@ func startDragging(dragArea, draggable, additionalDragData):
 
 # ------------------------------------------------------------------------------
 
-func verifyDroppableOnEnter(_droppable, acceptedType: String):
+static func verifyDroppableOnEnter(_droppable, acceptedType: String):
   var dragArea = currentDragArea()
 
   if(not dragArea):
@@ -116,7 +116,7 @@ func verifyDroppableOnEnter(_droppable, acceptedType: String):
 
 # ------------------------------------------------------------------------------
 
-func verifyDroppableOnExit(_droppable, acceptedType: String):
+static func verifyDroppableOnExit(_droppable, acceptedType: String):
   var dragArea = currentDragArea()
   if(not dragArea):
     return
@@ -128,7 +128,7 @@ func verifyDroppableOnExit(_droppable, acceptedType: String):
 
 # ------------------------------------------------------------------------------
 
-func handleDraggingEnd():
+static func handleDraggingEnd():
   var dragArea = currentDragArea()
   var draggable = currentDraggable()
   var droppable = currentDroppable()
@@ -143,7 +143,7 @@ func handleDraggingEnd():
 
 # ------------------------------------------------------------------------------
 
-func switchDraggingTo(newDraggable, parentReference = null):
+static func switchDraggingTo(newDraggable, parentReference = null):
   var droppable = currentDroppable()
   var dragArea = currentDragArea()
   dragArea.resetInteraction()
