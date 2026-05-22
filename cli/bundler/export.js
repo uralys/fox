@@ -11,7 +11,7 @@ import {foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
 import switchBundle from './switch.js';
 import {readPresets, writePresets} from './read-presets.js';
-import {tagVersion} from './tag.js';
+import {tagVersion, readProjectVersion} from './tag.js';
 
 // -----------------------------------------------------------------------------
 
@@ -57,8 +57,88 @@ const unzipIPA = (bundleName) => {
 
 // -----------------------------------------------------------------------------
 
-const exportBundle = async (settings) => {
+const exportOnePreset = async (settings, presets, bundleSettings) => {
   const {core: coreConfig, bundles} = settings;
+  const {bundleId, preset, env} = bundleSettings;
+
+  let newVersion;
+
+  if (env === 'release') {
+    newVersion = await tagVersion();
+
+    if (!newVersion) {
+      foxLogger.error('Failed during versioning');
+      return false;
+    }
+  } else {
+    newVersion = readProjectVersion();
+    foxLogger.log(`env=${env} — skipping version bump (using ${newVersion})`);
+  }
+
+  // ---------
+
+  foxLogger.step(0, `Ready to bundle ${bundleId} (${newVersion}) for ${preset.name}`);
+
+  const {bundleName} = updatePreset(
+    bundleId,
+    env,
+    coreConfig,
+    preset,
+    bundles[bundleId],
+    newVersion
+  );
+
+  writePresets(presets);
+
+  // ---------
+
+  if (preset.export_path) {
+    const exportDir = path.dirname(path.resolve(process.cwd(), preset.export_path));
+    if (!fs.existsSync(exportDir)) {
+      shell.mkdir('-p', exportDir);
+      godotLogger.success(`Created ${exportDir}`);
+    }
+  }
+
+  const exportType = `--export-${env === 'release' ? 'release' : 'debug'}`;
+  godotLogger.log(`Exporting with ${exportType}...`);
+
+  return new Promise((resolve) => {
+    const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--headless'], {
+      stdio: [process.stdin, process.stdout, process.stderr]
+    });
+
+    bundler.on('close', (code) => {
+      if (code !== 0) {
+        godotLogger.error(`Export failed for ${preset.name} (exit ${code})`);
+        resolve(false);
+        return;
+      }
+
+      godotLogger.success('Build complete');
+
+      if (preset.platform === 'iOS') {
+        if(env === 'debug' || env === 'staging') {
+          unzipIPA(bundleName);
+        }
+        foxLogger.log(`_build/iOS/${bundleName}.xcodeproj is ready to be used with XCode`);
+      }
+
+      if (preset.platform === 'Android') {
+        foxLogger.log(`_build/android/${bundleName}${androidExtension(env)} is ready`);
+        foxLogger.log(`adb install -r _build/android/${bundleName}${androidExtension(env)}`);
+      }
+
+      foxLogger.done(`Exported ${bundleId} (${newVersion}) for ${preset.name} ${env}`);
+      resolve(true);
+    });
+  });
+};
+
+// -----------------------------------------------------------------------------
+
+const exportBundle = async (settings) => {
+  const {bundles} = settings;
   foxLogger.log('Exporting a bundle...');
 
   if (!bundles) {
@@ -72,15 +152,6 @@ const exportBundle = async (settings) => {
 
   // ---------
 
-  const newVersion = await tagVersion();
-
-  if (!newVersion) {
-    foxLogger.error('Failed during versioning');
-    return;
-  }
-
-  // ---------
-
   const presets = readPresets();
   if (!presets) {
     foxLogger.error('Failed during reading presets');
@@ -89,56 +160,45 @@ const exportBundle = async (settings) => {
 
   // ---------
 
-  const bundleSettings = await switchBundle(settings, presets);
-  if (!bundleSettings) {
+  const initial = await switchBundle(settings, presets);
+  if (!initial) {
     foxLogger.error('Failed during bundle settings preparation');
     return;
   }
 
-  const {bundleId, preset, env} = bundleSettings;
-
   // ---------
 
-  foxLogger.step(0, `Ready to bundle ${bundleId} (${newVersion}) for ${preset.name}`);
+  if (initial.all) {
+    foxLogger.log(`Building all ${Object.keys(presets).length} presets for bundle "${initial.bundleId}"`);
 
-  const {applicationName, bundleName} = updatePreset(
-    bundleId,
-    env,
-    coreConfig,
-    preset,
-    bundles[bundleId],
-    newVersion
-  );
+    for (const presetNum of Object.keys(presets)) {
+      const preset = presets[presetNum];
+      foxLogger.log(`--- ${preset.name} ---`);
 
-  writePresets(presets);
+      const bundleSettings = await switchBundle(settings, presets, {
+        bundleId: initial.bundleId,
+        preset
+      });
 
-  // ---------
-
-  const exportType = `--export-${env === 'release' ? 'release' : 'debug'}`;
-  godotLogger.log(`Exporting with ${exportType}...`);
-
-  const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--headless'], {
-    stdio: [process.stdin, process.stdout, process.stderr]
-  });
-
-  bundler.on('close', () => {
-    godotLogger.success('Build complete');
-
-    if (preset.platform === 'iOS') {
-      if(env === 'debug' || env === 'staging') {
-        unzipIPA(bundleName);
+      if (!bundleSettings) {
+        foxLogger.warn(`Skipping ${preset.name} (invalid bundle settings)`);
+        continue;
       }
 
-      foxLogger.log(`_build/iOS/${bundleName}.xcodeproj is ready to be used with XCode`);
+      const ok = await exportOnePreset(settings, presets, bundleSettings);
+      if (!ok) {
+        foxLogger.error(`Aborting "all" run: ${preset.name} failed`);
+        return;
+      }
     }
 
-    if (preset.platform === 'Android') {
-      foxLogger.log(`_build/android/${bundleName}${androidExtension(env)} is ready`);
-      foxLogger.log(`adb install -r _build/android/${bundleName}${androidExtension(env)}`);
-    }
+    foxLogger.done(`All ${Object.keys(presets).length} presets exported`);
+    return;
+  }
 
-    foxLogger.done(`Exported ${bundleId} (${newVersion}) for ${preset.name} ${env}`);
-  });
+  // ---------
+
+  await exportOnePreset(settings, presets, initial);
 };
 
 // -----------------------------------------------------------------------------

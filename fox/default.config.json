@@ -30,6 +30,9 @@
       { "name": "webp-16'9", "resolution": "2160x1215", "extension": ".webp" }
     ]
   },
+  "generate:steam-screenshots": {
+    "output": "assets/_steam/screenshots"
+  },
   "run:editor": {
     "resolution": "2980x2220",
     "position": "0,0"

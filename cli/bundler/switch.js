@@ -40,19 +40,26 @@ const extractEnv = (preset) => {
 
 // -----------------------------------------------------------------------------
 
+const ALL = 'all';
+
 const inquireParams = async (bundles, presets) => {
   const bundleIds = Object.keys(bundles);
   const singleBundleId = bundleIds.length > 1 ? null : bundleIds[0];
+
+  const presetChoices = Object.keys(presets).map((num) => ({
+    name: presets[num].name,
+    value: num
+  }));
 
   const questions = [
     {
       message: 'preset',
       name: 'presetNum',
       type: 'list',
-      choices: Object.keys(presets).map((num) => ({
-        name: presets[num].name,
-        value: num
-      }))
+      choices: [
+        { name: '✨ all', value: ALL },
+        ...presetChoices
+      ]
     }
   ];
 
@@ -67,15 +74,19 @@ const inquireParams = async (bundles, presets) => {
 
   const answers = await inquirer.prompt(questions);
   const { bundleId = singleBundleId, presetNum } = answers;
-  const preset = presets[presetNum];
   const bundle = bundles[bundleId];
 
+  if (presetNum === ALL) {
+    return { bundleId, bundle, all: true };
+  }
+
+  const preset = presets[presetNum];
   return { bundleId, bundle, preset };
 };
 
 // -----------------------------------------------------------------------------
 
-const switchBundle = async (settings, presets) => {
+const switchBundle = async (settings, presets, forced = null) => {
   const { core, bundles } = settings;
   switchLogger.log('Selecting bundle...');
 
@@ -89,7 +100,21 @@ const switchBundle = async (settings, presets) => {
     return;
   }
 
-  const { bundleId, preset } = await inquireParams(bundles, presets);
+  let bundleId;
+  let preset;
+
+  if (forced) {
+    bundleId = forced.bundleId;
+    preset = forced.preset;
+    switchLogger.log(`Using forced selection: ${preset.name} / ${bundleId}`);
+  } else {
+    const answers = await inquireParams(bundles, presets);
+    if (answers.all) {
+      return { all: true, bundleId: answers.bundleId };
+    }
+    bundleId = answers.bundleId;
+    preset = answers.preset;
+  }
 
   // ---------
 

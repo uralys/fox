@@ -16,6 +16,7 @@ import { foxLogger, godotLogger } from './logger.js';
 import generateIcons from './generate-icons.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateScreenshots from './generate-screenshots.js';
+import generateSteamScreenshots from './generate-steam-screenshots.js';
 import exportBundle from './bundler/export.js';
 import { readPresets } from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
@@ -32,6 +33,7 @@ const SWITCH = 'switch';
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
+const GENERATE_STEAM_SCREENSHOTS = 'generate:steam-screenshots';
 const UPDATE_PO_FILES = 'update-po-files';
 
 const RUN_EDITOR = 'run:editor';
@@ -45,6 +47,7 @@ const commands = [
   SWITCH,
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
+  GENERATE_STEAM_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
   UPDATE_PO_FILES,
   RUN_EDITOR,
@@ -221,6 +224,10 @@ const cli = async (yargs, params) => {
       generateScreenshots(config);
       break;
     }
+    case GENERATE_STEAM_SCREENSHOTS: {
+      generateSteamScreenshots(config, params);
+      break;
+    }
     default: {
       foxLogger.error(`${command} not handled`);
     }
@@ -250,6 +257,10 @@ const execute = async () => {
     .command(
       GENERATE_SCREENSHOTS,
       'resize all images in a folder to 2560x1600, to match store requirements'
+    )
+    .command(
+      GENERATE_STEAM_SCREENSHOTS,
+      'resize all images from <source-folder> to 1920x1080 for Steam (flat output)'
     )
     .demandCommand(1, 1, commandMessage, commandMessage)
     .help('h')
