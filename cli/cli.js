@@ -18,6 +18,7 @@ import generateSplashscreens from './generate-splashscreens.js';
 import generateScreenshots from './generate-screenshots.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import exportBundle from './bundler/export.js';
+import publish from './bundler/publish.js';
 import { readPresets } from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
 import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
@@ -28,6 +29,7 @@ import resolveGodotPath from './resolve-godot.js';
 
 const TAG = 'tag';
 const EXPORT = 'export';
+const PUBLISH = 'publish';
 const SWITCH = 'switch';
 
 const GENERATE_ICONS = 'generate:icons';
@@ -44,6 +46,7 @@ const RUN_GAME = 'run:game';
 const commands = [
   TAG,
   EXPORT,
+  PUBLISH,
   SWITCH,
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
@@ -194,6 +197,10 @@ const cli = async (yargs, params) => {
       exportBundle(settings);
       return;
     }
+    case PUBLISH: {
+      await publish(settings, params);
+      return;
+    }
     case SWITCH: {
       const presets = readPresets();
       switchBundle(settings, presets);
@@ -247,6 +254,7 @@ const execute = async () => {
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(EXPORT, 'export a bundle for one of your presets')
+    .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [branch])')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')

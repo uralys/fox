@@ -33,6 +33,19 @@
   "generate:steam-screenshots": {
     "output": "assets/_steam/screenshots"
   },
+  "publish": {
+    "steam": {
+      "appId": "<your-steam-app-id>",
+      "login": "<your-steam-partner-login>",
+      "contentRoot": "export",
+      "depots": {
+        "<windows-depot-id>": "windows",
+        "<linux-depot-id>": "linux",
+        "<macos-depot-id>": "macos"
+      },
+      "branch": ""
+    }
+  },
   "run:editor": {
     "resolution": "2980x2220",
     "position": "0,0"
