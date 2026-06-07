@@ -55,7 +55,11 @@
     "potTemplate": "./assets/translations/locales.pot"
   },
   "run:game": {
-    "position": "1120,20"
+    "position": "1120,20",
+    "resolutions": {
+      "steamdeck": "1280x800",
+      "desktop": "1920x1080"
+    }
   },
   "bundles": {
     "yourApp": {

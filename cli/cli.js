@@ -59,6 +59,8 @@ const commands = [
 
 const commandMessage = `choose a command above, example:\nfox ${RUN_EDITOR}`;
 
+const HELP_FLAGS = ['-h', '--help'];
+
 // -----------------------------------------------------------------------------
 
 const DEFAULT_CONFIG_FILE = 'fox/default.config.json';
@@ -124,6 +126,14 @@ const cli = async (yargs, params) => {
   const command = yargs.argv._[0];
 
   if (!commands.includes(command)) {
+    yargs.showHelp();
+    return;
+  }
+
+  // Never let `-h`/`--help` on a subcommand fall through as a positional
+  // argument: `fox publish --help` would otherwise read `--help` as a branch
+  // name and trigger a real publish.
+  if (params.some((param) => HELP_FLAGS.includes(param))) {
     yargs.showHelp();
     return;
   }

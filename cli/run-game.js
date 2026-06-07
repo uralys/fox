@@ -35,9 +35,22 @@ const restart = (godotPath, params, config) => {
 const start = (godotPath, params, config) => {
   godotLogger.reset();
   godotLogger.log('Starting game');
-  var {position, screen} = config;
+  const {position, screen, resolutions = {}} = config;
 
-  const parameters = [...params];
+  // `--steamdeck` / `--desktop` select a windowed resolution from config.resolutions
+  let resolution = null;
+  const parameters = params.filter((param) => {
+    const key = param.replace(/^--/, '');
+    if (resolutions[key]) {
+      resolution = resolutions[key];
+      return false;
+    }
+    return true;
+  });
+
+  if (resolution) {
+    parameters.push('--windowed', '--resolution', resolution);
+  }
 
   if (screen) {
     parameters.push('--screen', screen);
@@ -73,8 +86,11 @@ const runGame = (godotPath, params, config) => {
     }
   });
 
+  const resolutionKey = params.map((p) => p.replace(/^--/, '')).find((k) => config.resolutions?.[k]);
+
   godotLogger.data({
     position: config.position || config.screen,
+    resolution: resolutionKey ? `${resolutionKey} (${config.resolutions[resolutionKey]})` : 'project.godot default',
     watching: '.gd .tscn .cfg .json .yml',
     keys: 'r = full restart, ctrl+c = exit',
     hotReload: 'scene reload on file change',
