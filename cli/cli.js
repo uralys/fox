@@ -264,7 +264,7 @@ const execute = async () => {
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(EXPORT, 'export a bundle for one of your presets')
-    .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [branch])')
+    .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [demo] [branch])')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')

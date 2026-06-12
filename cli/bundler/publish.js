@@ -122,32 +122,37 @@ const runSteamcmd = (login, appBuildPath) =>
 
 // -----------------------------------------------------------------------------
 
+const isPlaceholder = (value) => typeof value === 'string' && value.startsWith('<');
+
 const publish = async (settings, params) => {
   const {core, config} = settings;
-  const steam = config.steam;
+
+  const isDemo = params[0] === 'demo';
+  const configKey = isDemo ? 'steamDemo' : 'steam';
+  const steam = isDemo ? config.steamDemo : config.steam;
 
   if (!steam) {
-    foxLogger.error('Missing "publish.steam" in fox.config.json');
+    foxLogger.error(`Missing "publish.${configKey}" in fox.config.json`);
     return;
   }
 
   const {appId, login, contentRoot, depots} = steam;
-  const branch = params[0] || steam.branch || '';
+  const branch = (isDemo ? params[1] : params[0]) || steam.branch || '';
 
   if (!appId || !login || !depots) {
-    steamLogger.error('publish.steam requires appId, login and depots');
+    steamLogger.error(`publish.${configKey} requires appId, login and depots`);
     return;
   }
 
-  if (login.startsWith('<')) {
+  if (isPlaceholder(login)) {
     steamLogger.error(`Set your Steam partner login in fox.config.json (got placeholder "${login}")`);
     return;
   }
 
-  // ---------
-
-  if (!shell.which('steamcmd')) {
-    steamLogger.error('steamcmd not found — install it: https://developer.valvesoftware.com/wiki/SteamCMD');
+  if (isPlaceholder(appId)) {
+    steamLogger.error(
+      `Create the demo app in Steamworks, then set publish.${configKey}.appId/depots in fox.config.json (got placeholder "${appId}")`
+    );
     return;
   }
 
@@ -179,9 +184,10 @@ const publish = async (settings, params) => {
     depotScripts[depotId] = `depot_${depotId}.vdf`;
   }
 
+  const demoSuffix = isDemo ? ' (demo)' : '';
   const appBuildPath = writeAppBuildScript(steamDir, {
     appId,
-    desc: `${core.title} ${version}${branch ? ` (${branch})` : ''}`,
+    desc: `${core.title} ${version}${demoSuffix}${branch ? ` (${branch})` : ''}`,
     contentRoot: absoluteContentRoot,
     setlive: branch,
     depots: depotScripts
@@ -190,6 +196,11 @@ const publish = async (settings, params) => {
   steamLogger.success(`Generated VDF scripts in ${STEAM_DIR}/`);
 
   // ---------
+
+  if (!shell.which('steamcmd')) {
+    steamLogger.error('steamcmd not found — install it: https://developer.valvesoftware.com/wiki/SteamCMD');
+    return;
+  }
 
   const ok = await runSteamcmd(login, appBuildPath);
   if (!ok) {
