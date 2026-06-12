@@ -14,7 +14,7 @@ import {getSubtitle, getTitle} from './export.js';
 // -----------------------------------------------------------------------------
 
 const OVERRIDE_CFG = './override.cfg';
-const ENV = ['debug', 'staging', 'release'];
+const ENV = ['debug', 'staging', 'release', 'demo'];
 
 // -----------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ const extractEnv = (preset) => {
   if (!_env) {
     switchLogger.error('export_presets.cfg must be edited');
     switchLogger.warn(`Missing 'env' in custom_features: "${preset.custom_features}"`);
-    switchLogger.warn('Add "env:debug" or "env:release" within the custom_features list');
+    switchLogger.warn(`Add one of [${ENV.map((e) => `env:${e}`).join(', ')}] within the custom_features list`);
     return;
   }
 
