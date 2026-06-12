@@ -108,7 +108,8 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
 
   const _applicationName = getApplicationName(coreConfig, bundle);
 
-  const applicationName = `${_applicationName}${env === 'release' ? '' : `(${env})`}`;
+  const envSuffix = env === 'release' ? '' : env === 'demo' ? ' Demo' : `(${env})`;
+  const applicationName = `${_applicationName}${envSuffix}`;
   const bundleName = `${bundleId}${env === 'release' ? '' : `-${env}`}`;
 
   switch (platform) {

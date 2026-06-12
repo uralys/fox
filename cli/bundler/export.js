@@ -100,7 +100,7 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
     }
   }
 
-  const exportType = `--export-${env === 'release' ? 'release' : 'debug'}`;
+  const exportType = `--export-${env === 'release' || env === 'demo' ? 'release' : 'debug'}`;
   godotLogger.log(`Exporting with ${exportType}...`);
 
   return new Promise((resolve) => {
