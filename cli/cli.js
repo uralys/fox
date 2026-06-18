@@ -19,7 +19,6 @@ import generateScreenshots from './generate-screenshots.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import exportBundle from './bundler/export.js';
 import publish from './bundler/publish.js';
-import { readPresets } from './bundler/read-presets.js';
 import switchBundle from './bundler/switch.js';
 import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
 import runGame from './run-game.js';
@@ -212,8 +211,7 @@ const cli = async (yargs, params) => {
       return;
     }
     case SWITCH: {
-      const presets = readPresets();
-      switchBundle(settings, presets);
+      await switchBundle(settings);
       return;
     }
   }

@@ -3,15 +3,24 @@
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
+import inquirer from 'inquirer';
 import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
 import {foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
-import switchBundle from './switch.js';
+import {writeOverride} from './switch.js';
+import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
 import {readPresets, writePresets} from './read-presets.js';
 import {tagVersion, readProjectVersion} from './tag.js';
+
+// -----------------------------------------------------------------------------
+
+const PROJECT_GODOT = 'project.godot';
+
+const ALL = 'all';
+const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
 
 // -----------------------------------------------------------------------------
 
@@ -41,6 +50,22 @@ const verifyBuildFolder = () => {
 };
 
 // -----------------------------------------------------------------------------
+// Exported builds read `bundle/env` from the project.binary baked into the PCK.
+// Godot serializes the in-memory ProjectSettings at export, so we keep both the
+// editor source (override.cfg) and the PCK source (project.godot [bundle]) in
+// sync for the target platform right before invoking the exporter.
+
+const patchProjectGodotBundle = ({platform, env}) => {
+  let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
+
+  content = content.replace(/^platform=".*"$/m, `platform="${platform}"`);
+  content = content.replace(/^env=".*"$/m, `env="${env}"`);
+
+  fs.writeFileSync(PROJECT_GODOT, content);
+  godotLogger.log(`project.godot [bundle] -> platform="${platform}" env="${env}"`);
+};
+
+// -----------------------------------------------------------------------------
 
 const unzipIPA = (bundleName) => {
   foxLogger.log(`Unzipping ${bundleName}.app...`);
@@ -59,23 +84,7 @@ const unzipIPA = (bundleName) => {
 
 const exportOnePreset = async (settings, presets, bundleSettings) => {
   const {core: coreConfig, bundles} = settings;
-  const {bundleId, preset, env} = bundleSettings;
-
-  let newVersion;
-
-  if (env === 'release') {
-    newVersion = await tagVersion();
-
-    if (!newVersion) {
-      foxLogger.error('Failed during versioning');
-      return false;
-    }
-  } else {
-    newVersion = readProjectVersion();
-    foxLogger.log(`env=${env} — skipping version bump (using ${newVersion})`);
-  }
-
-  // ---------
+  const {bundleId, preset, env, newVersion} = bundleSettings;
 
   foxLogger.step(0, `Ready to bundle ${bundleId} (${newVersion}) for ${preset.name}`);
 
@@ -137,6 +146,24 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
 
 // -----------------------------------------------------------------------------
 
+const inquirePlatforms = async () => {
+  const {target} = await inquirer.prompt([
+    {
+      message: 'platform',
+      name: 'target',
+      type: 'list',
+      choices: [
+        {name: '✨ all', value: ALL},
+        ...PLATFORMS.map((platform) => ({name: platform, value: platform}))
+      ]
+    }
+  ]);
+
+  return target === ALL ? PLATFORMS : [target];
+};
+
+// -----------------------------------------------------------------------------
+
 const exportBundle = async (settings) => {
   const {bundles} = settings;
   foxLogger.log('Exporting a bundle...');
@@ -152,53 +179,73 @@ const exportBundle = async (settings) => {
 
   // ---------
 
-  const presets = readPresets();
+  let presets = readPresets();
   if (!presets) {
     foxLogger.error('Failed during reading presets');
     return;
   }
 
-  // ---------
+  // --------- env comes from the last `fox switch`
 
-  const initial = await switchBundle(settings, presets);
-  if (!initial) {
-    foxLogger.error('Failed during bundle settings preparation');
+  const current = readCurrentBundle();
+  const env = current && current.env;
+  const bundleId = (current && current.id) || Object.keys(bundles)[0];
+
+  if (!env) {
+    foxLogger.error('No current env in override.cfg — run `fox switch` first');
     return;
   }
 
+  foxLogger.log(`Current env: ${env} (bundle "${bundleId}")`);
+
   // ---------
 
-  if (initial.all) {
-    foxLogger.log(`Building all ${Object.keys(presets).length} presets for bundle "${initial.bundleId}"`);
+  const platforms = await inquirePlatforms();
 
-    for (const presetNum of Object.keys(presets)) {
-      const preset = presets[presetNum];
-      foxLogger.log(`--- ${preset.name} ---`);
+  // --------- every target must resolve to a preset before any versioning
 
-      const bundleSettings = await switchBundle(settings, presets, {
-        bundleId: initial.bundleId,
-        preset
-      });
-
-      if (!bundleSettings) {
-        foxLogger.warn(`Skipping ${preset.name} (invalid bundle settings)`);
-        continue;
-      }
-
-      const ok = await exportOnePreset(settings, presets, bundleSettings);
-      if (!ok) {
-        foxLogger.error(`Aborting "all" run: ${preset.name} failed`);
-        return;
-      }
+  for (const platform of platforms) {
+    if (!findPreset(presets, platform, env)) {
+      foxLogger.error(`No preset with env:${env} for platform "${platform}"`);
+      foxLogger.error('Aborting: add the matching preset in export_presets.cfg');
+      return;
     }
+  }
 
-    foxLogger.done(`All ${Object.keys(presets).length} presets exported`);
-    return;
+  // --------- version resolved once: a single tag even when building `all`
+
+  let newVersion;
+
+  if (env === 'release') {
+    newVersion = await tagVersion();
+    if (!newVersion) {
+      foxLogger.error('Failed during versioning');
+      return;
+    }
+    presets = readPresets();
+  } else {
+    newVersion = readProjectVersion();
+    foxLogger.log(`env=${env} — skipping version bump (using ${newVersion})`);
   }
 
   // ---------
 
-  await exportOnePreset(settings, presets, initial);
+  for (const platform of platforms) {
+    foxLogger.log(`--- ${platform} (${env}) ---`);
+
+    const preset = findPreset(presets, platform, env);
+
+    writeOverride(settings, {bundleId, platform, env});
+    patchProjectGodotBundle({platform, env});
+
+    const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
+    if (!ok) {
+      foxLogger.error(`Aborting run: ${preset.name} failed`);
+      return;
+    }
+  }
+
+  foxLogger.done(`Exported ${platforms.length} platform(s) (${newVersion}) for env "${env}"`);
 };
 
 // -----------------------------------------------------------------------------

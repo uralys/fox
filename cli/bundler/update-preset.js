@@ -70,7 +70,7 @@ const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleN
 
 // -----------------------------------------------------------------------------
 
-const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName) => {
+const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
   updateMain(preset, 'export_path', `_build/macOS/${bundleName}`);
 
   updateOptions(preset, 'application/name', applicationName);

@@ -14,137 +14,52 @@ import {getSubtitle, getTitle} from './export.js';
 // -----------------------------------------------------------------------------
 
 const OVERRIDE_CFG = './override.cfg';
-const ENV = ['debug', 'staging', 'release', 'demo'];
 
-// -----------------------------------------------------------------------------
-
-const extractEnv = (preset) => {
-  const _env = preset.custom_features.split(',').find((feature) => feature.includes('env:'));
-
-  if (!_env) {
-    switchLogger.error('export_presets.cfg must be edited');
-    switchLogger.warn(`Missing 'env' in custom_features: "${preset.custom_features}"`);
-    switchLogger.warn(`Add one of [${ENV.map((e) => `env:${e}`).join(', ')}] within the custom_features list`);
-    return;
-  }
-
-  const env = _env.split('env:')[1];
-
-  if (!ENV.includes(env)) {
-    switchLogger.warn(`env:${env} is not supported, use one of [${ENV}]`);
-    return;
-  }
-
-  return env;
+const PLATFORM_BY_PROCESS = {
+  darwin: 'macOS',
+  win32: 'Windows Desktop',
+  linux: 'Linux'
 };
 
-// -----------------------------------------------------------------------------
+// `prod` is the public label of the `release` env.
+// `staging` stays supported internally but is hidden from the prompt.
+const ENV_CHOICES = [
+  {name: 'debug', value: 'debug'},
+  {name: 'demo', value: 'demo'},
+  {name: 'prod', value: 'release'}
+];
 
-const ALL = 'all';
-
-const inquireParams = async (bundles, presets) => {
-  const bundleIds = Object.keys(bundles);
-  const singleBundleId = bundleIds.length > 1 ? null : bundleIds[0];
-
-  const presetChoices = Object.keys(presets).map((num) => ({
-    name: presets[num].name,
-    value: num
-  }));
-
-  const questions = [
-    {
-      message: 'preset',
-      name: 'presetNum',
-      type: 'list',
-      choices: [
-        { name: '✨ all', value: ALL },
-        ...presetChoices
-      ]
-    }
-  ];
-
-  if (!singleBundleId) {
-    questions.push({
-      message: 'bundle',
-      name: 'bundleId',
-      type: 'list',
-      choices: bundleIds
-    });
-  }
-
-  const answers = await inquirer.prompt(questions);
-  const { bundleId = singleBundleId, presetNum } = answers;
-  const bundle = bundles[bundleId];
-
-  if (presetNum === ALL) {
-    return { bundleId, bundle, all: true };
-  }
-
-  const preset = presets[presetNum];
-  return { bundleId, bundle, preset };
-};
+const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo'];
 
 // -----------------------------------------------------------------------------
 
-const switchBundle = async (settings, presets, forced = null) => {
-  const { core, bundles } = settings;
-  switchLogger.log('Selecting bundle...');
+export const hostPlatform = () => PLATFORM_BY_PROCESS[process.platform] || 'Linux';
 
-  if (!bundles) {
-    switchLogger.error('Missing bundles in fox.config.json');
-    return;
+// -----------------------------------------------------------------------------
+
+export const writeOverride = (settings, {bundleId, platform, env}) => {
+  const {core, bundles} = settings;
+
+  if (!SUPPORTED_ENVS.includes(env)) {
+    switchLogger.error(`env:${env} is not supported, use one of [${SUPPORTED_ENVS}]`);
+    return null;
   }
 
-  if (!presets) {
-    switchLogger.error('Missing presets');
-    return;
-  }
-
-  let bundleId;
-  let preset;
-
-  if (forced) {
-    bundleId = forced.bundleId;
-    preset = forced.preset;
-    switchLogger.log(`Using forced selection: ${preset.name} / ${bundleId}`);
-  } else {
-    const answers = await inquireParams(bundles, presets);
-    if (answers.all) {
-      return { all: true, bundleId: answers.bundleId };
-    }
-    bundleId = answers.bundleId;
-    preset = answers.preset;
-  }
-
-  // ---------
-
-  const env = extractEnv(preset);
-
-  if (!env) {
-    switchLogger.error('Could not find env');
-    return;
-  }
-
-  switchLogger.log(`env: ${env}`);
-
-  // ---------
-
-  const override = { bundle: {}, fox: {}, custom: {} };
+  const override = {bundle: {}, fox: {}, custom: {}};
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
   const appVersion = readProjectVersion();
-
-  const subtitle = getSubtitle(bundles[bundleId])
+  const subtitle = getSubtitle(bundles[bundleId]);
 
   override.fox.version = foxPackageJSON.version;
   override.bundle.id = bundleId;
   override.bundle.title = getTitle(core);
   override.bundle.version = appVersion;
   override.bundle.versionCode = toVersionNumber(appVersion);
-  override.bundle.platform = preset.platform;
+  override.bundle.platform = platform;
   override.bundle.env = env;
 
   if (subtitle) {
-    override.bundle.subtitle = getSubtitle(bundles[bundleId]);
+    override.bundle.subtitle = subtitle;
   }
 
   if (core.useNotifications !== undefined) {
@@ -193,9 +108,68 @@ const switchBundle = async (settings, presets, forced = null) => {
   // ---------
 
   fs.writeFileSync(OVERRIDE_CFG, ini.stringify(override));
+
+  return override;
+};
+
+// -----------------------------------------------------------------------------
+
+const inquireParams = async (bundles) => {
+  const bundleIds = Object.keys(bundles);
+  const singleBundleId = bundleIds.length > 1 ? null : bundleIds[0];
+
+  const questions = [
+    {
+      message: 'env',
+      name: 'env',
+      type: 'list',
+      choices: ENV_CHOICES
+    }
+  ];
+
+  if (!singleBundleId) {
+    questions.push({
+      message: 'bundle',
+      name: 'bundleId',
+      type: 'list',
+      choices: bundleIds
+    });
+  }
+
+  const answers = await inquirer.prompt(questions);
+
+  return {
+    bundleId: answers.bundleId || singleBundleId,
+    env: answers.env
+  };
+};
+
+// -----------------------------------------------------------------------------
+
+const switchBundle = async (settings) => {
+  const {bundles} = settings;
+  switchLogger.log('Selecting env...');
+
+  if (!bundles) {
+    switchLogger.error('Missing bundles in fox.config.json');
+    return;
+  }
+
+  const {bundleId, env} = await inquireParams(bundles);
+  const platform = hostPlatform();
+
+  switchLogger.log(`env: ${env} — platform: ${platform}`);
+
+  const override = writeOverride(settings, {bundleId, platform, env});
+
+  if (!override) {
+    switchLogger.error('Could not write override.cfg');
+    return;
+  }
+
   switchLogger.success('Bundle ready');
 
-  return { bundleId, preset, env };
+  return {bundleId, env};
 };
 
 // -----------------------------------------------------------------------------
