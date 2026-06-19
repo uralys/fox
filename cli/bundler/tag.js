@@ -14,6 +14,7 @@ import {updateVersionInPreset} from './update-preset.js';
 // -----------------------------------------------------------------------------
 
 const PROJECT_GODOT = 'project.godot';
+const OVERRIDE_CFG = 'override.cfg';
 const SEMVER_LEVELS = ['patch', 'minor', 'major'];
 
 // -----------------------------------------------------------------------------
@@ -40,6 +41,24 @@ const writeProjectVersion = (newVersion) => {
   content = content.replace(/^versionCode=.*$/m, `versionCode=${versionCode}`);
 
   fs.writeFileSync(PROJECT_GODOT, content);
+};
+
+// -----------------------------------------------------------------------------
+// override.cfg is the editor source that `fox export` regenerates. Syncing its
+// [bundle] version here keeps the tagged commit complete, so a later export does
+// not leave a leftover version diff to commit.
+
+const writeOverrideVersion = (newVersion) => {
+  if (!fs.existsSync(OVERRIDE_CFG)) return false;
+
+  let content = fs.readFileSync(OVERRIDE_CFG, 'utf8');
+  const versionCode = toVersionNumber(newVersion);
+
+  content = content.replace(/^version=".*"$/m, `version="${newVersion}"`);
+  content = content.replace(/^versionCode=.*$/m, `versionCode=${versionCode}`);
+
+  fs.writeFileSync(OVERRIDE_CFG, content);
+  return true;
 };
 
 // -----------------------------------------------------------------------------
@@ -81,6 +100,11 @@ const tagVersion = async (levelArg) => {
   logger.success(`project.godot updated to ${newVersion} (code: ${toVersionNumber(newVersion)})`);
 
   const filesToCommit = [PROJECT_GODOT];
+
+  if (writeOverrideVersion(newVersion)) {
+    logger.success(`override.cfg updated to ${newVersion}`);
+    filesToCommit.push(OVERRIDE_CFG);
+  }
 
   if (fs.existsSync(PRESETS_CFG)) {
     const presets = readPresets();

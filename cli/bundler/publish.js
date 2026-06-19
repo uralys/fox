@@ -211,7 +211,9 @@ const publish = async (settings, params) => {
   if (branch) {
     steamLogger.done(`Build uploaded and set live on branch "${branch}"`);
   } else {
-    steamLogger.done('Build uploaded — assign it to a branch in Steamworks › SteamPipe › Builds');
+    steamLogger.done(
+      `Build uploaded — assign it to a branch in Steamworks › SteamPipe › Builds: https://partner.steamgames.com/apps/builds/${appId}`
+    );
   }
 
   return true;

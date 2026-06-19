@@ -27,6 +27,13 @@ func init(musicOn = true, soundsOn = true):
   MUSIC_ON = musicOn
   SOUNDS_ON = soundsOn
 
+  # Re-init (e.g. after Reset Data): drop the previous host node so its still-playing
+  # music/SFX are freed and audio restarts from a clean state instead of doubling up.
+  if(___node and is_instance_valid(___node)):
+    ___node.queue_free()
+  CURRENT_MUSIC = null
+  CURRENT_MUSIC_CURSOR = -1
+
   ___node = Node.new()
   ___node.process_mode = PROCESS_MODE_ALWAYS
   $'/root/app'.add_child(___node)
