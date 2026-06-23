@@ -1,21 +1,33 @@
 # Popups
 
-You can create Popups by creating a `ReferenceRect` extending `components/popup`:
+Fox has two popup helpers — pick the one that matches your need:
 
-```gd
+- **`components/popup.gd`** — the full-featured popup base: a `ReferenceRect`
+  with automatic blur, a panel show/hide animation, and a close button. Use it
+  for in-game dialogs (shop, confirm, review…). Documented below.
+- **`FoxPopup`** (`core/popup.gd`) — a minimal `Control` base that only adds
+  responsive refresh (`_onViewportResized`) on window resize. Use it for custom
+  overlays that manage their own visuals. See [screens & responsive](./screens.md#foxpopup).
+
+## Creating a popup
+
+Create a `ReferenceRect` extending `components/popup`:
+
+```gdscript
 extends 'res://fox/components/popup.gd'
 ```
 
-if you override the `_ready` function, make sure to call `super._ready()`:
+If you override `_ready`, call `super._ready()`:
 
-```gd
+```gdscript
 func _ready():
   super._ready()
 ```
 
-then add a function somewhere to instantiate the popup, for example in your `Router`
+Instantiate it somewhere, typically in your `Router`, adding it under the
+`popups` node:
 
-```gd
+```gdscript
 var ShopPopup = preload('res://shop.tscn')
 
 func openShop():
@@ -23,20 +35,26 @@ func openShop():
   $/root/app/popups.add_child(shop)
 ```
 
-## Blur and Panel
+## Blur, panel and close button
 
-- You can add a `components/blur.tscn`, name it `blur`, to blur the background, the popup will automatically show/hide the blur.
+The base wires up child nodes by name automatically:
 
-- You can add a `Panel`, name it `panel`, to automatically show/hide your content.
+- a `components/blur.tscn` named `blur` → blurred background, shown/hidden with
+  the popup;
+- a `Panel` named `panel` → its content is faded in/out automatically;
+- a `closeButton` (inside the panel) with a `pressed` signal → calls `close()`
+  automatically.
 
-- Inside this panel, you can add a `closeButton` with a `pressed` signal to automatically call the `close` function.
+Exports / flags:
 
-example:
+- `blurAmount: int = 60` — target blur strength
+- `thisPopupPauseEngine` — set `true` to pause the tree while the popup is open
+- `closed` signal — emitted on close
 
-```gd
+## Example
+
+```gdscript
 extends 'res://fox/components/popup.gd'
-
-# ------------------------------------------------------------------------------
 
 func _ready():
   super._ready()
@@ -45,11 +63,9 @@ func _ready():
     propertyPath = 'position',
     fromValue = panel.position + Vector2(0, G.H),
     duration = 1,
-    transition= Tween.TRANS_QUAD,
+    transition = Tween.TRANS_QUAD,
     easing = Tween.EASE_OUT
   })
-
-# ------------------------------------------------------------------------------
 
 func close():
   Router.openHome()

@@ -47,25 +47,51 @@ This other one sends a body to a REST API, handles and logs the result while sho
 
 ## Documentation
 
-Few documentation links (find more in the [docs](./docs)):
+Full documentation lives in [docs](./docs). Start with
+[Installing Fox](./docs/install.md).
 
-- [Installing](./docs/install.md) Fox to use in your Godot app
+### Core
 
-Coding:
+- [Globals & Debug](./docs/gdscript/globals.md) — `G` (globals + logging) and
+  `DEBUG` (flags)
+- [Router](./docs/gdscript/router.md) — scenes, transitions, nav state, overlays
+- [Screens & responsive](./docs/gdscript/screens.md) — `FoxScreen`, `FoxPopup`,
+  `ViewportResize`
+- [Sound](./docs/gdscript/sound.md) — SFX, music, ducking
 
-- Using the [Router](./docs/gdscript/router.md)
-- Using [Animation](./docs/gdscript/animations.md) Tween helpers
-- Using `Touchable` and `Draggable` Nodes with an [interactiveArea2D](./docs/gdscript/interactive-area-2d.md) behaviour on any Node
-- Using [Popups](./docs/gdscript/popups.md)
-- Using [DraggableCamera](./docs/gdscript/draggable-camera.md)
-- Using [Sound](./docs/gdscript/sound.md)
-- static functions inspired by [Underscore](/fox/libs/underscore.gd)
+### Input
 
-Exporting:
+- [Controls](./docs/gdscript/controls.md) — unified keyboard / gamepad / stick
+  input
+- [interactiveArea2D](./docs/gdscript/interactive-area-2d.md) — touch, drag &
+  drop on any Node
+- [Multitouch Area](./docs/gdscript/multitouch.md) — press / drag listener
+- [Draggable Camera](./docs/gdscript/draggable-camera.md)
 
-- [Installing the CLI](./docs/cli.md)
-- Info about [Android](./docs/exporting/android.md) settings and building
-- Info about [iOS](./docs/exporting/ios.md) settings and building
+### Animation & UI
+
+- [Animations](./docs/gdscript/animations.md) — `Animate` Tween helpers +
+  `Framer`
+- [Motion](./docs/gdscript/motion.md) — procedural idle motion (float, wobble,
+  breathe)
+- [Popups](./docs/gdscript/popups.md)
+- [Components](./docs/gdscript/components.md) — loader, screen fader, ask-for-review
+
+### Libs & utilities
+
+- [HTTP](./docs/gdscript/http.md) — REST client
+- [Utility libs](./docs/gdscript/utils.md) — `__` (Underscore), `Wait`,
+  `TimeTools`, `Bundle`, `Generate`
+- [In-App Purchases](./docs/gdscript/stores.md) — iOS / Android stores
+
+### Tooling & exporting
+
+- [CLI](./docs/cli.md) — run, hot reload, export, publish
+- [Building](./docs/exporting/build.md) and [Exporting](./docs/exporting/export.md)
+- [Images generation](./docs/exporting/images.md) — icons, splashscreens,
+  screenshots
+- [Android](./docs/exporting/android.md) and [iOS](./docs/exporting/ios.md)
+  settings
 
 ## Games created with Fox
 

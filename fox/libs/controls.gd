@@ -58,17 +58,6 @@ var STICK_TURN_ANGLE_FAST: float = 28.0
 # longest-held recent direction, which is what a chicane should pivot around.
 var BASE_COMMIT_MS: int = 220
 
-# ── A/B EXPERIMENT — is the stick tuning even necessary? ───────────────────────
-# RAW mode bypasses ALL of the above (hysteresis band, STICK_TURN re-aim, neutral
-# debounce, speed-adaptive cone, base commit) for the irreducible minimum: a single
-# deadzone + dominant-axis 4-way latch. It's the honest "no tuning" baseline to
-# feel-compare against the tuned path. Default false = historical tuned behaviour
-# (fox-safe for every game); a game opts in via its InputTuning. RAW_DEADZONE is the
-# single engage/release threshold (no band → expect boundary flicker + rush-break on
-# flick-through-centre — exactly what the tuning exists to remove, if it does).
-var STICK_RAW_MODE: bool = false
-var RAW_DEADZONE: float = 0.5
-
 # Local 4-way ids (no dependency on a project's LevelState). Same convention as
 # the flat grid: TOP=0, RIGHT=1, BOTTOM=2, LEFT=3.
 const DIR_TOP: int = 0
@@ -341,10 +330,6 @@ func _update_stick():
 	var magnitude := vector.length()
 	stick_moved.emit(vector)
 
-	if STICK_RAW_MODE:
-		_update_stick_raw(vector, magnitude)
-		return
-
 	var desired := _stick_direction
 	if magnitude < STICK_RELEASE:
 		desired = -1
@@ -380,23 +365,6 @@ func _commit_neutral():
 	if vector.length() >= STICK_RELEASE:
 		return
 	_latch_stick(-1, 0.0)
-
-# RAW baseline (no tuning): single deadzone + dominant-axis 4-way, nothing else. No
-# hysteresis band, no debounce, no turn re-aim, no adaptive cone, no base. Drops
-# straight to neutral the frame magnitude falls under the deadzone — a flick through
-# centre therefore emits a release (rush-break) the tuned path would have absorbed.
-func _update_stick_raw(vector: Vector2, magnitude: float):
-	var desired := -1
-	if magnitude >= RAW_DEADZONE:
-		if absf(vector.x) > absf(vector.y):
-			desired = DIR_RIGHT if vector.x > 0.0 else DIR_LEFT
-		else:
-			desired = DIR_BOTTOM if vector.y > 0.0 else DIR_TOP
-	if desired == _stick_direction:
-		return
-	_stick_direction = desired
-	_stick_base_direction = -1
-	stick_direction_changed.emit(desired, magnitude)
 
 func _latch_stick(direction: int, magnitude: float):
 	if direction == _stick_direction:

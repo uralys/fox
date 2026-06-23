@@ -4,7 +4,7 @@ extends Node
 
 # ------------------------------------------------------------------------------
 
-class_name FoxMotion
+class_name Motion
 
 # ------------------------------------------------------------------------------
 #
@@ -17,9 +17,9 @@ class_name FoxMotion
 # Reference: https://github.com/MlgmXyysd/2D-BOY-s-Boy-Framework
 #
 # Usage (in _process):
-#   position = basePosition + FoxMotion.bob(t, 8.0, 0.5)
-#   scale    = Vector2.ONE * FoxMotion.breathe(t, 0.05, 0.8)
-#   rotation = deg_to_rad(FoxMotion.wobbleDeg(t, 4.0, 1.2))
+#   position = basePosition + Motion.bob(t, 8.0, 0.5)
+#   scale    = Vector2.ONE * Motion.breathe(t, 0.05, 0.8)
+#   rotation = deg_to_rad(Motion.wobbleDeg(t, 4.0, 1.2))
 #
 # `frequency` is in Hz (cycles per second), `phase` in radians.
 #

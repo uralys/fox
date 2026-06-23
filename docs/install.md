@@ -40,7 +40,7 @@ cmd.exe /c "mklink /J C:\path\to\your-game\fox C:\path\to\fox\fox"
 > ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/your-game ~/Projects/uralys/gamedev/your-game
 > ```
 
-### 4 - Declare your main Scene
+### 3 - Declare your main Scene
 
 #### create the main script
 
@@ -54,11 +54,12 @@ You can remove the default code and replace with:
 extends 'res://fox/core/app.gd'
 
 func _ready():
-  finalizeFoxSetup()
+  super._ready()
   print(G.BUNDLE_ID + ' is running!')
 ```
 
-Note: `finalizeFoxSetup()` is mandatory to setup Fox core nodes and settings.
+Note: `super._ready()` is mandatory — it sets up the Fox core nodes and settings
+(screen reference, debug flags, notifications).
 
 #### set as main scene
 
@@ -101,6 +102,10 @@ DEBUG="*res://fox/core/debug.gd"
 Gesture="*res://fox/libs/gesture.gd"
 ```
 
+Other libs are autoloads too — add the ones you use, e.g.
+`Controls="*res://fox/libs/controls.gd"` (input), `HotReload`, `Sound`,
+`Generate`, `AppStore` / `PlayStore`. See each lib's doc.
+
 and set few default options
 
 ```ini
@@ -134,7 +139,7 @@ At this point, you should have something like this:
 You can have a look at your startup app:
 
 ```sh
-fox run:start
+fox run:game
 ```
 
 and now let's start your editor and enjoy developing!
@@ -152,7 +157,7 @@ For example, to extend Globals and add your own:
 Create a `globals.gd`
 
 ```gdscript
-extends 'res://fox/core/main.gd'
+extends 'res://fox/core/globals.gd'
 ```
 
 And replace the autoload in `project.godot` with yours:

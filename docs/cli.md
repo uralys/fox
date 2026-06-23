@@ -65,22 +65,34 @@ fox run:game --headless --debug-collisions
 Usage: fox <command> [options]
 
 Commands:
-  fox run:editor              open Godot Editor with your main scene
+  fox run:editor                open Godot Editor with your main scene
 
-  fox run:game                start your game to debug
+  fox run:game                  start your game locally (watch + hot reload)
 
-  fox export                  export a bundle for one of your presets
+  fox tag [patch|minor|major]   bump version in project.godot and create a
+                                git tag
 
-  fox generate:icons          generate icons, using a base 1200x1200 image
+  fox export                    export a bundle for one of your presets
 
-  fox generate:splashscreens  generate splashscreens, extending a background
-                              color from a centered base image
+  fox publish [demo] [branch]   upload exported builds to Steam via steamcmd
 
-  fox generate:screenshots    resize all images in a folder to 2560x1600, to
-                              match store requirements
+  fox switch                    switch from a bundle to another (writes
+                                override.cfg)
+
+  fox generate:icons            generate icons, using a base 1200x1200 image
+
+  fox generate:splashscreens    generate splashscreens, extending a background
+                                color from a centered base image
+
+  fox generate:screenshots      resize store screenshots to the required sizes
+
+  fox generate:steam-screenshots  resize screenshots for the Steam store
+
+  fox update-po-files           run msgmerge on the project .po translation
+                                files (experimental)
 ```
 
-- more details for exporting [here](./docs/export.md)
+- more details for exporting [here](./exporting/export.md)
 
 ## hot reload
 
