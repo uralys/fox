@@ -95,6 +95,8 @@ Full documentation lives in [docs](./docs). Start with
 
 ## Games created with Fox
 
+<a href="https://uralys.com/faraday-corridors"><img alt="faraday-corridors" width="128" title="faraday-corridors" src="./assets/docs/games/faraday-corridors.png"></a>
+<a href="https://uralys.com/sylvestrine"><img alt="sylvestrine" width="128" title="sylvestrine" src="./assets/docs/games/sylvestrine.png"></a>
 <a href="https://uralys.com/xoozz"><img alt="xoozz" width="128" title="xoozz" src="./assets/docs/games/xoozz.webp"></a>
 <a href="https://uralys.com/battle-squares"><img alt="battle-squares" width="128" title="battle-squares" src="./assets/docs/games/battle-squares.webp"/></a>
 <a href="https://uralys.com/avindi"><img alt="avindi" width="128" title="avindi" src="./assets/docs/games/avindi-desktop-512x512.png"></a>
