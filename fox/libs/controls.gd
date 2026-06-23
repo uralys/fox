@@ -16,12 +16,58 @@ extends Node
 # the interpreter — the stick latch is emitted here as a plain direction change.
 # ==============================================================================
 
+# ── Stick tuning — NEUTRAL DEFAULTS, overridable PER GAME ──────────────────────
+# These describe the device feel, but the right value is GAME-specific: a fast
+# arcade rusher and a slow puzzle game want different turn tolerances. So they are
+# public `var`s (not consts): fox ships sane defaults and each game pushes its own
+# at boot (e.g. Faraday's `InputTuning.apply()`), without forking fox. Keyboard /
+# D-pad are digital and never reach the stick path, so these never affect them.
+#
 # Stick hysteresis: a firm push past ENGAGE latches the dominant 4-way direction;
 # it only re-arms once the stick falls back below RELEASE. The gap between the two
-# is the neutral band that keeps drift from latching on its own. Values are
+# is the neutral band that keeps drift from latching on its own. Defaults are
 # community-aligned (Godot deadzone / XInput anti-drift).
-const STICK_ENGAGE: float = 0.5
-const STICK_RELEASE: float = 0.25
+var STICK_ENGAGE: float = 0.5
+var STICK_RELEASE: float = 0.25
+
+# Keyboard-parity tuning. A digital key turns instantly; the analog stick must
+# sweep an arc and cross thresholds, which adds latency a key never has. Two
+# levers narrow that gap WITHOUT weakening the anti-drift ENGAGE gate:
+#   • STICK_TURN — once already engaged, re-aim the dominant cardinal as soon as
+#     the stick is still clearly deflected, instead of waiting for it to climb
+#     back past ENGAGE. The [RELEASE, ENGAGE] freeze was pure turn latency.
+#   • STICK_NEUTRAL_DEBOUNCE_MS — a flick THROUGH the centre dips to neutral for
+#     a frame or two; hold the release briefly so a cardinal re-engaging within
+#     the window reads as a DIRECT turn (one hold_started, no release/re-press),
+#     exactly like a held-key direction change. This is the stick "buffer".
+var STICK_TURN: float = 0.35
+var STICK_NEUTRAL_DEBOUNCE_MS: int = 40
+
+# Speed-adaptive turn angle (game-driven via `stick_speed_factor`). The deflection a
+# turn must reach AWAY from the base axis before it commits: the classic 45° quadrant
+# split at rest, shrinking toward STICK_TURN_ANGLE_FAST at top speed so a fast,
+# imprecise diagonal flick still registers the turn — the stick keeps up with a rush
+# instead of demanding a full throw. Keyboard is digital and never reaches this path,
+# so it is untouched; other fox games leave the factor at 0 → exact 45° behaviour.
+var STICK_TURN_ANGLE_SLOW: float = 45.0
+var STICK_TURN_ANGLE_FAST: float = 28.0
+
+# A direction must be held this long before it becomes the new BASE axis. Brief
+# perpendicular flicks (chicanes) change the EMITTED direction but NOT the base, so
+# the main travel axis is not abandoned on the first tap — the base follows the
+# longest-held recent direction, which is what a chicane should pivot around.
+var BASE_COMMIT_MS: int = 220
+
+# ── A/B EXPERIMENT — is the stick tuning even necessary? ───────────────────────
+# RAW mode bypasses ALL of the above (hysteresis band, STICK_TURN re-aim, neutral
+# debounce, speed-adaptive cone, base commit) for the irreducible minimum: a single
+# deadzone + dominant-axis 4-way latch. It's the honest "no tuning" baseline to
+# feel-compare against the tuned path. Default false = historical tuned behaviour
+# (fox-safe for every game); a game opts in via its InputTuning. RAW_DEADZONE is the
+# single engage/release threshold (no band → expect boundary flicker + rush-break on
+# flick-through-centre — exactly what the tuning exists to remove, if it does).
+var STICK_RAW_MODE: bool = false
+var RAW_DEADZONE: float = 0.5
 
 # Local 4-way ids (no dependency on a project's LevelState). Same convention as
 # the flat grid: TOP=0, RIGHT=1, BOTTOM=2, LEFT=3.
@@ -73,6 +119,17 @@ var _direction_down := {}  # direction -> from_gamepad
 var _left_axis: Vector2 = Vector2.ZERO
 var _right_axis: Vector2 = Vector2.ZERO
 var _stick_direction: int = -1
+var _neutral_pending: bool = false  # a release is being debounced (see STICK_NEUTRAL_DEBOUNCE_MS)
+
+# Set by the game (0..1): how fast the controlled character is moving. 0 keeps the
+# precise 45° split (default for menus / other fox games); toward 1 the turn angle
+# narrows so a partial flick turns. Lives here because the stick classification lives
+# here, but the VALUE is a game concept the interpreter pushes in.
+var stick_speed_factor: float = 0.0
+# Base = the "main" axis a chicane pivots around (the longest-held recent direction),
+# tracked separately from the instantaneous emitted latch.
+var _stick_base_direction: int = -1
+var _stick_dir_since_ms: int = 0
 
 # Triggers (L2 / R2) are analog axes → edge-detected with hysteresis so each pull
 # fires its button once.
@@ -119,6 +176,13 @@ func _handle_key(event: InputEventKey):
 
 	var key_action := _key_to_button(keycode)
 	if key_action != '':
+		# Steam Deck (and any pad) injects a synthetic keyboard key alongside the
+		# real gamepad button (A → SPACE, B → ESCAPE), so one physical press arrives
+		# twice and folds to the same action. When a joypad is connected, drop the
+		# keyboard copy — the JOY_BUTTON_* path is the source of truth (mirrors the
+		# D-pad guard below). Desktop keeps working: no joypad → no drop.
+		if not Input.get_connected_joypads().is_empty():
+			return
 		if event.pressed:
 			button_pressed.emit(key_action)
 		else:
@@ -155,6 +219,8 @@ func _key_to_button(keycode: int) -> String:
 		KEY_ESCAPE: return 'button_b'
 		KEY_R: return 'trigger_left'
 		KEY_SHIFT: return 'shoulder_right'
+		KEY_PAGEUP: return 'shoulder_left'
+		KEY_PAGEDOWN: return 'shoulder_right'
 	return ''
 
 func _key_to_direction(event: InputEventKey) -> int:
@@ -275,16 +341,101 @@ func _update_stick():
 	var magnitude := vector.length()
 	stick_moved.emit(vector)
 
+	if STICK_RAW_MODE:
+		_update_stick_raw(vector, magnitude)
+		return
+
 	var desired := _stick_direction
 	if magnitude < STICK_RELEASE:
 		desired = -1
-	elif magnitude >= STICK_ENGAGE:
+	elif magnitude >= STICK_ENGAGE or (_stick_direction != -1 and magnitude >= STICK_TURN):
+		# From neutral, ENGAGE is required (drift can't latch on its own); once
+		# engaged, a turn re-aims down to STICK_TURN so it lands as soon as the
+		# dominant axis flips, not after climbing back past ENGAGE.
+		desired = _classify_stick_direction(vector)
+
+	if desired == _stick_direction:
+		# Re-deflected before a pending release committed → keep the latch alive.
+		_neutral_pending = false
+		return
+
+	if desired == -1:
+		# Debounce the release: a flick through the centre must not read as a
+		# release + re-press. Hold the current latch; a cardinal re-engaging
+		# within the window becomes a direct turn, else _commit_neutral fires.
+		if not _neutral_pending:
+			_neutral_pending = true
+			get_tree().create_timer(STICK_NEUTRAL_DEBOUNCE_MS / 1000.0).timeout.connect(_commit_neutral)
+		return
+
+	_neutral_pending = false
+	_latch_stick(desired, magnitude)
+
+func _commit_neutral():
+	if not _neutral_pending:
+		return
+	_neutral_pending = false
+	# The stick may have re-engaged without a fresh motion event — re-check live.
+	var vector := _left_axis if _left_axis.length() >= _right_axis.length() else _right_axis
+	if vector.length() >= STICK_RELEASE:
+		return
+	_latch_stick(-1, 0.0)
+
+# RAW baseline (no tuning): single deadzone + dominant-axis 4-way, nothing else. No
+# hysteresis band, no debounce, no turn re-aim, no adaptive cone, no base. Drops
+# straight to neutral the frame magnitude falls under the deadzone — a flick through
+# centre therefore emits a release (rush-break) the tuned path would have absorbed.
+func _update_stick_raw(vector: Vector2, magnitude: float):
+	var desired := -1
+	if magnitude >= RAW_DEADZONE:
 		if absf(vector.x) > absf(vector.y):
 			desired = DIR_RIGHT if vector.x > 0.0 else DIR_LEFT
 		else:
 			desired = DIR_BOTTOM if vector.y > 0.0 else DIR_TOP
-
 	if desired == _stick_direction:
 		return
 	_stick_direction = desired
+	_stick_base_direction = -1
 	stick_direction_changed.emit(desired, magnitude)
+
+func _latch_stick(direction: int, magnitude: float):
+	if direction == _stick_direction:
+		return
+	_stick_direction = direction
+	# Restart the base-commit clock on every latch and drop the base on release, so
+	# the base only ever follows a direction that PERSISTS (see _classify).
+	_stick_dir_since_ms = Time.get_ticks_msec()
+	if direction == -1:
+		_stick_base_direction = -1
+	stick_direction_changed.emit(direction, magnitude)
+
+# Speed-adaptive 4-way classification. At rest (stick_speed_factor 0) it is the plain
+# 45° quadrant split. As speed rises, the angle a turn must deflect from the BASE axis
+# shrinks (STICK_TURN_ANGLE_SLOW → _FAST), so a partial diagonal flick turns the
+# character with far less stick travel. The base is the longest-held direction, NOT
+# the latest latch, so a chicane (brief perpendicular taps) pivots around the main
+# axis instead of resetting the reference on every tap.
+func _classify_stick_direction(vector: Vector2) -> int:
+	# Promote the base once the current latch has persisted past the commit window:
+	# a real direction change, not a brief chicane tap.
+	if _stick_direction != -1 and (Time.get_ticks_msec() - _stick_dir_since_ms) >= BASE_COMMIT_MS:
+		_stick_base_direction = _stick_direction
+
+	# Fresh from neutral (no base yet): neutral 45° split, no bias.
+	if _stick_base_direction == -1:
+		if absf(vector.x) > absf(vector.y):
+			return DIR_RIGHT if vector.x > 0.0 else DIR_LEFT
+		return DIR_BOTTOM if vector.y > 0.0 else DIR_TOP
+
+	# Turn threshold measured from the base axis. k = tan(angle): at 45° k = 1 (the
+	# neutral split); below 45° k < 1, so the perpendicular wins with less deflection.
+	var turn_angle := lerpf(STICK_TURN_ANGLE_SLOW, STICK_TURN_ANGLE_FAST, clampf(stick_speed_factor, 0.0, 1.0))
+	var k := tan(deg_to_rad(turn_angle))
+
+	if _stick_base_direction == DIR_RIGHT or _stick_base_direction == DIR_LEFT:
+		if absf(vector.y) > absf(vector.x) * k:
+			return DIR_BOTTOM if vector.y > 0.0 else DIR_TOP
+		return DIR_RIGHT if vector.x > 0.0 else DIR_LEFT
+	if absf(vector.x) > absf(vector.y) * k:
+		return DIR_RIGHT if vector.x > 0.0 else DIR_LEFT
+	return DIR_BOTTOM if vector.y > 0.0 else DIR_TOP
