@@ -22,6 +22,10 @@ const vdfBlock = (entries, indent = 0) => {
   const inner = '\t'.repeat(indent + 1);
 
   const lines = Object.entries(entries).map(([key, value]) => {
+    if (Array.isArray(value)) {
+      // VDF allows a key to repeat (e.g. several FileExclusion entries).
+      return value.map((item) => `${inner}"${key}"\t"${item}"`).join('\n');
+    }
     if (value !== null && typeof value === 'object') {
       return `${inner}"${key}"\n${inner}{\n${vdfBlock(value, indent + 1)}\n${inner}}`;
     }
@@ -51,7 +55,7 @@ const writeDepotScript = (steamDir, depotId, contentRoot) => {
         DepotPath: '.',
         recursive: '1'
       },
-      FileExclusion: '*.pdb'
+      FileExclusion: ['*.pdb', 'steam_appid.txt']
     }
   });
 
