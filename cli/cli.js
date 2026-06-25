@@ -88,7 +88,8 @@ const getSettings = async (command, defaultConfig) => {
   return {
     config: { ...defaultConfig[command], ...config[command] },
     core: { ...defaultConfig.core, ...config.core },
-    bundles: config.bundles
+    bundles: config.bundles,
+    publish: { ...defaultConfig.publish, ...config.publish }
   };
 };
 

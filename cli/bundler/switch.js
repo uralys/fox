@@ -37,6 +37,21 @@ export const hostPlatform = () => PLATFORM_BY_PROCESS[process.platform] || 'Linu
 
 // -----------------------------------------------------------------------------
 
+// Steam app_id per env: the demo runs as a separate Steam app (own Cloud storage),
+// so the build must init Steam against the right id. `override.cfg` is loaded before
+// the autoloads, overriding `project.godot [steam] initialization/app_id` — the
+// committed project keeps `app_id=0`, fox.config.json is the single source of truth.
+export const resolveSteamAppId = ({publish}, env) => {
+  const steamConfig = env === 'demo' ? publish && publish.steamDemo : publish && publish.steam;
+  const appId = steamConfig && steamConfig.appId;
+  if (!appId || String(appId).startsWith('<')) {
+    return null;
+  }
+  return appId;
+};
+
+// -----------------------------------------------------------------------------
+
 export const writeOverride = (settings, {bundleId, platform, env}) => {
   const {core, bundles} = settings;
 
@@ -96,6 +111,14 @@ export const writeOverride = (settings, {bundleId, platform, env}) => {
 
   // ---------
 
+  const steamAppId = resolveSteamAppId(settings, env);
+
+  if (steamAppId) {
+    override.steam = {'initialization/app_id': steamAppId};
+  }
+
+  // ---------
+
   const dataDisplay = {};
   Object.keys(override.bundle).forEach((key) => {
     dataDisplay[`[bundle] ${key}`] = override.bundle[key];
@@ -103,6 +126,9 @@ export const writeOverride = (settings, {bundleId, platform, env}) => {
   Object.keys(override.custom).forEach((key) => {
     dataDisplay[`[custom] ${key}`] = key.includes('secret') ? 'xxx' : override.custom[key];
   });
+  if (override.steam) {
+    dataDisplay['[steam] initialization/app_id'] = override.steam['initialization/app_id'];
+  }
   switchLogger.data(dataDisplay);
 
   // ---------

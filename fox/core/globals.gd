@@ -4,6 +4,7 @@ extends Node
 
 const RELEASE = 'release'
 const DEBUG = 'debug'
+const DEMO = 'demo'
 
 # ------------------------------------------------------------------------------
 # Fox required globals
@@ -30,7 +31,7 @@ func _ready():
   G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
   G.VERSION = ProjectSettings.get_setting('bundle/version')
   G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
-  G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + '.bin'
+  G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + _recordSuffix(G.ENV) + '.bin'
 
   G.log('========================================')
   var foxVersion = ProjectSettings.get_setting('fox/version')
@@ -40,6 +41,13 @@ func _ready():
   G.log('bundle/id: ' + G.BUNDLE_ID)
   G.log('bundle/env: ' + G.ENV)
   G.log('bundle/platform: ' + G.PLATFORM)
+
+# A demo ships as a separate Steam app (own app id, own Cloud) but shares the bundle
+# id with the full game. Key the save file on the demo env so the two variants never
+# share a local file, and each app's Cloud syncs its own save filename. Non-demo envs
+# keep the plain `saved-data.<bundle>.bin` (backward compatible).
+func _recordSuffix(env):
+  return '.demo' if env == DEMO else ''
 
 # ------------------------------------------------------------------------------
 
