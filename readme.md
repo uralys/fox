@@ -58,6 +58,7 @@ Full documentation lives in [docs](./docs). Start with
 - [Screens & responsive](./docs/gdscript/screens.md) — `FoxScreen`, `FoxPopup`,
   `ViewportResize`
 - [Sound](./docs/gdscript/sound.md) — SFX, music, ducking
+- [Files](./docs/gdscript/files.md) — bundle config + rotating save backups (cloud-safe)
 
 ### Input
 
