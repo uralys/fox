@@ -10,7 +10,7 @@ import {spawn} from 'child_process';
 
 import {foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
-import {writeOverride} from './switch.js';
+import {writeOverride, resolveSteamAppId} from './switch.js';
 import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
 import {readPresets, writePresets} from './read-presets.js';
 import {tagVersion, readProjectVersion} from './tag.js';
@@ -54,15 +54,30 @@ const verifyBuildFolder = () => {
 // Godot serializes the in-memory ProjectSettings at export, so we keep both the
 // editor source (override.cfg) and the PCK source (project.godot [bundle]) in
 // sync for the target platform right before invoking the exporter.
+//
+// `override.cfg` does NOT reach the PCK (Godot ignores it in editor/headless and
+// fox does not ship it next to the binary), so the per-env Steam app_id must be
+// baked into project.godot too — otherwise GodotSteam's steamInitEx() reads the
+// committed `initialization/app_id=0`. Verified by extracting project.binary from
+// the demo PCK: it carried app_id=0 despite override.cfg holding 4873710.
 
-const patchProjectGodotBundle = ({platform, env}) => {
+const patchProjectGodotBundle = ({platform, env, steamAppId}) => {
   let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
 
   content = content.replace(/^platform=".*"$/m, `platform="${platform}"`);
   content = content.replace(/^env=".*"$/m, `env="${env}"`);
 
+  if (steamAppId) {
+    content = content.replace(
+      /^initialization\/app_id=.*$/m,
+      `initialization/app_id=${steamAppId}`
+    );
+  }
+
   fs.writeFileSync(PROJECT_GODOT, content);
-  godotLogger.log(`project.godot [bundle] -> platform="${platform}" env="${env}"`);
+
+  const steamLog = steamAppId ? ` [steam] app_id=${steamAppId}` : '';
+  godotLogger.log(`project.godot [bundle] -> platform="${platform}" env="${env}"${steamLog}`);
 };
 
 // -----------------------------------------------------------------------------
@@ -236,7 +251,7 @@ const exportBundle = async (settings) => {
     const preset = findPreset(presets, platform, env);
 
     writeOverride(settings, {bundleId, platform, env});
-    patchProjectGodotBundle({platform, env});
+    patchProjectGodotBundle({platform, env, steamAppId: resolveSteamAppId(settings, env)});
 
     const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
     if (!ok) {
