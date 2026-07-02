@@ -65,6 +65,15 @@ const DIR_RIGHT: int = 1
 const DIR_BOTTOM: int = 2
 const DIR_LEFT: int = 3
 
+# Steam Input injects a synthetic keyboard key alongside the real gamepad button
+# (A → SPACE, B → ESCAPE, D-pad → arrows). Muting the keyboard whenever ANY pad is
+# CONNECTED killed the desktop keyboard sitting next to an idle controller. Instead
+# we timestamp each processed gamepad button and drop only a keyboard copy that folds
+# onto the SAME action/direction within this window — the mirror arrives in the same
+# frame or just after the JOY_BUTTON_* event, so a real desktop keypress (with no
+# recent gamepad event) is never dropped.
+const GAMEPAD_KEY_MIRROR_MS: int = 50
+
 # ------------------------------------------------------------------------------
 # Raw signals — the only public surface.
 # ------------------------------------------------------------------------------
@@ -103,6 +112,21 @@ var _joypad_dpad_to_direction := {}
 
 # Digital direction press tracking so a release maps back to its source channel.
 var _direction_down := {}  # direction -> from_gamepad
+
+# Source-based keyboard/gamepad dedup (see GAMEPAD_KEY_MIRROR_MS). Timestamps of the
+# last processed gamepad button, keyed the same way the keyboard folds, so a mirror can
+# be recognised by (same action/direction + within window). The `_dropped_*` sets keep
+# press/release paired: a keyboard release is dropped iff its press was dropped, so a
+# folded button never leaks a lone release nor a stuck `_direction_down` entry.
+var _joy_action_ts := {}           # folded action -> ticks_msec of last gamepad button edge
+var _joy_direction_ts := {}        # direction     -> ticks_msec of last D-pad edge
+var _dropped_key_actions := {}     # folded action -> true while its keyboard press is suppressed
+var _dropped_key_directions := {}  # direction      -> true while its arrow press is suppressed
+
+# Last-active device: which device produced the most recent REAL (non-mirror) event.
+# The interpreter reads this to pick face-button meaning (keyboard vs pad) instead of
+# mere pad presence — an idle connected controller no longer forces gamepad semantics.
+var last_input_was_gamepad: bool = false
 
 # Analog stick state (left + right tracked independently; the harder push wins).
 var _left_axis: Vector2 = Vector2.ZERO
@@ -167,11 +191,13 @@ func _handle_key(event: InputEventKey):
 	if key_action != '':
 		# Steam Deck (and any pad) injects a synthetic keyboard key alongside the
 		# real gamepad button (A → SPACE, B → ESCAPE), so one physical press arrives
-		# twice and folds to the same action. When a joypad is connected, drop the
-		# keyboard copy — the JOY_BUTTON_* path is the source of truth (mirrors the
-		# D-pad guard below). Desktop keeps working: no joypad → no drop.
-		if not Input.get_connected_joypads().is_empty():
+		# twice and folds to the same action. Drop the keyboard copy ONLY when a
+		# gamepad button folding to the same action was just seen (source-based dedup,
+		# not mere presence — see GAMEPAD_KEY_MIRROR_MS). A real desktop keypress with
+		# no recent gamepad event always goes through, even beside an idle controller.
+		if _is_gamepad_mirror_action(key_action, event.pressed):
 			return
+		last_input_was_gamepad = false
 		if event.pressed:
 			button_pressed.emit(key_action)
 		else:
@@ -181,6 +207,7 @@ func _handle_key(event: InputEventKey):
 	if event.pressed:
 		var number := _keycode_to_number(keycode)
 		if number > 0:
+			last_input_was_gamepad = false
 			number_pressed.emit(number)
 			return
 
@@ -189,12 +216,13 @@ func _handle_key(event: InputEventKey):
 		return
 
 	# Steam Deck (and any gamepad) maps the D-pad to BOTH arrow keys and
-	# JOY_BUTTON_DPAD, so a single D-pad press arrives twice. When a joypad is
-	# connected, drop the arrow-key copy — the JOY_BUTTON_DPAD path is the source
-	# of truth. WASD stays for the desktop keyboard.
-	if keycode in _arrow_to_direction and not Input.get_connected_joypads().is_empty():
+	# JOY_BUTTON_DPAD, so a single D-pad press arrives twice. Drop the arrow-key copy
+	# ONLY when a JOY_BUTTON_DPAD for the same direction was just seen (source-based,
+	# not presence). WASD has no D-pad mirror and always stays live for the desktop.
+	if keycode in _arrow_to_direction and _is_gamepad_mirror_direction(direction, event.pressed):
 		return
 
+	last_input_was_gamepad = false
 	if event.pressed:
 		_emit_direction_pressed(direction, false)
 	else:
@@ -237,15 +265,52 @@ func _keycode_to_number(keycode: int) -> int:
 		KEY_9: return 9
 	return 0
 
+# True when this keyboard event folding onto `action` is the Steam Input synthetic
+# mirror of a real gamepad button (same action within GAMEPAD_KEY_MIRROR_MS). The
+# press decides; the release just follows its press so the pair never desyncs.
+func _is_gamepad_mirror_action(action: String, pressed: bool) -> bool:
+	if pressed:
+		var ts: int = _joy_action_ts.get(action, -1)
+		if ts != -1 and Time.get_ticks_msec() - ts <= GAMEPAD_KEY_MIRROR_MS:
+			_dropped_key_actions[action] = true
+			return true
+		_dropped_key_actions.erase(action)
+		return false
+	if _dropped_key_actions.get(action, false):
+		_dropped_key_actions.erase(action)
+		return true
+	return false
+
+# Same source-based dedup for the D-pad → arrow-key mirror, keyed by direction. Dropping
+# a mirror release when (and only when) its press was dropped keeps `_direction_down`
+# balanced, so a dropped D-pad copy never leaves a phantom held direction.
+func _is_gamepad_mirror_direction(direction: int, pressed: bool) -> bool:
+	if pressed:
+		var ts: int = _joy_direction_ts.get(direction, -1)
+		if ts != -1 and Time.get_ticks_msec() - ts <= GAMEPAD_KEY_MIRROR_MS:
+			_dropped_key_directions[direction] = true
+			return true
+		_dropped_key_directions.erase(direction)
+		return false
+	if _dropped_key_directions.get(direction, false):
+		_dropped_key_directions.erase(direction)
+		return true
+	return false
+
 # ------------------------------------------------------------------------------
 # Joypad buttons
 # ------------------------------------------------------------------------------
 
 func _handle_joypad_button(event: InputEventJoypadButton):
 	var button := event.button_index
+	# A gamepad button is the source of truth for the mirror dedup below and marks the
+	# pad as the last-active device (set BEFORE any emit so the interpreter reads it).
+	last_input_was_gamepad = true
+	var now := Time.get_ticks_msec()
 
 	var direction: int = _joypad_dpad_to_direction.get(button, -1)
 	if direction != -1:
+		_joy_direction_ts[direction] = now
 		if event.pressed:
 			_emit_direction_pressed(direction, true)
 		else:
@@ -255,6 +320,7 @@ func _handle_joypad_button(event: InputEventJoypadButton):
 	var action := _joypad_button_to_action(button)
 	if action == '':
 		return
+	_joy_action_ts[action] = now
 	if event.pressed:
 		button_pressed.emit(action)
 	else:
@@ -319,12 +385,14 @@ func _handle_trigger(value: float, is_left: bool):
 			_trigger_left_down = true
 		else:
 			_trigger_right_down = true
+		last_input_was_gamepad = true
 		button_pressed.emit(action)
 	elif value < STICK_RELEASE and down:
 		if is_left:
 			_trigger_left_down = false
 		else:
 			_trigger_right_down = false
+		last_input_was_gamepad = true
 		button_released.emit(action)
 
 func _update_stick():
@@ -374,6 +442,8 @@ func _commit_neutral():
 func _latch_stick(direction: int, magnitude: float):
 	if direction == _stick_direction:
 		return
+	if direction != -1:
+		last_input_was_gamepad = true
 	_stick_direction = direction
 	# Restart the base-commit clock on every latch and drop the base on release, so
 	# the base only ever follows a direction that PERSISTS (see _classify).

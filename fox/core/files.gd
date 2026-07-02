@@ -51,6 +51,8 @@ func restoreVar(path, index := 0):
   if not FileAccess.file_exists(backup):
     return null
   var file = FileAccess.open(backup, FileAccess.READ)
+  if file == null:
+    return null
   var content = file.get_var()
   file.close()
   return content
