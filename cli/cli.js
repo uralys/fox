@@ -18,6 +18,7 @@ import generateSplashscreens from './generate-splashscreens.js';
 import generateScreenshots from './generate-screenshots.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import exportBundle from './bundler/export.js';
+import exportWeb from './bundler/export-web.js';
 import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
 import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
@@ -28,6 +29,7 @@ import resolveGodotPath from './resolve-godot.js';
 
 const TAG = 'tag';
 const EXPORT = 'export';
+const EXPORT_WEB = 'export:web';
 const PUBLISH = 'publish';
 const SWITCH = 'switch';
 
@@ -45,6 +47,7 @@ const RUN_GAME = 'run:game';
 const commands = [
   TAG,
   EXPORT,
+  EXPORT_WEB,
   PUBLISH,
   SWITCH,
   GENERATE_ICONS,
@@ -171,7 +174,7 @@ const cli = async (yargs, params) => {
 
   // -------- resolve Godot path
 
-  const godotCommands = [RUN_EDITOR, RUN_GAME, EXPORT];
+  const godotCommands = [RUN_EDITOR, RUN_GAME, EXPORT, EXPORT_WEB];
 
   if (godotCommands.includes(command)) {
     const godotPath = resolveGodotPath(core.godot);
@@ -205,6 +208,10 @@ const cli = async (yargs, params) => {
     }
     case EXPORT: {
       exportBundle(settings);
+      return;
+    }
+    case EXPORT_WEB: {
+      await exportWeb(settings);
       return;
     }
     case PUBLISH: {
@@ -263,6 +270,7 @@ const execute = async () => {
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(EXPORT, 'export a bundle for one of your presets')
+    .command(EXPORT_WEB, 'headless HTML5/Web export (no switch/steam/tag) from the platform="Web" preset')
     .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [demo] [branch])')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
