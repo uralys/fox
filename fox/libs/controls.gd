@@ -185,6 +185,14 @@ func _handle_key(event: InputEventKey):
 	if event.is_echo():
 		return
 
+	# While a text field owns the keyboard, every key that yields a character must reach
+	# it as text — never fold WASD onto a move, SPACE / letters onto confirm, or a digit
+	# onto a number-select. Arrows / ESC / ENTER carry no character, so they still drive
+	# menu navigation, cancel and submit. Checked on press AND release (same keycode both
+	# times) so a suppressed press never leaves a dangling release.
+	if _is_text_key(event) and _text_input_focused():
+		return
+
 	var keycode := event.keycode
 
 	var key_action := _key_to_button(keycode)
@@ -244,6 +252,27 @@ func _key_to_button(keycode: int) -> String:
 		KEY_PAGEUP: return 'shoulder_left'
 		KEY_PAGEDOWN: return 'shoulder_right'
 	return ''
+
+# True when the key produces a printable character (letters incl. WASD, digits, space),
+# so it belongs to a focused text field rather than to a game action. WASD is matched on
+# physical position (layout-independent), the rest on the logical keycode.
+func _is_text_key(event: InputEventKey) -> bool:
+	var kc := event.keycode
+	if kc == KEY_SPACE:
+		return true
+	if kc >= KEY_A and kc <= KEY_Z:
+		return true
+	if kc >= KEY_0 and kc <= KEY_9:
+		return true
+	return event.physical_keycode in _wasd_to_direction
+
+# True while a text-input control (LineEdit / TextEdit) holds the GUI keyboard focus.
+func _text_input_focused() -> bool:
+	var vp := get_viewport()
+	if vp == null:
+		return false
+	var focus := vp.gui_get_focus_owner()
+	return focus is LineEdit or focus is TextEdit
 
 func _key_to_direction(event: InputEventKey) -> int:
 	if event.keycode in _arrow_to_direction:
