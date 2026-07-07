@@ -35,10 +35,11 @@ const restart = (godotPath, params, config) => {
 const start = (godotPath, params, config) => {
   godotLogger.reset();
   godotLogger.log('Starting game');
-  const {position, screen, resolutions = {}} = config;
+  const {position, screen, resolution: defaultResolution, resolutions = {}} = config;
 
-  // `--steamdeck` / `--desktop` select a windowed resolution from config.resolutions
-  let resolution = null;
+  // `resolution` (singular) is the default windowed size, always applied.
+  // `--steamdeck` / `--desktop` override it by selecting from config.resolutions.
+  let resolution = defaultResolution || null;
   const parameters = params.filter((param) => {
     const key = param.replace(/^--/, '');
     if (resolutions[key]) {
@@ -56,7 +57,9 @@ const start = (godotPath, params, config) => {
     parameters.push('--screen', screen);
   }
 
-  if (position) {
+  // `position: "center"` lets Godot center the window on the primary screen (its
+  // default when no --position is passed) instead of forcing absolute coordinates.
+  if (position && position !== 'center') {
     parameters.push('--position', position);
   }
 
@@ -90,7 +93,9 @@ const runGame = (godotPath, params, config) => {
 
   godotLogger.data({
     position: config.position || config.screen,
-    resolution: resolutionKey ? `${resolutionKey} (${config.resolutions[resolutionKey]})` : 'project.godot default',
+    resolution: resolutionKey
+      ? `${resolutionKey} (${config.resolutions[resolutionKey]})`
+      : config.resolution || 'project.godot default',
     watching: '.gd .tscn .cfg .json .yml',
     keys: 'r = full restart, ctrl+c = exit',
     hotReload: 'scene reload on file change',
