@@ -21,6 +21,7 @@ const PROJECT_GODOT = 'project.godot';
 
 const ALL = 'all';
 const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
+const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
 
 // -----------------------------------------------------------------------------
 
@@ -169,7 +170,7 @@ const inquirePlatforms = async () => {
       type: 'list',
       choices: [
         {name: '✨ all', value: ALL},
-        ...PLATFORMS.map((platform) => ({name: platform, value: platform}))
+        ...PLATFORMS.map((platform) => ({name: PLATFORM_LABELS[platform] || platform, value: platform}))
       ]
     }
   ]);
