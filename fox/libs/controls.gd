@@ -112,6 +112,11 @@ var _joypad_dpad_to_direction := {}
 
 # Digital direction press tracking so a release maps back to its source channel.
 var _direction_down := {}  # direction -> from_gamepad
+# Same idea for face/shoulder/trigger actions (button_a, shoulder_left, …) — tracks
+# "is this action currently held" independent of device, so a second joypad device
+# mirroring an already-held action (see _emit_direction_pressed) is dropped instead
+# of re-emitted.
+var _action_down := {}  # action -> true while held
 
 # Source-based keyboard/gamepad dedup (see GAMEPAD_KEY_MIRROR_MS). Timestamps of the
 # last processed gamepad button, keyed the same way the keyboard folds, so a mirror can
@@ -128,9 +133,50 @@ var _dropped_key_directions := {}  # direction      -> true while its arrow pres
 # mere pad presence — an idle connected controller no longer forces gamepad semantics.
 var last_input_was_gamepad: bool = false
 
-# Analog stick state (left + right tracked independently; the harder push wins).
-var _left_axis: Vector2 = Vector2.ZERO
-var _right_axis: Vector2 = Vector2.ZERO
+# Which joypad device produced the most recent gamepad event (button, trigger or
+# stick latch) — -1 while none has fired yet. A game's UI layer reads
+# `is_playstation_pad()` off this to print the printed hardware label that matches
+# the ACTUAL connected pad (LB/RB on Xbox-style, L1/R1 on PlayStation) instead of
+# hardcoding one brand — Godot maps every pad to the same JOY_BUTTON_* positions, but
+# the label printed on the plastic differs per brand.
+var last_gamepad_device: int = -1
+
+# True when the last-active gamepad's reported name looks like a PlayStation pad
+# (DualShock / DualSense / "Wireless Controller", the name Godot/SDL report for a
+# PS4/PS5 pad over most backends). Name-sniffing is the only signal Godot exposes
+# without a GUID database; false (Xbox-style default) for every other/unknown pad,
+# which matches the existing A/B/X/Y + LB/RB glyphs already shipped.
+func is_playstation_pad() -> bool:
+	if last_gamepad_device == -1:
+		return false
+	var name := Input.get_joy_name(last_gamepad_device).to_lower()
+	return 'playstation' in name or 'dualshock' in name or 'dualsense' in name or 'wireless controller' in name or 'sony' in name
+
+# Timestamp of the most recent gamepad button/trigger/stick-latch event. On a
+# keyboard-less device (Steam Deck) `last_input_was_gamepad` is only ever reset to
+# false by a KEYBOARD event (see _handle_key) — there is none on the Deck, so that
+# bool latches true FOREVER after the first controller press and would wrongly
+# reject every later mouse/touch click for the rest of the session (confirmed live:
+# it silently broke the Settings close-on-touch guard added the same day). Callers
+# that need "was this click likely a same-frame Steam Input phantom mirror of a
+# gamepad press" (rather than "is a pad merely connected") should compare against
+# THIS timestamp with a short window (~100ms, like GAMEPAD_KEY_MIRROR_MS) instead
+# of reading the sticky bool.
+var last_gamepad_input_ms: int = 0
+
+# Analog stick state, tracked PER DEVICE (device -> Vector2) rather than in one
+# shared pair of floats. Multiple joypads can be connected at once — the Deck's own
+# controls plus one or more external pads — and some third-party pads (confirmed
+# live: a GameSir G7 Pro) even enumerate as TWO separate devices for the same
+# physical stick (native HID + XInput layer), each firing its own motion events. A
+# single shared `_left_axis`/`_right_axis` let those fight over the same floats,
+# which read as extra "information"/jitter compared to the Deck's own sticks.
+# `_update_stick()` now picks the single hardest-pushed stick across every device —
+# the same "harder push wins" idea the old left-vs-right logic already used,
+# extended across devices so an idle pad's noise can never out-vote the one the
+# player is actually holding.
+var _left_axis_by_device: Dictionary = {}   # device -> Vector2
+var _right_axis_by_device: Dictionary = {}  # device -> Vector2
 var _stick_direction: int = -1
 var _neutral_pending: bool = false  # a release is being debounced (see STICK_NEUTRAL_DEBOUNCE_MS)
 
@@ -167,6 +213,18 @@ func _ready():
 	_joypad_dpad_to_direction[JOY_BUTTON_DPAD_LEFT] = DIR_LEFT
 	_joypad_dpad_to_direction[JOY_BUTTON_DPAD_RIGHT] = DIR_RIGHT
 
+	for device in Input.get_connected_joypads():
+		print('[DIAG Controls] connected at ready: device=', device, ' name=', Input.get_joy_name(device), ' guid=', Input.get_joy_guid(device))
+	Input.joy_connection_changed.connect(func(device, connected):
+		print('[DIAG Controls] joy_connection_changed device=', device, ' connected=', connected, ' name=', Input.get_joy_name(device))
+		if not connected:
+			# Drop its stale axis reading — otherwise a disconnected pad's last
+			# non-neutral value keeps "winning" _strongest_axis_vector() forever.
+			_left_axis_by_device.erase(device)
+			_right_axis_by_device.erase(device)
+	)
+	set_process(true)
+
 # ------------------------------------------------------------------------------
 
 func _input(event):
@@ -176,6 +234,10 @@ func _input(event):
 		_handle_joypad_button(event)
 	elif event is InputEventJoypadMotion:
 		_handle_joypad_motion(event)
+	elif event is InputEventScreenTouch:
+		print('[DIAG Controls] RAW ScreenTouch index=', event.index, ' pressed=', event.pressed, ' pos=', event.position)
+	elif event is InputEventMouseButton:
+		print('[DIAG Controls] RAW MouseButton index=', event.button_index, ' pressed=', event.pressed, ' pos=', event.position)
 
 # ------------------------------------------------------------------------------
 # Keyboard
@@ -204,12 +266,14 @@ func _handle_key(event: InputEventKey):
 		# not mere presence — see GAMEPAD_KEY_MIRROR_MS). A real desktop keypress with
 		# no recent gamepad event always goes through, even beside an idle controller.
 		if _is_gamepad_mirror_action(key_action, event.pressed):
+			print('[DIAG Controls] keyboard key_action=', key_action, ' DROPPED as gamepad mirror, pressed=', event.pressed)
 			return
+		print('[DIAG Controls] keyboard key_action=', key_action, ' keycode=', keycode, ' pressed=', event.pressed, ' (last_input_was_gamepad was ', last_input_was_gamepad, ')')
 		last_input_was_gamepad = false
 		if event.pressed:
-			button_pressed.emit(key_action)
+			_emit_button_pressed(key_action)
 		else:
-			button_released.emit(key_action)
+			_emit_button_released(key_action)
 		return
 
 	if event.pressed:
@@ -332,10 +396,13 @@ func _is_gamepad_mirror_direction(direction: int, pressed: bool) -> bool:
 
 func _handle_joypad_button(event: InputEventJoypadButton):
 	var button := event.button_index
+	print('[DIAG Controls] joypad button_index=', button, ' pressed=', event.pressed, ' device=', event.device)
 	# A gamepad button is the source of truth for the mirror dedup below and marks the
 	# pad as the last-active device (set BEFORE any emit so the interpreter reads it).
 	last_input_was_gamepad = true
+	last_gamepad_device = event.device
 	var now := Time.get_ticks_msec()
+	last_gamepad_input_ms = now
 
 	var direction: int = _joypad_dpad_to_direction.get(button, -1)
 	if direction != -1:
@@ -351,9 +418,27 @@ func _handle_joypad_button(event: InputEventJoypadButton):
 		return
 	_joy_action_ts[action] = now
 	if event.pressed:
-		button_pressed.emit(action)
+		_emit_button_pressed(action)
 	else:
-		button_released.emit(action)
+		_emit_button_released(action)
+
+# Idempotent action emit (see `_action_down` doc) — shared by the keyboard and
+# joypad button paths so a duplicate source (synthetic keyboard mirror already
+# filtered upstream, OR a second joypad device — e.g. a GameSir G7 Pro's native
+# HID + XInput layers both reporting the same press) can never double-fire.
+func _emit_button_pressed(action: String) -> void:
+	if _action_down.get(action, false):
+		return
+	print('[DIAG Controls] EMITTED button_pressed action=', action)
+	_action_down[action] = true
+	button_pressed.emit(action)
+
+func _emit_button_released(action: String) -> void:
+	if not _action_down.get(action, false):
+		return
+	print('[DIAG Controls] EMITTED button_released action=', action)
+	_action_down.erase(action)
+	button_released.emit(action)
 
 func _joypad_button_to_action(button: int) -> String:
 	match button:
@@ -373,6 +458,17 @@ func _joypad_button_to_action(button: int) -> String:
 # ------------------------------------------------------------------------------
 
 func _emit_direction_pressed(direction: int, from_gamepad: bool):
+	# Idempotent on an already-held direction. Some third-party pads (confirmed live:
+	# a GameSir G7 Pro) enumerate as TWO separate joypad devices at once — one native
+	# HID interface, one XInput-compatibility layer — and mirror every D-pad press on
+	# BOTH device indices. `_direction_down` already tracks "is this direction held"
+	# per direction (not per device), so re-pressing an already-held direction is
+	# always a duplicate/mirror, never a real second push — drop it instead of
+	# re-emitting, or a single physical press reads downstream as two hold_started
+	# (a menu cursor jumping two items, an extra confirm sound) per SESSION diagnosis.
+	if _direction_down.has(direction):
+		return
+	print('[DIAG Controls] EMITTED direction_pressed direction=', direction)
 	_direction_down[direction] = from_gamepad
 	direction_pressed.emit(direction, from_gamepad)
 
@@ -386,27 +482,68 @@ func _emit_direction_released(direction: int, from_gamepad: bool):
 # Joypad motion — analog stick (hysteresis) + analog triggers (edge)
 # ------------------------------------------------------------------------------
 
+# DIAG — counts raw motion events per device over a rolling window so we can
+# compare event VOLUME between devices (e.g. Deck's own sticks vs an external
+# pad) without flooding the log with a print per axis tick. Flushed by _process.
+var _diag_motion_count: Dictionary = {}   # device -> count since last flush
+var _diag_motion_elapsed: float = 0.0
+
+# DIAG — peak trigger value (L2/R2) per device over the same rolling window, so we
+# can see whether a pad's analog triggers actually reach STICK_ENGAGE (0.5) at all
+# (e.g. a different resting/max range under Steam Input) without flooding the log.
+var _diag_trigger_peak: Dictionary = {}  # "device:L"/"device:R" -> peak value since last flush
+
+func _process(delta: float) -> void:
+	_diag_motion_elapsed += delta
+	if _diag_motion_elapsed < 1.0:
+		return
+	_diag_motion_elapsed = 0.0
+	if not _diag_motion_count.is_empty():
+		for device in _diag_motion_count:
+			print('[DIAG Controls] motion events/s device=', device, ' count=', _diag_motion_count[device])
+		_diag_motion_count.clear()
+	if not _diag_trigger_peak.is_empty():
+		for key in _diag_trigger_peak:
+			print('[DIAG Controls] trigger peak/s ', key, '=', _diag_trigger_peak[key])
+		_diag_trigger_peak.clear()
+
+func _diag_track_trigger_peak(device: int, side: String, value: float) -> void:
+	var key := str(device) + ':' + side
+	if value > float(_diag_trigger_peak.get(key, 0.0)):
+		_diag_trigger_peak[key] = value
+
 func _handle_joypad_motion(event: InputEventJoypadMotion):
+	_diag_motion_count[event.device] = int(_diag_motion_count.get(event.device, 0)) + 1
 	match event.axis:
 		JOY_AXIS_TRIGGER_LEFT:
-			_handle_trigger(event.axis_value, true)
+			_diag_track_trigger_peak(event.device, 'L', event.axis_value)
+			_handle_trigger(event.axis_value, true, event.device)
 			return
 		JOY_AXIS_TRIGGER_RIGHT:
-			_handle_trigger(event.axis_value, false)
+			_diag_track_trigger_peak(event.device, 'R', event.axis_value)
+			_handle_trigger(event.axis_value, false, event.device)
 			return
 		JOY_AXIS_LEFT_X:
-			_left_axis.x = event.axis_value
+			_set_axis(_left_axis_by_device, event.device, event.axis_value, true)
 		JOY_AXIS_LEFT_Y:
-			_left_axis.y = event.axis_value
+			_set_axis(_left_axis_by_device, event.device, event.axis_value, false)
 		JOY_AXIS_RIGHT_X:
-			_right_axis.x = event.axis_value
+			_set_axis(_right_axis_by_device, event.device, event.axis_value, true)
 		JOY_AXIS_RIGHT_Y:
-			_right_axis.y = event.axis_value
+			_set_axis(_right_axis_by_device, event.device, event.axis_value, false)
 		_:
 			return
 	_update_stick()
 
-func _handle_trigger(value: float, is_left: bool):
+func _set_axis(by_device: Dictionary, device: int, value: float, is_x: bool) -> void:
+	var v: Vector2 = by_device.get(device, Vector2.ZERO)
+	if is_x:
+		v.x = value
+	else:
+		v.y = value
+	by_device[device] = v
+
+func _handle_trigger(value: float, is_left: bool, device: int):
 	var action := 'trigger_left' if is_left else 'trigger_right'
 	var down: bool = _trigger_left_down if is_left else _trigger_right_down
 	if value >= STICK_ENGAGE and not down:
@@ -415,20 +552,44 @@ func _handle_trigger(value: float, is_left: bool):
 		else:
 			_trigger_right_down = true
 		last_input_was_gamepad = true
-		button_pressed.emit(action)
+		last_gamepad_device = device
+		last_gamepad_input_ms = Time.get_ticks_msec()
+		_emit_button_pressed(action)
 	elif value < STICK_RELEASE and down:
 		if is_left:
 			_trigger_left_down = false
 		else:
 			_trigger_right_down = false
 		last_input_was_gamepad = true
-		button_released.emit(action)
+		last_gamepad_device = device
+		last_gamepad_input_ms = Time.get_ticks_msec()
+		_emit_button_released(action)
+
+# Strongest-push-wins across BOTH sticks AND every connected device. Merging axes
+# into one shared pair of floats let an idle stick's (or an idle second device's)
+# per-frame drift overwrite the active one, dropping magnitude below RELEASE every
+# frame → a flood of re-latches. Comparing by magnitude instead means whichever
+# stick the player is actually holding always dominates any other idle noise.
+var _diag_strongest_device: int = -1  # which device's axis won the last pick
+
+func _strongest_axis_vector() -> Vector2:
+	var best := Vector2.ZERO
+	var best_device := -1
+	for device in _left_axis_by_device:
+		var v: Vector2 = _left_axis_by_device[device]
+		if v.length() > best.length():
+			best = v
+			best_device = device
+	for device in _right_axis_by_device:
+		var v: Vector2 = _right_axis_by_device[device]
+		if v.length() > best.length():
+			best = v
+			best_device = device
+	_diag_strongest_device = best_device
+	return best
 
 func _update_stick():
-	# Track both sticks and follow whichever is pushed harder. Merging them into
-	# one vector lets an idle stick's per-frame drift overwrite the active one,
-	# dropping magnitude below RELEASE every frame → a flood of re-latches.
-	var vector := _left_axis if _left_axis.length() >= _right_axis.length() else _right_axis
+	var vector := _strongest_axis_vector()
 	var magnitude := vector.length()
 	stick_moved.emit(vector)
 
@@ -443,6 +604,8 @@ func _update_stick():
 
 	if desired == _stick_direction:
 		# Re-deflected before a pending release committed → keep the latch alive.
+		if _neutral_pending:
+			print('[DIAG Controls] stick debounce CANCELLED (re-deflected) magnitude=', magnitude, ' device=', _diag_strongest_device)
 		_neutral_pending = false
 		return
 
@@ -451,6 +614,7 @@ func _update_stick():
 		# release + re-press. Hold the current latch; a cardinal re-engaging
 		# within the window becomes a direct turn, else _commit_neutral fires.
 		if not _neutral_pending:
+			print('[DIAG Controls] stick debounce START magnitude=', magnitude, ' device=', _diag_strongest_device, ' held_direction=', _stick_direction)
 			_neutral_pending = true
 			get_tree().create_timer(STICK_NEUTRAL_DEBOUNCE_MS / 1000.0).timeout.connect(_commit_neutral)
 		return
@@ -463,7 +627,7 @@ func _commit_neutral():
 		return
 	_neutral_pending = false
 	# The stick may have re-engaged without a fresh motion event — re-check live.
-	var vector := _left_axis if _left_axis.length() >= _right_axis.length() else _right_axis
+	var vector := _strongest_axis_vector()
 	if vector.length() >= STICK_RELEASE:
 		return
 	_latch_stick(-1, 0.0)
@@ -471,8 +635,11 @@ func _commit_neutral():
 func _latch_stick(direction: int, magnitude: float):
 	if direction == _stick_direction:
 		return
+	print('[DIAG Controls] stick latch: ', _stick_direction, ' -> ', direction, ' magnitude=', magnitude, ' device=', _diag_strongest_device)
 	if direction != -1:
 		last_input_was_gamepad = true
+		last_gamepad_device = _diag_strongest_device
+		last_gamepad_input_ms = Time.get_ticks_msec()
 	_stick_direction = direction
 	# Restart the base-commit clock on every latch and drop the base on release, so
 	# the base only ever follows a direction that PERSISTS (see _classify).
