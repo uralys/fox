@@ -39,9 +39,34 @@ players so nothing doubles up.
 ```gdscript
 Sound.play('onButtonPress')        # by name (key of oggFiles)
 Sound.play('confirm', 0.2)         # with a 0.2s delay
+Sound.play('confirm', 0, 0.5)      # at half (linear) volume
 ```
 
-`play()` does nothing when sounds are muted or when `DEBUG.SOUND_OFF` is set.
+`play()` does nothing when sounds are muted or when `DEBUG.SOUND_OFF` is set. It
+returns the `AudioStreamPlayer` it started (or `null`), so a caller can keep a
+handle on it.
+
+### Volume
+
+`play(name, delay, volume)` takes an optional **linear** `volume` (default
+`1.0` = unchanged, converted to dB via `linear_to_db`). It is multiplied by the
+per-sound scale returned by the `_sound_volume(name)` hook, so a game can expose
+a volume table / channel mix by overriding that hook instead of re-wrapping
+`play()`:
+
+```gdscript
+extends 'res://fox/core/sound.gd'
+
+var SOUNDS_VOLUME := 0.8
+
+# Applied to every SFX; the base multiplies it into the per-play volume.
+func _sound_volume(_name):
+  return SOUNDS_VOLUME
+```
+
+A combined scale of exactly `1.0` leaves the player untouched (`0 dB`); `0` or
+below is floored to silence. Both the argument and the hook default to `1.0`, so
+the base behaviour is unchanged when neither is used.
 
 ### Same-sample ducking
 

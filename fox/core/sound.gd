@@ -65,9 +65,12 @@ func playMusic(musicName, delay = 0):
 
 # ------------------------------------------------------------------------------
 
-func play(soundName, delay = 0):
+func play(soundName, delay = 0, volume = 1.0):
   if(SOUNDS_ON):
-    _play(soundName, delay)
+    var player = await _play(soundName, delay)
+    if(player):
+      _apply_sfx_volume(player, soundName, volume)
+    return player
 
 # ------------------------------------------------------------------------------
 
@@ -101,6 +104,26 @@ func isSoundsOn():
 
 func isMusicOn():
   return MUSIC_ON
+
+# ------------------------------------------------------------------------------
+# Native SFX volume (additive)
+# ------------------------------------------------------------------------------
+
+# Per-sound linear volume scale (1.0 = unchanged). Games override this hook to
+# expose a per-key volume table / channel mix; the returned scale is multiplied
+# by the explicit `volume` argument passed to play(). Left a no-op here so the
+# base behaviour is byte-identical when neither the arg nor an override is used.
+func _sound_volume(_soundName):
+  return 1.0
+
+# Apply the combined linear volume to a freshly started player. A combined scale
+# of exactly 1.0 leaves the player untouched (0 dB — previous behaviour); 0 or
+# below is floored to silence to avoid linear_to_db(0) == -inf.
+func _apply_sfx_volume(player, soundName, volume):
+  var scale = volume * _sound_volume(soundName)
+  if(scale == 1.0):
+    return
+  player.volume_db = linear_to_db(scale) if scale > 0 else -80.0
 
 # ------------------------------------------------------------------------------
 

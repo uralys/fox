@@ -5,6 +5,7 @@ resized, so you get responsive UI (Steam Deck ↔ desktop) with zero per-screen
 glue:
 
 - `FoxScreen` — for router scenes (Node2D-rooted)
+- `FoxScreen3D` — for router scenes (Node3D-rooted)
 - `FoxPopup` — for popups / overlays (Control-rooted)
 
 Both delegate the resize wiring to `ViewportResize`, a single source of truth.
@@ -30,6 +31,26 @@ func _layout() -> void:
 
 The viewport `size_changed` signal is connected automatically in `_enter_tree`
 and disconnected in `_exit_tree` — you never call `super()` from `_ready`.
+
+## FoxScreen3D
+
+Same contract as `FoxScreen`, for router scenes whose root is a `Node3D` instead
+of a `Node2D` (3D gameplay screens). Extend it and override `_onViewportResized()`
+just like the 2D base:
+
+```gdscript
+extends FoxScreen3D
+
+func _ready():
+  _layout()
+
+func _onViewportResized() -> void:
+  _layout()
+```
+
+The resize wiring is identical (delegated to `ViewportResize` in `_enter_tree` /
+`_exit_tree`), so the router needs no per-scene duck-typing to refresh 3D screens
+on resize.
 
 ## FoxPopup
 

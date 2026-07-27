@@ -303,15 +303,16 @@ func _handle_key(event: InputEventKey):
 func _key_to_button(keycode: int) -> String:
 	# Keyboard keys fold onto their nearest device action (the generic vocabulary):
 	# SPACE / ENTER are the primary "accept" → button_a, ESCAPE is "back" → button_b.
-	# SHIFT mirrors R2 (trigger_right) and CTRL mirrors L2 (trigger_left), so the
-	# keyboard reaches the same device actions the interpreter binds for gamepad
-	# shoulders/triggers (e.g. rush on trigger_right, focus on trigger_left). R folds
-	# onto button_y so the keyboard reset shares the gamepad's Y action.
+	# CTRL mirrors L2 (trigger_left) so the keyboard reaches the same focus action the
+	# interpreter binds for the gamepad L2. R folds onto button_y so the keyboard reset
+	# shares the gamepad's Y action. SHIFT folds onto button_x (the game reads SHIFT as
+	# the pawn swap there); it no longer mirrors R2 — on keyboard the rush lives on
+	# button_a (SPACE, carried by the interpreter), so trigger_right is now R2-only.
 	match keycode:
 		KEY_SPACE, KEY_ENTER, KEY_KP_ENTER: return 'button_a'
 		KEY_ESCAPE: return 'button_b'
 		KEY_R: return 'button_y'
-		KEY_SHIFT: return 'trigger_right'
+		KEY_SHIFT: return 'button_x'
 		KEY_CTRL: return 'trigger_left'
 		KEY_PAGEUP: return 'shoulder_left'
 		KEY_PAGEDOWN: return 'shoulder_right'
