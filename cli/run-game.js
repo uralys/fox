@@ -74,11 +74,18 @@ const runGame = (godotPath, params, config) => {
 
   process.stdin.setRawMode(true);
 
+  const ignoredFolders = ['.worktrees', ...(config.ignored || [])].map((folder) =>
+    folder.replace(/^\.\//, '').replace(/\/+$/, '')
+  );
+
+  const isIgnoredFolder = (path) =>
+    ignoredFolders.some((folder) => path === folder || path.includes(`${folder}/`));
+
   const watcher = chokidar.watch('.', {
     ignored: (path, stats) => {
-      if (!stats) return false;
+      if (isIgnoredFolder(path)) return true;
 
-      if (path.includes('.worktrees/')) return true;
+      if (!stats) return false;
 
       const validExtensions = ['.gd', '.tscn', '.cfg', '.json', '.yml'];
       const isWantedFile = validExtensions.some(ext => path.endsWith(ext));
@@ -97,6 +104,7 @@ const runGame = (godotPath, params, config) => {
       ? `${resolutionKey} (${config.resolutions[resolutionKey]})`
       : config.resolution || 'project.godot default',
     watching: '.gd .tscn .cfg .json .yml',
+    ignoring: ignoredFolders.map((folder) => `${folder}/`).join(' '),
     keys: 'r = full restart, ctrl+c = exit',
     hotReload: 'scene reload on file change',
   });

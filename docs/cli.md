@@ -112,6 +112,18 @@ HotReload="*res://fox/libs/hot-reload.gd"
 
 Add `.hot-reload` and `.nav-state` to your `.gitignore`.
 
+### Ignoring folders
+
+`.worktrees/` and `.godot/` are always ignored. To skip additional folders (tooling, generated data, sub-projects), list them in `run:game.ignored` of your `fox.config.json`:
+
+```json
+{
+  "run:game": {
+    "ignored": ["solutions"]
+  }
+}
+```
+
 ### Navigation state (NavState)
 
 The Router persists a typed `NavState` (`fox/core/nav-state.gd`) to `.nav-state` (JSON). It stores the current scene path and a `path` array representing nested sub-view segments — similar to outlets in Ember.js or React Router.
