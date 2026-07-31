@@ -7,8 +7,9 @@ extends Node
 # adds its own game-specific features on top.
 #
 # Responsibilities kept generic here:
-#  - init at startup, guarded on Engine.has_singleton('Steam') so the editor and
-#    non-Steam launches run cleanly (every method degrades to a safe no-op),
+#  - init at startup, guarded on Engine.has_singleton('Steam') and on having a
+#    display, so the editor, headless runs and non-Steam launches run cleanly
+#    (every method degrades to a safe no-op),
 #  - pump callbacks each frame (_process),
 #  - idempotent teardown (shutdown), safe to call twice,
 #  - Steam Deck detection (Steam-reported OR SteamOS env var), cached once,
@@ -39,6 +40,15 @@ var _steam: Object = null
 # ------------------------------------------------------------------------------
 
 func _ready() -> void:
+	# A headless run (--headless: tests, tools, CI, asset import) is never a real
+	# Steam launch. Calling steamInitEx() there always fails, and the failure is
+	# printed by the native SDK itself on stdout ("[S_API FAIL] SteamAPI_Init()
+	# failed…"), which no Godot-side log filter can suppress — it pollutes every
+	# headless test report. So Steam is not even attempted without a display.
+	if DisplayServer.get_name() == 'headless':
+		on_steam_deck = _detect_steam_deck_hardware()
+		return
+
 	if not Engine.has_singleton('Steam'):
 		push_warning('[SteamManager] GodotSteam GDExtension not loaded — running without Steam')
 		on_steam_deck = _detect_steam_deck_hardware()
