@@ -236,8 +236,6 @@ func _input(event):
 		_handle_joypad_motion(event)
 	elif event is InputEventScreenTouch:
 		print('[DIAG Controls] RAW ScreenTouch index=', event.index, ' pressed=', event.pressed, ' pos=', event.position)
-	elif event is InputEventMouseButton:
-		print('[DIAG Controls] RAW MouseButton index=', event.button_index, ' pressed=', event.pressed, ' pos=', event.position)
 
 # ------------------------------------------------------------------------------
 # Keyboard
