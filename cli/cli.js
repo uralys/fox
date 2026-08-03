@@ -23,6 +23,7 @@ import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
 import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
 import runGame from './run-game.js';
+import importAssets from './import-assets.js';
 import resolveGodotPath from './resolve-godot.js';
 
 // -----------------------------------------------------------------------------
@@ -41,6 +42,7 @@ const UPDATE_PO_FILES = 'update-po-files';
 
 const RUN_EDITOR = 'run:editor';
 const RUN_GAME = 'run:game';
+const IMPORT = 'import';
 
 // -----------------------------------------------------------------------------
 
@@ -56,7 +58,8 @@ const commands = [
   GENERATE_SPLASHSCREENS,
   UPDATE_PO_FILES,
   RUN_EDITOR,
-  RUN_GAME
+  RUN_GAME,
+  IMPORT
 ];
 
 const commandMessage = `choose a command above, example:\nfox ${RUN_EDITOR}`;
@@ -174,7 +177,7 @@ const cli = async (yargs, params) => {
 
   // -------- resolve Godot path
 
-  const godotCommands = [RUN_EDITOR, RUN_GAME, EXPORT, EXPORT_WEB];
+  const godotCommands = [RUN_EDITOR, RUN_GAME, IMPORT, EXPORT, EXPORT_WEB];
 
   if (godotCommands.includes(command)) {
     const godotPath = resolveGodotPath(core.godot);
@@ -205,6 +208,9 @@ const cli = async (yargs, params) => {
     case RUN_GAME: {
       runGame(core.godot, params, config);
       return;
+    }
+    case IMPORT: {
+      return await importAssets(core.godot, params);
     }
     case EXPORT: {
       exportBundle(settings);
@@ -269,6 +275,7 @@ const execute = async () => {
     .command(TAG, 'bump version in project.godot and create git tag (fox tag [patch|minor|major])')
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
+    .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
     .command(EXPORT, 'export a bundle for one of your presets')
     .command(EXPORT_WEB, 'headless HTML5/Web export (no switch/steam/tag) from the platform="Web" preset')
     .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [demo] [branch])')
