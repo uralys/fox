@@ -12,7 +12,7 @@ import {foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
 import {writeOverride, resolveSteamAppId} from './switch.js';
 import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
-import {readPresets, writePresets} from './read-presets.js';
+import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
 import {tagVersion, readProjectVersion} from './tag.js';
 
 // -----------------------------------------------------------------------------
@@ -48,6 +48,39 @@ const verifyBuildFolder = () => {
     shell.mkdir('-p', buildFolder);
     foxLogger.success('Created _build folder');
   }
+};
+
+// -----------------------------------------------------------------------------
+// The bake below rewrites versioned files (project.godot, export_presets.cfg) for
+// the duration of the export only, then reverts them with `git restore`. That
+// revert is destructive by nature, so it is gated on a clean working tree: with
+// nothing pending, there is nothing a restore can throw away. Untracked files are
+// ignored — `git restore` never touches them.
+
+const PATCHED_FILES = [PROJECT_GODOT, PRESETS_CFG];
+
+const isGitRepo = () =>
+  shell.exec('git rev-parse --is-inside-work-tree', {silent: true}).code === 0;
+
+const verifyCleanTree = () => {
+  const {stdout} = shell.exec('git status --porcelain --untracked-files=no', {silent: true});
+  const pending = stdout.trim();
+
+  if (!pending) {
+    return true;
+  }
+
+  foxLogger.error('Working tree is not clean — commit or stash before exporting');
+  foxLogger.error('fox bakes [bundle] + Steam app_id into project.godot, then restores it');
+  pending.split('\n').forEach((line) => foxLogger.log(line));
+
+  return false;
+};
+
+const restorePatchedFiles = () => {
+  const files = PATCHED_FILES.filter((file) => fs.existsSync(file));
+  shell.exec(`git restore -- ${files.join(' ')}`, {silent: true});
+  godotLogger.log(`Restored ${files.join(', ')} (build bake reverted)`);
 };
 
 // -----------------------------------------------------------------------------
@@ -193,6 +226,18 @@ const exportBundle = async (settings) => {
 
   verifyBuildFolder();
 
+  // --------- versioned files are baked then restored: refuse a dirty tree
+
+  const gitTracked = isGitRepo();
+
+  if (gitTracked && !verifyCleanTree()) {
+    return;
+  }
+
+  if (!gitTracked) {
+    foxLogger.log('Not a git repository — project.godot will keep the baked values');
+  }
+
   // ---------
 
   let presets = readPresets();
@@ -246,18 +291,24 @@ const exportBundle = async (settings) => {
 
   // ---------
 
-  for (const platform of platforms) {
-    foxLogger.log(`--- ${platform} (${env}) ---`);
+  try {
+    for (const platform of platforms) {
+      foxLogger.log(`--- ${platform} (${env}) ---`);
 
-    const preset = findPreset(presets, platform, env);
+      const preset = findPreset(presets, platform, env);
 
-    writeOverride(settings, {bundleId, platform, env});
-    patchProjectGodotBundle({platform, env, steamAppId: resolveSteamAppId(settings, env)});
+      writeOverride(settings, {bundleId, platform, env});
+      patchProjectGodotBundle({platform, env, steamAppId: resolveSteamAppId(settings, env)});
 
-    const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
-    if (!ok) {
-      foxLogger.error(`Aborting run: ${preset.name} failed`);
-      return;
+      const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
+      if (!ok) {
+        foxLogger.error(`Aborting run: ${preset.name} failed`);
+        return;
+      }
+    }
+  } finally {
+    if (gitTracked) {
+      restorePatchedFiles();
     }
   }
 
