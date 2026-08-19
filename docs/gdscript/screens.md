@@ -80,10 +80,60 @@ Use it only if you need resize refresh on a node that cannot extend a Fox base.
 
 ## Responsive helper
 
-The breakpoint logic (compact / desktop decision, fit & scale maths) lives in a
-project-side `Responsive` helper, not in Fox core. The key rule: take the
-**compact vs desktop** decision on the *physical* window size
-(`DisplayServer.window_get_size()`), but compute the fit / scale on the *logical*
-viewport size. With `stretch/mode = canvas_items`, `get_viewport_rect().size` is
-the logical canvas size on every device (including the Steam Deck), so comparing
-it to the breakpoint would misclassify the Deck as desktop.
+`FoxResponsive` (`core/responsive.gd`) holds the shared responsive maths. It is
+engine-agnostic on purpose: GDScript statics do not dispatch virtually, so the
+base can never read a game-specific token or autoload — each game passes its
+width threshold (`min_desktop_width`) and its "this is a handheld" hook
+(`force_compact`, e.g. `SteamManager.is_steam_deck()`) at the call site, usually
+through a thin project-side `Responsive` wrapper.
+
+### The rule: one global scale factor
+
+The mechanism a Fox game should use is a **single global scale factor**, posed
+once on the window at boot and re-posed on every resize:
+
+```gdscript
+# src/main.gd
+func _ready():
+	super._ready()
+	Responsive.apply_content_scale(get_window())  # BEFORE anything is laid out
+	load_app()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+func _on_viewport_resized():
+	Responsive.apply_content_scale(get_window())
+```
+
+`apply_content_scale` writes `Window.content_scale_factor`: `1.0` on desktop, the
+game's handheld factor otherwise (faraday-corridors: `1.5`, so a 1920-wide base
+canvas lands on the Deck's 1280 physical pixels — 1 logical unit = 1 physical
+pixel). The factor **composes** with the project stretch (`canvas_items` +
+`expand`), so the whole canvas is re-rendered at the screen resolution: text and
+hairlines are **re-rasterised**, not upscaled.
+
+Why it matters: with that factor in place, **a screen has nothing responsive to
+do**. Every widget is written once, at its native size, in logical coordinates.
+No per-component multiplier, no per-screen derogation.
+
+Two rules survive the global factor:
+
+- **The verdict is taken on the PHYSICAL window size**
+  (`FoxResponsive.screen_size()`, i.e. `DisplayServer.window_get_size()`), never
+  on `get_viewport_rect().size`. This trap gets *more* dangerous once the factor
+  is in place: logical ≈ physical at the nominal resolutions, so a viewport-based
+  test appears to work and only breaks on an unusual window shape or a docked
+  handheld.
+- **A frame is never scaled, only its content is.** A `node.scale` still resamples
+  whatever it carries — border included. Size the frame (`size = base * fit`) and
+  let a child `content` node carry the fit.
+
+Note (2026-08-19) — known divergence: `FoxResponsive` still exposes the previous
+model's API (a per-component multiplier, and a 7-parameter `fit_scale` with a
+handheld margin). faraday-corridors no longer uses it: its `src/ui/responsive.gd`
+is standalone, exposes exactly eight members (`is_desktop`, `screen_size`,
+`is_portrait`, `content_scale`, `apply_content_scale`, `contain_fit`, `fit_scale`
+at 3 parameters, `apply_cursor_visibility`) and implements the global factor
+above. sylvestrine still runs on the older model; when it moves over, the
+per-component helpers here can be dropped and `content_scale` /
+`apply_content_scale` lifted into `FoxResponsive` with the factor injected like
+`min_desktop_width` already is.

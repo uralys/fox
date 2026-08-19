@@ -56,7 +56,8 @@ Full documentation lives in [docs](./docs). Start with
   `DEBUG` (flags)
 - [Router](./docs/gdscript/router.md) — scenes, transitions, nav state, overlays
 - [Screens & responsive](./docs/gdscript/screens.md) — `FoxScreen`, `FoxPopup`,
-  `ViewportResize`
+  `ViewportResize`, `FoxResponsive` (the desktop / handheld split and the single
+  global content scale factor)
 - [Sound](./docs/gdscript/sound.md) — SFX, music, ducking
 - [Files](./docs/gdscript/files.md) — bundle config + rotating save backups (cloud-safe)
 
