@@ -14,6 +14,7 @@ import {writeOverride, resolveSteamAppId, ENV_CHOICES} from './switch.js';
 import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
 import {tagVersion, readProjectVersion} from './tag.js';
+import resolveGodotPath from '../resolve-godot.js';
 
 // -----------------------------------------------------------------------------
 
@@ -347,6 +348,20 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
   if (!bundles) {
     foxLogger.error('Missing bundles in fox.config.json');
     return;
+  }
+
+  // The CLI resolves the Godot binary only for the commands it knows need one,
+  // and `fox publish` is not one of them — it becomes one the moment it offers
+  // to export. Resolving here keeps that dependency owned by the exporter, so
+  // publishing from a machine without Godot still works right up to the offer.
+  if (!coreConfig.godot) {
+    const godotPath = resolveGodotPath(coreConfig.godot);
+
+    if (!godotPath) {
+      return;
+    }
+
+    coreConfig.godot = godotPath;
   }
 
   // ---------
