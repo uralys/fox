@@ -25,15 +25,14 @@ const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
 
 const BOLD = '\x1b[1m';
 const RESET = '\x1b[0m';
-const BLACK = '\x1b[30m';
 
-// Background colours, so an env reads as a chip rather than as tinted text:
-// the whole point is to be seen without being looked for.
-const ENV_BACKGROUNDS = {
-  debug: '\x1b[44m',
-  demo: '\x1b[45m',
-  staging: '\x1b[43m',
-  release: '\x1b[42m'
+// Bright foregrounds, no background: the chip has to stand out against the
+// terminal's own theme, not fight it with a filled block.
+const ENV_FOREGROUNDS = {
+  debug: '\x1b[94m',
+  demo: '\x1b[95m',
+  staging: '\x1b[93m',
+  release: '\x1b[92m'
 };
 
 // -----------------------------------------------------------------------------
@@ -232,19 +231,56 @@ const envLabel = (env) => {
 };
 
 const envChip = (env) => {
-  const background = ENV_BACKGROUNDS[env] || '\x1b[47m';
-  return `${background}${BLACK}${BOLD} ${envLabel(env)} ${RESET}`;
+  const foreground = ENV_FOREGROUNDS[env] || colors.white;
+  return `${foreground}${BOLD}${envLabel(env)}${RESET}`;
+};
+
+// What already sits in a folder is what `fox publish` would ship if this run
+// filled a different one. Reading it off disk is the only way to tell a fresh
+// export from bytes left there weeks ago — the version in the banner describes
+// the build about to be made, never the one already lying in the other envs.
+const lastExportAt = (presets, env) => {
+  const stamps = PLATFORMS.map((platform) => {
+    const preset = findPreset(presets, platform, env);
+
+    if (!preset || !preset.export_path) {
+      return null;
+    }
+
+    try {
+      return fs.statSync(path.resolve(process.cwd(), preset.export_path)).mtime;
+    } catch (e) {
+      return null;
+    }
+  }).filter(Boolean);
+
+  if (!stamps.length) {
+    return null;
+  }
+
+  return new Date(Math.max(...stamps.map((stamp) => stamp.getTime())));
+};
+
+const exportedLabel = (presets, env) => {
+  const stamp = lastExportAt(presets, env);
+
+  if (!stamp) {
+    return `${colors.gray}(never exported)${colors.reset}`;
+  }
+
+  const local = new Date(stamp.getTime() - stamp.getTimezoneOffset() * 60000);
+  return `${colors.gray}(last export ${local.toISOString().slice(0, 16).replace('T', ' ')})${colors.reset}`;
 };
 
 // Two lines on purpose: the identity of the build on one, the destination it is
 // about to fill on the other, arrowed so it reads as a consequence.
-const logBundleBanner = ({title, bundleId, env, version, exportRoot}) => {
+const logBundleBanner = ({presets, title, bundleId, env, version, exportRoot}) => {
   const c = colors.cyan;
   const r = colors.reset;
   const target = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${r}` : '';
 
   console.log(`${c}├─${r} ${c}●${r} ${BOLD}${title}${r} ${colors.gray}(${bundleId})${r} ${BOLD}v${version}${r}`);
-  console.log(`${c}├────>${r}  ${envChip(env)}${target}`);
+  console.log(`${c}├────>${r}  ${envChip(env)}${target} ${exportedLabel(presets, env)}`);
 };
 
 // -----------------------------------------------------------------------------
@@ -266,9 +302,12 @@ const inquireEnv = async (presets, currentEnv) => {
       name: 'env',
       type: 'list',
       choices: [
-        {name: `keep ${envChip(currentEnv)} (no switch)`, value: currentEnv},
+        {
+          name: `keep ${envChip(currentEnv)} (no switch) -> ${exportRootForEnv(presets, currentEnv)}/ ${exportedLabel(presets, currentEnv)}`,
+          value: currentEnv
+        },
         ...others.map(({value}) => ({
-          name: `switch to ${envChip(value)} -> ${exportRootForEnv(presets, value)}/`,
+          name: `switch to ${envChip(value)} -> ${exportRootForEnv(presets, value)}/ ${exportedLabel(presets, value)}`,
           value
         }))
       ]
@@ -343,6 +382,7 @@ const exportBundle = async (settings) => {
   }
 
   logBundleBanner({
+    presets,
     title: getTitle(coreConfig),
     bundleId,
     env: currentEnv,
