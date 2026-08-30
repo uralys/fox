@@ -10,7 +10,7 @@ import {spawn} from 'child_process';
 
 import {createLogger, foxLogger} from '../logger.js';
 import {readProjectVersion} from './tag.js';
-import exportBundle from './export.js';
+import exportBundle, {envChip} from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -198,12 +198,22 @@ const payloadVersion = (report) => {
   return versions.length === 1 ? versions[0] : null;
 };
 
+const payloadEnv = (report) => {
+  const envs = [...new Set(report.map(({env}) => env).filter(Boolean))];
+  return envs.length === 1 ? envs[0] : null;
+};
+
 const confirmPayload = async ({title, appId, login, branch, contentRoot, env, projectVersion, version, report}) => {
+  // The env is read back from the payload whenever the depots carry it, so the
+  // chip names what is IN the folder rather than what was asked for.
+  const bakedEnv = payloadEnv(report) || env;
+
   const details = {
     app: `${title} (appId ${appId})`,
     login,
     branch: branch || '(none — build stays unassigned)',
     contentRoot,
+    env: envChip(bakedEnv),
     version: `${version}${version === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`
   };
 
@@ -221,14 +231,14 @@ const confirmPayload = async ({title, appId, login, branch, contentRoot, env, pr
     steamLogger.warn('depots disagree on the version — check what you exported');
   }
 
-  const target = `appId ${appId}${branch ? ` on branch "${branch}"` : ''}`;
+  const target = `(${envChip(bakedEnv)}) to appId ${appId}${branch ? ` on branch "${branch}"` : ''}`;
 
   // When the payload matches the repo there is one sensible answer, so a plain
   // confirm is enough. When it does not, refusing is not the useful reply — the
   // useful reply is the export that would fix it, offered first and by default.
   if (version === projectVersion && !mismatched.length) {
     const {go} = await inquirer.prompt([
-      {message: `upload ${version} to ${target}?`, name: 'go', type: 'confirm', default: true}
+      {message: `upload ${version} ${target}?`, name: 'go', type: 'confirm', default: true}
     ]);
 
     return go ? UPLOAD : EXIT;
@@ -242,8 +252,8 @@ const confirmPayload = async ({title, appId, login, branch, contentRoot, env, pr
       name: 'choice',
       type: 'list',
       choices: [
-        {name: `fox export ${env} now, then publish ${projectVersion}`, value: EXPORT},
-        {name: `upload ${version} anyway to ${target}`, value: UPLOAD},
+        {name: `fox export ${envChip(env)} now, then publish ${projectVersion}`, value: EXPORT},
+        {name: `upload ${version} anyway ${target}`, value: UPLOAD},
         {name: 'exit', value: EXIT}
       ]
     }

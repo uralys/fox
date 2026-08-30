@@ -27,6 +27,14 @@ const SYMBOLS = {
 
 // -----------------------------------------------------------------------------
 
+// Box widths are measured on what the terminal SHOWS: an ANSI sequence costs
+// bytes but no columns, so counting it would push every right border out by the
+// length of the colour codes on that line.
+const ANSI = /\x1b\[[0-9;]*m/g;
+const visibleLength = (text) => text.replace(ANSI, '').length;
+
+// -----------------------------------------------------------------------------
+
 const formatValue = (value, indent = 4) => {
   if (value === null || value === undefined) {
     return String(value);
@@ -106,7 +114,7 @@ const createLogger = ({name, color}) => {
 
     const maxLen = lines.reduce((max, line) => {
       const plainLines = line.split('\n');
-      const longest = plainLines.reduce((m, l) => Math.max(m, l.length), 0);
+      const longest = plainLines.reduce((m, l) => Math.max(m, visibleLength(l)), 0);
       return Math.max(max, longest);
     }, 0);
 
@@ -118,7 +126,7 @@ const createLogger = ({name, color}) => {
     for (const line of lines) {
       const subLines = line.split('\n');
       for (const subLine of subLines) {
-        const padding = width - subLine.length - 1;
+        const padding = width - visibleLength(subLine) - 1;
         console.log(`${pipe}  │ ${subLine}${' '.repeat(Math.max(0, padding))}│`);
       }
     }

@@ -231,7 +231,7 @@ const envLabel = (env) => {
   return (choice ? choice.name : env).toUpperCase();
 };
 
-const envChip = (env) => {
+export const envChip = (env) => {
   const foreground = ENV_FOREGROUNDS[env] || colors.white;
   return `${foreground}${BOLD}${envLabel(env)}${RESET}`;
 };
