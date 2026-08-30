@@ -259,23 +259,134 @@ const runSteamcmd = (login, appBuildPath) =>
   });
 
 // -----------------------------------------------------------------------------
+// `fox publish` alone asks what it is about to publish instead of relying on
+// arguments typed from memory. The last answers are remembered under _build,
+// which is gitignored: this is a convenience for one machine, never a shared
+// setting — fox.config.json stays the source of truth for what a target IS.
+
+const STATE_FILE = path.join(STEAM_DIR, 'last-publish.json');
+
+const PUBLISH_TARGETS = [
+  {arg: 'game', key: 'steam', label: 'game'},
+  {arg: 'demo', key: 'steamDemo', label: 'demo'}
+];
+
+const NO_BRANCH = '';
+const OTHER_BRANCH = '\u0000other';
+
+const readState = () => {
+  try {
+    return JSON.parse(fs.readFileSync(path.resolve(process.cwd(), STATE_FILE), 'utf8'));
+  } catch (e) {
+    return {};
+  }
+};
+
+const writeState = (state) => {
+  const filePath = path.resolve(process.cwd(), STATE_FILE);
+  shell.mkdir('-p', path.dirname(filePath));
+  fs.writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`);
+};
+
+const availableTargets = (config) => PUBLISH_TARGETS.filter(({key}) => config[key]);
+
+const inquireTarget = async (config, lastKey) => {
+  const targets = availableTargets(config);
+
+  if (targets.length < 2) {
+    return targets[0] && targets[0].key;
+  }
+
+  const ordered = [
+    ...targets.filter(({key}) => key === lastKey),
+    ...targets.filter(({key}) => key !== lastKey)
+  ];
+
+  const {key} = await inquirer.prompt([
+    {
+      message: 'publish',
+      name: 'key',
+      type: 'list',
+      choices: ordered.map(({key: value, label}) => ({
+        name: `${label} (appId ${config[value].appId})`,
+        value
+      }))
+    }
+  ]);
+
+  return key;
+};
+
+const inquireBranch = async (steam, lastBranch) => {
+  const known = [...new Set([lastBranch, steam.branch].filter((branch) => branch))];
+
+  const {branch} = await inquirer.prompt([
+    {
+      message: 'branch',
+      name: 'branch',
+      type: 'list',
+      choices: [
+        ...known.map((value) => ({name: value, value})),
+        {name: '(none — build stays unassigned)', value: NO_BRANCH},
+        {name: 'other...', value: OTHER_BRANCH}
+      ]
+    }
+  ]);
+
+  if (branch !== OTHER_BRANCH) {
+    return branch;
+  }
+
+  const {typed} = await inquirer.prompt([
+    {message: 'branch name', name: 'typed', type: 'input'}
+  ]);
+
+  return typed.trim();
+};
+
+// -----------------------------------------------------------------------------
 
 const isPlaceholder = (value) => typeof value === 'string' && value.startsWith('<');
 
 const publish = async (settings, params) => {
   const {core, config} = settings;
 
-  const isDemo = params[0] === 'demo';
-  const configKey = isDemo ? 'steamDemo' : 'steam';
-  const steam = isDemo ? config.steamDemo : config.steam;
+  const state = readState();
+
+  // Arguments still win, so a scripted `fox publish demo staging` never stops on
+  // a prompt; only what is missing is asked for.
+  const argTarget = PUBLISH_TARGETS.find(({arg}) => arg === params[0]);
+  const argBranch = argTarget ? params[1] : params[0];
+
+  const configKey = argTarget ? argTarget.key : await inquireTarget(config, state.target);
+
+  if (!configKey) {
+    foxLogger.error('Missing "publish.steam" or "publish.steamDemo" in fox.config.json');
+    return;
+  }
+
+  const steam = config[configKey];
 
   if (!steam) {
     foxLogger.error(`Missing "publish.${configKey}" in fox.config.json`);
     return;
   }
 
+  const isDemo = configKey === 'steamDemo';
+  const remembered = (state.branches || {})[configKey];
+
+  const branch =
+    argBranch !== undefined && argBranch !== null
+      ? argBranch
+      : await inquireBranch(steam, remembered === undefined ? steam.branch : remembered);
+
+  writeState({
+    ...state,
+    target: configKey,
+    branches: {...(state.branches || {}), [configKey]: branch}
+  });
+
   const {appId, login, contentRoot, depots} = steam;
-  const branch = (isDemo ? params[1] : params[0]) || steam.branch || '';
 
   if (!appId || !login || !depots) {
     steamLogger.error(`publish.${configKey} requires appId, login and depots`);
