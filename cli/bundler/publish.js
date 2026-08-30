@@ -11,6 +11,7 @@ import {spawn} from 'child_process';
 import {createLogger, foxLogger} from '../logger.js';
 import {readProjectVersion} from './tag.js';
 import exportBundle, {envChip} from './export.js';
+import createSteamcmdLog from './steamcmd-log.js';
 
 // -----------------------------------------------------------------------------
 
@@ -264,17 +265,26 @@ const confirmPayload = async ({title, appId, login, branch, contentRoot, env, pr
 
 // -----------------------------------------------------------------------------
 
-const runSteamcmd = (login, appBuildPath) =>
+const runSteamcmd = (login, appBuildPath, depots) =>
   new Promise((resolve) => {
     steamLogger.log('Uploading to SteamPipe (steamcmd)...');
 
+    const steamLog = createSteamcmdLog(steamLogger, depots);
+
+    // stdin stays inherited: steamcmd may still ask for a Steam Guard code, and
+    // that prompt has to reach the real terminal.
     const steamcmd = spawn(
       'steamcmd',
       ['+login', login, '+run_app_build', appBuildPath, '+quit'],
-      {stdio: [process.stdin, process.stdout, process.stderr]}
+      {stdio: ['inherit', 'pipe', 'pipe']}
     );
 
+    steamcmd.stdout.on('data', (chunk) => steamLog.push(chunk.toString()));
+    steamcmd.stderr.on('data', (chunk) => steamLog.push(chunk.toString()));
+
     steamcmd.on('close', (code) => {
+      steamLog.flush();
+
       if (code !== 0) {
         steamLogger.error(`steamcmd exited with code ${code}`);
         resolve(false);
@@ -520,7 +530,7 @@ const publish = async (settings, params) => {
     return;
   }
 
-  const ok = await runSteamcmd(login, appBuildPath);
+  const ok = await runSteamcmd(login, appBuildPath, depots);
   if (!ok) {
     steamLogger.error('Publish failed');
     return;
