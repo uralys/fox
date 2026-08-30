@@ -3,6 +3,7 @@
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
+import inquirer from 'inquirer';
 import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
@@ -80,26 +81,159 @@ const writeAppBuildScript = (steamDir, {appId, desc, contentRoot, setlive, depot
 };
 
 // -----------------------------------------------------------------------------
+// What is uploaded is whatever sits in the export folder, which is NOT what
+// `project.godot` says: a publish run after an export left on another env ships
+// weeks-old bytes under a fresh build number. Godot bakes ProjectSettings into
+// `project.binary` inside the PCK, so the version and env of those exact bytes
+// are readable on disk — that reading, not the repo, is what gets confirmed and
+// what names the build on Steamworks.
+
+const SCANNED_EXTENSIONS = ['.pck', '.exe', '.x86_64'];
+
+const readBakedValue = (buffer, key) => {
+  const needle = Buffer.from(`bundle/${key}`, 'latin1');
+
+  let at = buffer.indexOf(needle);
+
+  while (at >= 0) {
+    // `bundle/version` is also the prefix of `bundle/versionCode`: a printable
+    // byte right after the key means we landed on the longer one.
+    const next = buffer[at + needle.length];
+
+    if (next !== undefined && next < 0x21) {
+      const window = buffer.toString('latin1', at, at + 256);
+      const match = window.match(new RegExp(`bundle/${key}[^\\x21-\\x7e]+([\\x21-\\x7e]+)`));
+
+      if (match) {
+        return match[1];
+      }
+    }
+
+    at = buffer.indexOf(needle, at + 1);
+  }
+
+  return null;
+};
+
+const readBakedBundle = (depotPath, files) => {
+  const scanned = SCANNED_EXTENSIONS.map((extension) =>
+    files.find((file) => file.endsWith(extension))
+  ).find(Boolean);
+
+  if (!scanned) {
+    return {version: null, env: null};
+  }
+
+  try {
+    const buffer = fs.readFileSync(path.join(depotPath, scanned));
+    return {
+      version: readBakedValue(buffer, 'version'),
+      env: readBakedValue(buffer, 'env')
+    };
+  } catch (e) {
+    return {version: null, env: null};
+  }
+};
+
+const newestMtime = (depotPath, files) => {
+  const stamps = files
+    .map((file) => {
+      try {
+        return fs.statSync(path.join(depotPath, file)).mtime.getTime();
+      } catch (e) {
+        return null;
+      }
+    })
+    .filter(Boolean);
+
+  return stamps.length ? new Date(Math.max(...stamps)) : null;
+};
+
+const formatStamp = (stamp) => {
+  if (!stamp) {
+    return 'unknown';
+  }
+
+  const local = new Date(stamp.getTime() - stamp.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16).replace('T', ' ');
+};
 
 const verifyContent = (contentRoot, depots) => {
+  const report = [];
+
   for (const [depotId, folder] of Object.entries(depots)) {
     const depotPath = path.resolve(contentRoot, folder);
 
     if (!fs.existsSync(depotPath)) {
       steamLogger.error(`Depot ${depotId}: missing folder ${depotPath} — run "fox export" first`);
-      return false;
+      return null;
     }
 
     const files = fs.readdirSync(depotPath).filter((f) => !f.startsWith('.'));
     if (files.length === 0) {
       steamLogger.error(`Depot ${depotId}: ${depotPath} is empty`);
-      return false;
+      return null;
     }
 
-    steamLogger.successCompact(`Depot ${depotId} → ${folder}/ (${files.length} files)`);
+    const {version, env} = readBakedBundle(depotPath, files);
+    report.push({depotId, folder, files: files.length, version, env, exportedAt: newestMtime(depotPath, files)});
   }
 
-  return true;
+  return report;
+};
+
+// -----------------------------------------------------------------------------
+// The confirmation exists for one line: the version actually baked in the
+// depots. It is the answer to "what am I about to put on that branch", and it
+// is deliberately read from the payload rather than from the repo, because the
+// two disagreeing is precisely the accident this guards against.
+
+const payloadVersion = (report) => {
+  const versions = [...new Set(report.map(({version}) => version).filter(Boolean))];
+  return versions.length === 1 ? versions[0] : null;
+};
+
+const confirmPayload = async ({title, appId, login, branch, contentRoot, projectVersion, version, report}) => {
+  const details = {
+    app: `${title} (appId ${appId})`,
+    login,
+    branch: branch || '(none — build stays unassigned)',
+    contentRoot,
+    version: `${version}${version === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`
+  };
+
+  report.forEach(({depotId, folder, files, version: depotVersion, env, exportedAt}) => {
+    details[`depot ${depotId}`] =
+      `${folder}/ — ${depotVersion || 'version unknown'} ${env ? `(${env})` : ''} — ` +
+      `${files} files — exported ${formatStamp(exportedAt)}`;
+  });
+
+  steamLogger.data(details);
+
+  const mismatched = report.filter(({version: depotVersion}) => depotVersion && depotVersion !== version);
+
+  if (mismatched.length) {
+    steamLogger.warn('depots disagree on the version — check what you exported');
+  }
+
+  if (version !== projectVersion) {
+    steamLogger.warn(
+      `payload is ${version} while project.godot is ${projectVersion} — re-run \`fox export\` on this env to ship ${projectVersion}`
+    );
+  }
+
+  const {go} = await inquirer.prompt([
+    {
+      message: `upload ${version} to appId ${appId}${branch ? ` on branch "${branch}"` : ''}?`,
+      name: 'go',
+      type: 'confirm',
+      // Agreeing with the repo is the ordinary case and defaults to yes; any
+      // disagreement makes a blind enter mean "no", never "ship it anyway".
+      default: version === projectVersion && !mismatched.length
+    }
+  ]);
+
+  return go;
 };
 
 // -----------------------------------------------------------------------------
@@ -162,18 +296,32 @@ const publish = async (settings, params) => {
 
   // ---------
 
-  const version = readProjectVersion();
+  const projectVersion = readProjectVersion();
   const absoluteContentRoot = path.resolve(process.cwd(), contentRoot);
 
-  steamLogger.log(`Publishing ${core.title} ${version} (appId ${appId})`);
-  steamLogger.data({
+  steamLogger.log(`Publishing ${core.title} (appId ${appId})`);
+
+  const report = verifyContent(absoluteContentRoot, depots);
+
+  if (!report) {
+    return;
+  }
+
+  const version = payloadVersion(report) || projectVersion;
+
+  const confirmed = await confirmPayload({
+    title: core.title,
     appId,
     login,
+    branch,
     contentRoot: absoluteContentRoot,
-    branch: branch || '(none — build stays unassigned)'
+    projectVersion,
+    version,
+    report
   });
 
-  if (!verifyContent(absoluteContentRoot, depots)) {
+  if (!confirmed) {
+    steamLogger.done('Nothing uploaded');
     return;
   }
 
