@@ -153,6 +153,7 @@ const presetsLogger = createLogger({name: 'Presets', color: 'gray'});
 // -----------------------------------------------------------------------------
 
 export {
+  colors,
   createLogger,
   logHeader,
   foxLogger,

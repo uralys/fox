@@ -23,7 +23,7 @@ const PLATFORM_BY_PROCESS = {
 
 // `prod` is the public label of the `release` env.
 // `staging` stays supported internally but is hidden from the prompt.
-const ENV_CHOICES = [
+export const ENV_CHOICES = [
   {name: 'debug', value: 'debug'},
   {name: 'demo', value: 'demo'},
   {name: 'prod', value: 'release'}

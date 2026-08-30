@@ -8,9 +8,9 @@ import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
-import {foxLogger, godotLogger} from '../logger.js';
+import {colors, foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
-import {writeOverride, resolveSteamAppId} from './switch.js';
+import {writeOverride, resolveSteamAppId, ENV_CHOICES} from './switch.js';
 import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
 import {tagVersion, readProjectVersion} from './tag.js';
@@ -22,6 +22,16 @@ const PROJECT_GODOT = 'project.godot';
 const ALL = 'all';
 const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
 const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
+
+const BOLD = '\x1b[1m';
+const REVERSE = '\x1b[7m';
+
+const ENV_COLORS = {
+  debug: colors.blue,
+  demo: colors.magenta,
+  staging: colors.yellow,
+  release: colors.green
+};
 
 // -----------------------------------------------------------------------------
 
@@ -194,6 +204,69 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
 };
 
 // -----------------------------------------------------------------------------
+// The env decides which presets are exported, hence which folder gets filled.
+// `fox publish` reads that folder and never this run, so an export left on the
+// wrong env ships stale bytes under a fresh build number — with a build
+// description carrying the CURRENT version, which makes the mismatch invisible
+// on Steamworks. Both the banner and the env prompt exist to make the target
+// folder impossible to miss before a single byte is written.
+
+const exportRootForEnv = (presets, env) => {
+  const preset = PLATFORMS.map((platform) => findPreset(presets, platform, env)).find(Boolean);
+
+  if (!preset || !preset.export_path) {
+    return null;
+  }
+
+  return path.dirname(path.dirname(preset.export_path));
+};
+
+const envChip = (env) => {
+  const color = ENV_COLORS[env] || colors.white;
+  return `${color}${REVERSE}${BOLD} ${env.toUpperCase()} ${colors.reset}`;
+};
+
+const logBundleBanner = ({title, bundleId, env, version, exportRoot}) => {
+  const target = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${colors.reset}` : '';
+
+  foxLogger.log(
+    `${BOLD}${title}${colors.reset} ${colors.gray}(${bundleId})${colors.reset}` +
+      `  ${envChip(env)}  ${BOLD}v${version}${colors.reset}${target}`
+  );
+};
+
+// -----------------------------------------------------------------------------
+// Keeping the current env is the default answer: a switch is always an explicit
+// choice, never the consequence of hitting enter through the prompts.
+
+const inquireEnv = async (presets, currentEnv) => {
+  const others = ENV_CHOICES.filter(
+    ({value}) => value !== currentEnv && exportRootForEnv(presets, value)
+  );
+
+  if (!others.length) {
+    return currentEnv;
+  }
+
+  const {env} = await inquirer.prompt([
+    {
+      message: 'env',
+      name: 'env',
+      type: 'list',
+      choices: [
+        {name: `keep ${currentEnv} (no switch)`, value: currentEnv},
+        ...others.map(({name, value}) => ({
+          name: `switch to ${name} -> ${exportRootForEnv(presets, value)}/`,
+          value
+        }))
+      ]
+    }
+  ]);
+
+  return env;
+};
+
+// -----------------------------------------------------------------------------
 
 const inquirePlatforms = async () => {
   const {target} = await inquirer.prompt([
@@ -214,7 +287,7 @@ const inquirePlatforms = async () => {
 // -----------------------------------------------------------------------------
 
 const exportBundle = async (settings) => {
-  const {bundles} = settings;
+  const {core: coreConfig, bundles} = settings;
   foxLogger.log('Exporting a bundle...');
 
   if (!bundles) {
@@ -246,18 +319,30 @@ const exportBundle = async (settings) => {
     return;
   }
 
-  // --------- env comes from the last `fox switch`
+  // --------- env comes from the last `fox switch`, and can be switched right here
 
   const current = readCurrentBundle();
-  const env = current && current.env;
+  const currentEnv = current && current.env;
   const bundleId = (current && current.id) || Object.keys(bundles)[0];
 
-  if (!env) {
+  if (!currentEnv) {
     foxLogger.error('No current env in override.cfg — run `fox switch` first');
     return;
   }
 
-  foxLogger.log(`Current env: ${env} (bundle "${bundleId}")`);
+  logBundleBanner({
+    title: getTitle(coreConfig),
+    bundleId,
+    env: currentEnv,
+    version: readProjectVersion(),
+    exportRoot: exportRootForEnv(presets, currentEnv)
+  });
+
+  const env = await inquireEnv(presets, currentEnv);
+
+  if (env !== currentEnv) {
+    foxLogger.warn(`switching env: ${currentEnv} -> ${env} (override.cfg is rewritten)`);
+  }
 
   // ---------
 
@@ -293,9 +378,9 @@ const exportBundle = async (settings) => {
 
   try {
     for (const platform of platforms) {
-      foxLogger.log(`--- ${platform} (${env}) ---`);
-
       const preset = findPreset(presets, platform, env);
+
+      foxLogger.log(`--- ${platform} (${env}) -> ${preset.export_path} ---`);
 
       writeOverride(settings, {bundleId, platform, env});
       patchProjectGodotBundle({platform, env, steamAppId: resolveSteamAppId(settings, env)});
@@ -312,7 +397,13 @@ const exportBundle = async (settings) => {
     }
   }
 
-  foxLogger.done(`Exported ${platforms.length} platform(s) (${newVersion}) for env "${env}"`);
+  if (env !== currentEnv) {
+    foxLogger.warn(`override.cfg now holds env=${env} — \`fox switch\` to go back to ${currentEnv}`);
+  }
+
+  foxLogger.done(
+    `Exported ${platforms.length} platform(s) (${newVersion}) for env "${env}" -> ${exportRootForEnv(presets, env)}/`
+  );
 };
 
 // -----------------------------------------------------------------------------
