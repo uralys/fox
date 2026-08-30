@@ -24,13 +24,16 @@ const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
 const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
 
 const BOLD = '\x1b[1m';
-const REVERSE = '\x1b[7m';
+const RESET = '\x1b[0m';
+const BLACK = '\x1b[30m';
 
-const ENV_COLORS = {
-  debug: colors.blue,
-  demo: colors.magenta,
-  staging: colors.yellow,
-  release: colors.green
+// Background colours, so an env reads as a chip rather than as tinted text:
+// the whole point is to be seen without being looked for.
+const ENV_BACKGROUNDS = {
+  debug: '\x1b[44m',
+  demo: '\x1b[45m',
+  staging: '\x1b[43m',
+  release: '\x1b[42m'
 };
 
 // -----------------------------------------------------------------------------
@@ -221,18 +224,27 @@ const exportRootForEnv = (presets, env) => {
   return path.dirname(path.dirname(preset.export_path));
 };
 
-const envChip = (env) => {
-  const color = ENV_COLORS[env] || colors.white;
-  return `${color}${REVERSE}${BOLD} ${env.toUpperCase()} ${colors.reset}`;
+// `prod` is what ENV_CHOICES calls the `release` env: the chip must speak the
+// prompt's language, not the preset's.
+const envLabel = (env) => {
+  const choice = ENV_CHOICES.find(({value}) => value === env);
+  return (choice ? choice.name : env).toUpperCase();
 };
 
-const logBundleBanner = ({title, bundleId, env, version, exportRoot}) => {
-  const target = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${colors.reset}` : '';
+const envChip = (env) => {
+  const background = ENV_BACKGROUNDS[env] || '\x1b[47m';
+  return `${background}${BLACK}${BOLD} ${envLabel(env)} ${RESET}`;
+};
 
-  foxLogger.log(
-    `${BOLD}${title}${colors.reset} ${colors.gray}(${bundleId})${colors.reset}` +
-      `  ${envChip(env)}  ${BOLD}v${version}${colors.reset}${target}`
-  );
+// Two lines on purpose: the identity of the build on one, the destination it is
+// about to fill on the other, arrowed so it reads as a consequence.
+const logBundleBanner = ({title, bundleId, env, version, exportRoot}) => {
+  const c = colors.cyan;
+  const r = colors.reset;
+  const target = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${r}` : '';
+
+  console.log(`${c}├─${r} ${c}●${r} ${BOLD}${title}${r} ${colors.gray}(${bundleId})${r} ${BOLD}v${version}${r}`);
+  console.log(`${c}├────>${r}  ${envChip(env)}${target}`);
 };
 
 // -----------------------------------------------------------------------------
@@ -254,9 +266,9 @@ const inquireEnv = async (presets, currentEnv) => {
       name: 'env',
       type: 'list',
       choices: [
-        {name: `keep ${currentEnv} (no switch)`, value: currentEnv},
-        ...others.map(({name, value}) => ({
-          name: `switch to ${name} -> ${exportRootForEnv(presets, value)}/`,
+        {name: `keep ${envChip(currentEnv)} (no switch)`, value: currentEnv},
+        ...others.map(({value}) => ({
+          name: `switch to ${envChip(value)} -> ${exportRootForEnv(presets, value)}/`,
           value
         }))
       ]

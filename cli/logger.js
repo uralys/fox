@@ -53,42 +53,47 @@ const createLogger = ({name, color}) => {
   const gutter = (symbol) => `${c}${symbol}${r}`;
   const tag = `${c}${name}${r}`;
 
-  const log = (message) => {
+  // The logger name belongs to the `●` line that opens the tree: every child
+  // below it is already qualified by that header, so repeating the tag on each
+  // one only pushes the message right. A child-level call arriving first still
+  // opens the tree, tag included — nothing can end up orphaned under no header.
+  const emit = (symbol, decoration, message) => {
     if (!started) {
       started = true;
-      console.log(`${gutter(SYMBOLS.parent)} ${tag} ${message}`);
-    } else {
-      console.log(`${gutter(SYMBOLS.child)} ${tag} ${message}`);
+      console.log(`${gutter(SYMBOLS.parent)} ${tag} ${decoration}${message}`);
+      return;
     }
+
+    console.log(`${gutter(symbol)} ${decoration}${message}`);
+  };
+
+  const log = (message) => {
+    emit(SYMBOLS.child, '', message);
   };
 
   const step = (index, message) => {
-    if (!started) {
-      started = true;
-      console.log(`${gutter(SYMBOLS.parent)} ${tag} ${message}`);
-    } else {
-      console.log(`${gutter(SYMBOLS.child)} [${index}] ${tag} ${message}`);
-    }
+    emit(SYMBOLS.child, `[${index}] `, message);
   };
 
   const success = (message) => {
-    console.log(`${gutter(SYMBOLS.child)} ${colors.green}${SYMBOLS.success}${r}  ${tag} ${message}`);
+    emit(SYMBOLS.child, `${colors.green}${SYMBOLS.success}${r}  `, message);
   };
 
-  const successCompact = (message) => {
-    console.log(`${gutter(SYMBOLS.child)} ${colors.green}${SYMBOLS.success}${r}  ${message}`);
-  };
+  const successCompact = success;
 
   const warn = (message) => {
-    console.log(`${gutter(SYMBOLS.child)} ${colors.yellow}${SYMBOLS.warn}${r}  ${tag} ${message}`);
+    emit(SYMBOLS.child, `${colors.yellow}${SYMBOLS.warn}${r}  `, message);
   };
 
   const error = (message) => {
-    console.log(`${gutter(SYMBOLS.child)} ${colors.red}${SYMBOLS.error}${r}  ${tag} ${message}`);
+    emit(SYMBOLS.child, `${colors.red}${SYMBOLS.error}${r}  `, message);
   };
 
+  // `done` always closes with `└─`, even when it opens the tree on its own: a
+  // closing line rendered as a header would read as the start of a new section.
   const done = (message) => {
-    console.log(`${gutter(SYMBOLS.close)} ${colors.green}${SYMBOLS.success}${r}  ${tag} ${message}`);
+    const prefix = started ? '' : `${tag} `;
+    console.log(`${gutter(SYMBOLS.close)} ${colors.green}${SYMBOLS.success}${r}  ${prefix}${message}`);
     started = false;
   };
 
