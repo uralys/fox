@@ -337,7 +337,10 @@ const inquirePlatforms = async () => {
 
 // -----------------------------------------------------------------------------
 
-const exportBundle = async (settings) => {
+// `forcedEnv` is how `fox publish` re-exports the env it is about to upload:
+// the caller already knows the answer, so asking would only be a chance to get
+// it wrong.
+const exportBundle = async (settings, {forcedEnv} = {}) => {
   const {core: coreConfig, bundles} = settings;
   foxLogger.log('Exporting a bundle...');
 
@@ -390,7 +393,7 @@ const exportBundle = async (settings) => {
     exportRoot: exportRootForEnv(presets, currentEnv)
   });
 
-  const env = await inquireEnv(presets, currentEnv);
+  const env = forcedEnv || (await inquireEnv(presets, currentEnv));
 
   if (env !== currentEnv) {
     foxLogger.warn(`switching env: ${currentEnv} -> ${env} (override.cfg is rewritten)`);
@@ -456,6 +459,8 @@ const exportBundle = async (settings) => {
   foxLogger.done(
     `Exported ${platforms.length} platform(s) (${newVersion}) for env "${env}" -> ${exportRootForEnv(presets, env)}/`
   );
+
+  return true;
 };
 
 // -----------------------------------------------------------------------------

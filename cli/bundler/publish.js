@@ -10,6 +10,7 @@ import {spawn} from 'child_process';
 
 import {createLogger, foxLogger} from '../logger.js';
 import {readProjectVersion} from './tag.js';
+import exportBundle from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -188,12 +189,16 @@ const verifyContent = (contentRoot, depots) => {
 // is deliberately read from the payload rather than from the repo, because the
 // two disagreeing is precisely the accident this guards against.
 
+const UPLOAD = 'upload';
+const EXPORT = 'export';
+const EXIT = 'exit';
+
 const payloadVersion = (report) => {
   const versions = [...new Set(report.map(({version}) => version).filter(Boolean))];
   return versions.length === 1 ? versions[0] : null;
 };
 
-const confirmPayload = async ({title, appId, login, branch, contentRoot, projectVersion, version, report}) => {
+const confirmPayload = async ({title, appId, login, branch, contentRoot, env, projectVersion, version, report}) => {
   const details = {
     app: `${title} (appId ${appId})`,
     login,
@@ -216,24 +221,35 @@ const confirmPayload = async ({title, appId, login, branch, contentRoot, project
     steamLogger.warn('depots disagree on the version — check what you exported');
   }
 
-  if (version !== projectVersion) {
-    steamLogger.warn(
-      `payload is ${version} while project.godot is ${projectVersion} — re-run \`fox export\` on this env to ship ${projectVersion}`
-    );
+  const target = `appId ${appId}${branch ? ` on branch "${branch}"` : ''}`;
+
+  // When the payload matches the repo there is one sensible answer, so a plain
+  // confirm is enough. When it does not, refusing is not the useful reply — the
+  // useful reply is the export that would fix it, offered first and by default.
+  if (version === projectVersion && !mismatched.length) {
+    const {go} = await inquirer.prompt([
+      {message: `upload ${version} to ${target}?`, name: 'go', type: 'confirm', default: true}
+    ]);
+
+    return go ? UPLOAD : EXIT;
   }
 
-  const {go} = await inquirer.prompt([
+  steamLogger.warn(`payload is ${version} while project.godot is ${projectVersion}`);
+
+  const {choice} = await inquirer.prompt([
     {
-      message: `upload ${version} to appId ${appId}${branch ? ` on branch "${branch}"` : ''}?`,
-      name: 'go',
-      type: 'confirm',
-      // Agreeing with the repo is the ordinary case and defaults to yes; any
-      // disagreement makes a blind enter mean "no", never "ship it anyway".
-      default: version === projectVersion && !mismatched.length
+      message: `payload is ${version}, what now?`,
+      name: 'choice',
+      type: 'list',
+      choices: [
+        {name: `fox export ${env} now, then publish ${projectVersion}`, value: EXPORT},
+        {name: `upload ${version} anyway to ${target}`, value: UPLOAD},
+        {name: 'exit', value: EXIT}
+      ]
     }
   ]);
 
-  return go;
+  return choice;
 };
 
 // -----------------------------------------------------------------------------
@@ -412,26 +428,55 @@ const publish = async (settings, params) => {
 
   steamLogger.log(`Publishing ${core.title} (appId ${appId})`);
 
-  const report = verifyContent(absoluteContentRoot, depots);
+  // The env whose presets fill this content root: what `fox export` must be run
+  // on for the payload to become the version the repo is at.
+  const env = isDemo ? 'demo' : 'release';
+
+  let report = verifyContent(absoluteContentRoot, depots);
 
   if (!report) {
     return;
   }
 
-  const version = payloadVersion(report) || projectVersion;
+  let version = payloadVersion(report) || projectVersion;
+  let decision = EXIT;
 
-  const confirmed = await confirmPayload({
-    title: core.title,
-    appId,
-    login,
-    branch,
-    contentRoot: absoluteContentRoot,
-    projectVersion,
-    version,
-    report
-  });
+  // One loop, driven entirely by the answers: exporting brings us back to the
+  // same table, now describing the bytes that were just written.
+  for (;;) {
+    decision = await confirmPayload({
+      title: core.title,
+      appId,
+      login,
+      branch,
+      contentRoot: absoluteContentRoot,
+      env,
+      projectVersion,
+      version,
+      report
+    });
 
-  if (!confirmed) {
+    if (decision !== EXPORT) {
+      break;
+    }
+
+    steamLogger.log(`Running fox export on env "${env}"...`);
+
+    if (!(await exportBundle(settings, {forcedEnv: env}))) {
+      steamLogger.error('Export failed — nothing uploaded');
+      return;
+    }
+
+    report = verifyContent(absoluteContentRoot, depots);
+
+    if (!report) {
+      return;
+    }
+
+    version = payloadVersion(report) || projectVersion;
+  }
+
+  if (decision !== UPLOAD) {
     steamLogger.done('Nothing uploaded');
     return;
   }
