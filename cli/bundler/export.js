@@ -13,6 +13,7 @@ import updatePreset from './update-preset.js';
 import {writeOverride, resolveSteamAppId, ENV_CHOICES} from './switch.js';
 import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
+import ini from './ini.js';
 import {tagVersion, readProjectVersion} from './tag.js';
 import resolveGodotPath from '../resolve-godot.js';
 
@@ -107,6 +108,43 @@ const restorePatchedFiles = () => {
 // baked into project.godot too — otherwise GodotSteam's steamInitEx() reads the
 // committed `initialization/app_id=0`. Verified by extracting project.binary from
 // the demo PCK: it carried app_id=0 despite override.cfg holding 4873710.
+
+// Same reason as the Steam app_id above: the per-env secrets live in
+// `secret.<env>.cfg` (gitignored) and `fox switch` only merges them into
+// override.cfg, which never reaches the PCK. An exported build therefore shipped
+// the committed empty `custom/leaderboard-secret` — the game queued every score
+// and never POSTed one ("no secret configured, holding N submission(s)"), while
+// its public GET reads kept working, so the board looked alive with the player
+// missing from it. They are baked here and reverted by restorePatchedFiles().
+const patchProjectGodotSecrets = (env) => {
+  let secrets;
+
+  try {
+    secrets = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
+  } catch (e) {
+    godotLogger.warn(`No secret.${env}.cfg — [custom] secrets stay as committed`);
+    return;
+  }
+
+  let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
+  const baked = [];
+
+  Object.keys(secrets).forEach((key) => {
+    const line = new RegExp(`^${key}=.*$`, 'm');
+    if (!line.test(content)) {
+      godotLogger.warn(`project.godot has no [custom] ${key} — secret NOT baked`);
+      return;
+    }
+    content = content.replace(line, `${key}=${JSON.stringify(String(secrets[key]))}`);
+    baked.push(key);
+  });
+
+  fs.writeFileSync(PROJECT_GODOT, content);
+
+  if (baked.length > 0) {
+    godotLogger.log(`project.godot [custom] -> baked ${baked.join(', ')} from secret.${env}.cfg`);
+  }
+};
 
 const patchProjectGodotBundle = ({platform, env, steamAppId}) => {
   let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
@@ -454,6 +492,7 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
 
       writeOverride(settings, {bundleId, platform, env});
       patchProjectGodotBundle({platform, env, steamAppId: resolveSteamAppId(settings, env)});
+      patchProjectGodotSecrets(env);
 
       const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
       if (!ok) {
