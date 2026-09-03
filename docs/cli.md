@@ -82,6 +82,9 @@ Commands:
   fox switch                    switch from a bundle to another (writes
                                 override.cfg)
 
+  fox ls                        list the local exports and the builds
+                                installed on the Steam Deck, and compare them
+
   fox generate:icons            generate icons, using a base 1200x1200 image
 
   fox generate:splashscreens    generate splashscreens, extending a background
@@ -96,6 +99,59 @@ Commands:
 ```
 
 - more details for exporting [here](./exporting/export.md)
+
+## ls
+
+`fox ls` answers one question: **is the build installed on the Steam Deck the one sitting in my export folder?**
+
+Neither half can answer it alone. Steam knows a `BuildID` and a branch, but nothing about what those bytes contain; the export folder knows a version, but not whether Steam ever shipped it. So both are read and confronted on the **PCK** — the payload itself, identical across platforms unlike the executable.
+
+Every Steam app declared under `publish` in `fox.config.json` is listed (`publish.steam` and `publish.steamDemo`), so a project shipping a demo next to the game gets both.
+
+```sh
+fox ls
+```
+
+```txt
+●  Fox v1.14.4 ls
+├─ Faraday Corridors — project.godot is 0.20.0
+●  Local demo — appId 4873710 — export/demo/
+│  ┌──────────────────────────────────────────────────────────────────┐
+│  │ windows: 0.20.0 DEMO — exported 2026-09-03 19:25 645fd7567aba    │
+│  │ linux: 0.20.0 DEMO — exported 2026-09-03 19:25 f33d253d3199      │
+│  │ macos: faraday-corridors-demo.zip — archive not read             │
+│  │ steam deck: build 25107059 on "staging" — 0.20.0 DEMO f33d253d3199 │
+│  └──────────────────────────────────────────────────────────────────┘
+├─ ✓  demo: the deck runs the exact export/demo/linux payload (0.20.0)
+```
+
+The version and env printed for each depot are read from the **bytes on disk**, never from `project.godot`: an export left on another env is exactly the accident this listing exists to show.
+
+### what it warns about
+
+- the depots disagree on the version, or the export is behind `project.godot`
+- the branch **requested** differs from the branch **mounted** (Steam needs a restart)
+- `buildid` differs from `TargetBuildID` — an update is pending on the Deck
+- the Deck PCK is not the local `linux` one, with both short sha256 shown
+
+### the Steam Deck is optional
+
+It is a listing, never a gate: an unreachable Deck prints one info line and the local half is reported on its own.
+
+```txt
+●  SteamDeck deck@steamdeck.local not connected — local builds only (…)
+```
+
+The host defaults to `deck@steamdeck.local` over `ssh` in batch mode. Override it per project:
+
+```json
+{
+  "ls": {
+    "host": "deck@steamdeck.local",
+    "timeout": 8
+  }
+}
+```
 
 ## import
 

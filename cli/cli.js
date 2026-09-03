@@ -23,6 +23,7 @@ import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
 import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
 import runGame from './run-game.js';
+import ls from './ls.js';
 import importAssets from './import-assets.js';
 import resolveGodotPath from './resolve-godot.js';
 
@@ -33,6 +34,7 @@ const EXPORT = 'export';
 const EXPORT_WEB = 'export:web';
 const PUBLISH = 'publish';
 const SWITCH = 'switch';
+const LS = 'ls';
 
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
@@ -52,6 +54,7 @@ const commands = [
   EXPORT_WEB,
   PUBLISH,
   SWITCH,
+  LS,
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
   GENERATE_STEAM_SCREENSHOTS,
@@ -228,6 +231,9 @@ const cli = async (yargs, params) => {
       await switchBundle(settings);
       return;
     }
+    case LS: {
+      return await ls(settings);
+    }
   }
 
   // -------- IO commands
@@ -280,6 +286,7 @@ const execute = async () => {
     .command(EXPORT_WEB, 'headless HTML5/Web export (no switch/steam/tag) from the platform="Web" preset')
     .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [demo] [branch])')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
+    .command(LS, 'list local exports and the builds installed on the Steam Deck, and compare them')
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
     .command(
