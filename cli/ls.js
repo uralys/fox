@@ -20,7 +20,7 @@ import {execFile} from 'child_process';
 import {createLogger, foxLogger} from './logger.js';
 import {envChip} from './bundler/export.js';
 import {readProjectVersion} from './bundler/tag.js';
-import {PUBLISH_TARGETS} from './bundler/publish.js';
+import {exportRoot, publishableEnvs, readPublishConfig} from './bundler/publish-config.js';
 import {readBakedBundle, newestMtime, formatStamp, findPck, sha256} from './bundler/baked-bundle.js';
 
 // -----------------------------------------------------------------------------
@@ -277,12 +277,14 @@ const reportTarget = ({label, appId, contentRoot, depots, deck, projectVersion})
 const ls = async (settings) => {
   const {core, config, publish} = settings;
 
-  const targets = PUBLISH_TARGETS.map((target) => ({...target, steam: publish && publish[target.key]})).filter(
-    ({steam}) => steam && steam.appId && !String(steam.appId).startsWith('<')
-  );
+  // The deck only ever runs Steam builds, so this listing walks the Steam target's
+  // envs — one entry per Steam app the project publishes.
+  const targets = publishableEnvs({publish}, 'steam')
+    .map((env) => ({label: env, steam: readPublishConfig({publish}, 'steam', env), env}))
+    .filter(({steam}) => steam && steam.appId && !String(steam.appId).startsWith('<'));
 
   if (!targets.length) {
-    foxLogger.error('No Steam app configured — add "publish.steam" or "publish.steamDemo" to fox.config.json');
+    foxLogger.error('No Steam app configured — add "publish.steam.envs" to fox.config.json');
     return;
   }
 
@@ -300,11 +302,11 @@ const ls = async (settings) => {
     deckLogger.log(`${host} not connected — local builds only${deck.reason ? ` (${deck.reason})` : ''}`);
   }
 
-  targets.forEach(({label, steam}) => {
+  targets.forEach(({label, steam, env}) => {
     reportTarget({
       label,
       appId: steam.appId,
-      contentRoot: steam.contentRoot,
+      contentRoot: steam.contentRoot || exportRoot(env, 'steam'),
       depots: steam.depots,
       deck,
       projectVersion

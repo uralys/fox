@@ -10,13 +10,21 @@ import {spawn} from 'child_process';
 
 import {createLogger, foxLogger} from '../logger.js';
 import {readProjectVersion} from './tag.js';
-import exportBundle, {envChip} from './export.js';
+import exportBundle, {envChip, targetChip} from './export.js';
 import createSteamcmdLog from './steamcmd-log.js';
 import {readBakedBundle, newestMtime, formatStamp} from './baked-bundle.js';
+import {
+  exportRoot,
+  publishableEnvs,
+  publishableTargets,
+  readPublishConfig,
+  TARGET_CHOICES
+} from './publish-config.js';
 
 // -----------------------------------------------------------------------------
 
 const steamLogger = createLogger({name: 'Steam', color: 'magenta'});
+const itchLogger = createLogger({name: 'itch', color: 'red'});
 
 const STEAM_DIR = '_build/steam';
 
@@ -90,25 +98,28 @@ const writeAppBuildScript = (steamDir, {appId, desc, contentRoot, setlive, depot
 // bytes are read back from the payload (see baked-bundle.js) — that reading, not
 // the repo, is what gets confirmed and what names the build on Steamworks.
 
-const verifyContent = (contentRoot, depots) => {
+// `slots` maps a store-side name to a folder under the content root: a Steam
+// depot id, an itch channel. Both stores upload folder by folder, so both are
+// verified the same way.
+const verifyContent = (contentRoot, slots, logger) => {
   const report = [];
 
-  for (const [depotId, folder] of Object.entries(depots)) {
-    const depotPath = path.resolve(contentRoot, folder);
+  for (const [slot, folder] of Object.entries(slots)) {
+    const slotPath = path.resolve(contentRoot, folder);
 
-    if (!fs.existsSync(depotPath)) {
-      steamLogger.error(`Depot ${depotId}: missing folder ${depotPath} — run "fox export" first`);
+    if (!fs.existsSync(slotPath)) {
+      logger.error(`${slot}: missing folder ${slotPath} — run "fox export" first`);
       return null;
     }
 
-    const files = fs.readdirSync(depotPath).filter((f) => !f.startsWith('.'));
+    const files = fs.readdirSync(slotPath).filter((f) => !f.startsWith('.'));
     if (files.length === 0) {
-      steamLogger.error(`Depot ${depotId}: ${depotPath} is empty`);
+      logger.error(`${slot}: ${slotPath} is empty`);
       return null;
     }
 
-    const {version, env} = readBakedBundle(depotPath, files);
-    report.push({depotId, folder, files: files.length, version, env, exportedAt: newestMtime(depotPath, files)});
+    const {version, env} = readBakedBundle(slotPath, files);
+    report.push({slot, folder, files: files.length, version, env, exportedAt: newestMtime(slotPath, files)});
   }
 
   return report;
@@ -134,48 +145,46 @@ const payloadEnv = (report) => {
   return envs.length === 1 ? envs[0] : null;
 };
 
-const confirmPayload = async ({title, appId, login, branch, contentRoot, env, projectVersion, version, report}) => {
-  // The env is read back from the payload whenever the depots carry it, so the
+const confirmPayload = async ({logger, title, details, contentRoot, env, projectVersion, version, report}) => {
+  // The env is read back from the payload whenever the folders carry it, so the
   // chip names what is IN the folder rather than what was asked for.
   const bakedEnv = payloadEnv(report) || env;
 
-  const details = {
-    app: `${title} (appId ${appId})`,
-    login,
-    branch: branch || '(none — build stays unassigned)',
+  const shown = {
+    ...details,
     contentRoot,
     env: envChip(bakedEnv),
     version: `${version}${version === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`
   };
 
-  report.forEach(({depotId, folder, files, version: depotVersion, env, exportedAt}) => {
-    details[`depot ${depotId}`] =
-      `${folder}/ — ${depotVersion || 'version unknown'} ${env ? `(${env})` : ''} — ` +
+  report.forEach(({slot, folder, files, version: slotVersion, env: slotEnv, exportedAt}) => {
+    shown[slot] =
+      `${folder}/ — ${slotVersion || 'version unknown'} ${slotEnv ? `(${slotEnv})` : ''} — ` +
       `${files} files — exported ${formatStamp(exportedAt)}`;
   });
 
-  steamLogger.data(details);
+  logger.data(shown);
 
-  const mismatched = report.filter(({version: depotVersion}) => depotVersion && depotVersion !== version);
+  const mismatched = report.filter(({version: slotVersion}) => slotVersion && slotVersion !== version);
 
   if (mismatched.length) {
-    steamLogger.warn('depots disagree on the version — check what you exported');
+    logger.warn('folders disagree on the version — check what you exported');
   }
 
-  const target = `(${envChip(bakedEnv)}) to appId ${appId}${branch ? ` on branch "${branch}"` : ''}`;
+  const destination = `(${envChip(bakedEnv)}) to ${title}`;
 
   // When the payload matches the repo there is one sensible answer, so a plain
   // confirm is enough. When it does not, refusing is not the useful reply — the
   // useful reply is the export that would fix it, offered first and by default.
   if (version === projectVersion && !mismatched.length) {
     const {go} = await inquirer.prompt([
-      {message: `upload ${version} ${target}?`, name: 'go', type: 'confirm', default: true}
+      {message: `upload ${version} ${destination}?`, name: 'go', type: 'confirm', default: true}
     ]);
 
     return go ? UPLOAD : EXIT;
   }
 
-  steamLogger.warn(`payload is ${version} while project.godot is ${projectVersion}`);
+  logger.warn(`payload is ${version} while project.godot is ${projectVersion}`);
 
   const {choice} = await inquirer.prompt([
     {
@@ -184,7 +193,7 @@ const confirmPayload = async ({title, appId, login, branch, contentRoot, env, pr
       type: 'list',
       choices: [
         {name: `fox export ${envChip(env)} now, then publish ${projectVersion}`, value: EXPORT},
-        {name: `upload ${version} anyway ${target}`, value: UPLOAD},
+        {name: `upload ${version} anyway ${destination}`, value: UPLOAD},
         {name: 'exit', value: EXIT}
       ]
     }
@@ -232,11 +241,6 @@ const runSteamcmd = (login, appBuildPath, depots) =>
 
 const STATE_FILE = path.join(STEAM_DIR, 'last-publish.json');
 
-export const PUBLISH_TARGETS = [
-  {arg: 'game', key: 'steam', label: 'game'},
-  {arg: 'demo', key: 'steamDemo', label: 'demo'}
-];
-
 const NO_BRANCH = '';
 const OTHER_BRANCH = '\u0000other';
 
@@ -254,33 +258,62 @@ const writeState = (state) => {
   fs.writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`);
 };
 
-const availableTargets = (config) => PUBLISH_TARGETS.filter(({key}) => config[key]);
+const targetLabel = (target) => {
+  const choice = TARGET_CHOICES.find(({value}) => value === target);
+  return choice ? choice.name : target;
+};
 
-const inquireTarget = async (config, lastKey) => {
-  const targets = availableTargets(config);
+const inquireTarget = async (settings, lastTarget) => {
+  const targets = publishableTargets(settings);
 
   if (targets.length < 2) {
-    return targets[0] && targets[0].key;
+    return targets[0] || null;
   }
 
   const ordered = [
-    ...targets.filter(({key}) => key === lastKey),
-    ...targets.filter(({key}) => key !== lastKey)
+    ...targets.filter((target) => target === lastTarget),
+    ...targets.filter((target) => target !== lastTarget)
   ];
 
-  const {key} = await inquirer.prompt([
+  const {target} = await inquirer.prompt([
     {
-      message: 'publish',
-      name: 'key',
+      message: 'store',
+      name: 'target',
       type: 'list',
-      choices: ordered.map(({key: value, label}) => ({
-        name: `${label} (appId ${config[value].appId})`,
+      choices: ordered.map((value) => ({
+        name: `${targetChip(value)} ${colorless(publishableEnvs(settings, value).join(', '))}`,
         value
       }))
     }
   ]);
 
-  return key;
+  return target;
+};
+
+const colorless = (text) => `(${text})`;
+
+const inquireEnv = async (settings, target, lastEnv) => {
+  const envs = publishableEnvs(settings, target);
+
+  if (envs.length < 2) {
+    return envs[0] || null;
+  }
+
+  const ordered = [...envs.filter((env) => env === lastEnv), ...envs.filter((env) => env !== lastEnv)];
+
+  const {env} = await inquirer.prompt([
+    {
+      message: 'env',
+      name: 'env',
+      type: 'list',
+      choices: ordered.map((value) => {
+        const {appId} = readPublishConfig(settings, target, value);
+        return {name: `${envChip(value)}${appId ? ` (appId ${appId})` : ''}`, value};
+      })
+    }
+  ]);
+
+  return env;
 };
 
 const inquireBranch = async (steam, lastBranch) => {
@@ -314,48 +347,197 @@ const inquireBranch = async (steam, lastBranch) => {
 
 const isPlaceholder = (value) => typeof value === 'string' && value.startsWith('<');
 
+// -----------------------------------------------------------------------------
+// The payload gate, shared by every store: read back what actually sits in the
+// export folder, show it, and let the answer be the export that would fix it.
+// Returns the version to publish, or null when nothing should be uploaded.
+
+const settleOnPayload = async ({settings, logger, title, env, target, contentRoot, folders, details}) => {
+  const projectVersion = readProjectVersion();
+  let report = verifyContent(contentRoot, folders, logger);
+
+  if (!report) {
+    return null;
+  }
+
+  let version = payloadVersion(report) || projectVersion;
+
+  for (;;) {
+    const decision = await confirmPayload({
+      logger,
+      title,
+      details,
+      contentRoot,
+      env,
+      projectVersion,
+      version,
+      report
+    });
+
+    if (decision !== EXPORT) {
+      return decision === UPLOAD ? version : null;
+    }
+
+    logger.log(`Running fox export on "${env}" for "${target}"...`);
+
+    if (!(await exportBundle(settings, {forcedEnv: env, forcedTarget: target}))) {
+      logger.error('Export failed — nothing uploaded');
+      return null;
+    }
+
+    report = verifyContent(contentRoot, folders, logger);
+
+    if (!report) {
+      return null;
+    }
+
+    version = payloadVersion(report) || projectVersion;
+  }
+};
+
+// -----------------------------------------------------------------------------
+// itch.io — butler pushes one folder per channel, and a channel name carrying
+// "windows" / "linux" / "osx" is what tells itch which platform it is.
+
+const runButler = (folder, itchTarget, version) =>
+  new Promise((resolve) => {
+    itchLogger.log(`butler push ${folder} -> ${itchTarget}`);
+
+    const butler = spawn(
+      'butler',
+      ['push', folder, itchTarget, '--userversion', version],
+      {stdio: ['inherit', 'inherit', 'inherit']}
+    );
+
+    butler.on('close', (code) => resolve(code === 0));
+  });
+
+const publishToItch = async (settings, {env, store}) => {
+  const {core} = settings;
+  const {user, game, channels} = store;
+
+  if (!user || !game || !channels) {
+    itchLogger.error('publish.itch requires user, game, and envs.<env>.channels');
+    return;
+  }
+
+  if (isPlaceholder(user) || isPlaceholder(game)) {
+    itchLogger.error(`Set your itch.io user and game in fox.config.json (got "${user}/${game}")`);
+    return;
+  }
+
+  const contentRoot = path.resolve(process.cwd(), store.contentRoot || exportRoot(env, 'itch'));
+
+  itchLogger.log(`Publishing ${core.title} to ${user}/${game}`);
+
+  const details = {
+    page: `https://${user}.itch.io/${game}`,
+    env: envChip(env)
+  };
+
+  const version = await settleOnPayload({
+    settings,
+    logger: itchLogger,
+    title: core.title,
+    env,
+    target: 'itch',
+    contentRoot,
+    folders: channels,
+    details
+  });
+
+  if (!version) {
+    itchLogger.done('Nothing uploaded');
+    return;
+  }
+
+  if (!shell.which('butler')) {
+    itchLogger.error('butler not found — install it: https://itch.io/docs/butler/installing.html');
+    return;
+  }
+
+  for (const [channel, folder] of Object.entries(channels)) {
+    const ok = await runButler(
+      path.resolve(contentRoot, folder),
+      `${user}/${game}:${channel}`,
+      version
+    );
+
+    if (!ok) {
+      itchLogger.error(`butler failed on channel "${channel}" — later channels not pushed`);
+      return;
+    }
+  }
+
+  itchLogger.done(`Pushed ${version} to https://${user}.itch.io/${game}`);
+};
+
+// -----------------------------------------------------------------------------
+
 const publish = async (settings, params) => {
-  const {core, config} = settings;
+  const {config} = settings;
 
   const state = readState();
 
-  // Arguments still win, so a scripted `fox publish demo staging` never stops on
-  // a prompt; only what is missing is asked for.
-  const argTarget = PUBLISH_TARGETS.find(({arg}) => arg === params[0]);
-  const argBranch = argTarget ? params[1] : params[0];
+  // Arguments still win, so a scripted run never stops on a prompt; only what is
+  // missing is asked for. A first argument naming an env rather than a store is
+  // read as one — `fox publish demo staging` predates the target axis and still
+  // means the demo on Steam.
+  const knownTargets = publishableTargets({publish: config});
+  const argTarget = knownTargets.includes(params[0]) ? params[0] : null;
+  const rest = argTarget ? params.slice(1) : params;
 
-  const configKey = argTarget ? argTarget.key : await inquireTarget(config, state.target);
+  const target = argTarget || (await inquireTarget({publish: config}, state.target));
 
-  if (!configKey) {
-    foxLogger.error('Missing "publish.steam" or "publish.steamDemo" in fox.config.json');
+  if (!target) {
+    foxLogger.error('Nothing to publish: fox.config.json declares no "publish.<store>"');
     return;
   }
 
-  const steam = config[configKey];
+  const knownEnvs = publishableEnvs({publish: config}, target);
+  const argEnv = knownEnvs.includes(rest[0]) ? rest[0] : null;
+  const argBranch = argEnv ? rest[1] : rest[0];
 
-  if (!steam) {
-    foxLogger.error(`Missing "publish.${configKey}" in fox.config.json`);
+  const env = argEnv || (await inquireEnv({publish: config}, target, (state.envs || {})[target]));
+
+  if (!env) {
+    foxLogger.error(`publish.${target} declares no envs in fox.config.json`);
     return;
   }
 
-  const isDemo = configKey === 'steamDemo';
-  const remembered = (state.branches || {})[configKey];
+  const store = readPublishConfig({publish: config}, target, env);
+
+  writeState({
+    ...state,
+    target,
+    envs: {...(state.envs || {}), [target]: env}
+  });
+
+  if (target === 'itch') {
+    return publishToItch(settings, {env, store});
+  }
+
+  return publishToSteam(settings, {env, store, argBranch, state});
+};
+
+// -----------------------------------------------------------------------------
+
+const publishToSteam = async (settings, {env, store, argBranch, state}) => {
+  const {core} = settings;
+
+  const remembered = (state.branches || {})[env];
 
   const branch =
     argBranch !== undefined && argBranch !== null
       ? argBranch
-      : await inquireBranch(steam, remembered === undefined ? steam.branch : remembered);
+      : await inquireBranch(store, remembered === undefined ? store.branch : remembered);
 
-  writeState({
-    ...state,
-    target: configKey,
-    branches: {...(state.branches || {}), [configKey]: branch}
-  });
+  writeState({...readState(), branches: {...(state.branches || {}), [env]: branch}});
 
-  const {appId, login, contentRoot, depots} = steam;
+  const {appId, login, depots} = store;
 
   if (!appId || !login || !depots) {
-    steamLogger.error(`publish.${configKey} requires appId, login and depots`);
+    steamLogger.error(`publish.steam.envs.${env} requires appId, login and depots`);
     return;
   }
 
@@ -366,67 +548,37 @@ const publish = async (settings, params) => {
 
   if (isPlaceholder(appId)) {
     steamLogger.error(
-      `Create the demo app in Steamworks, then set publish.${configKey}.appId/depots in fox.config.json (got placeholder "${appId}")`
+      `Create the app in Steamworks, then set publish.steam.envs.${env}.appId/depots in fox.config.json (got placeholder "${appId}")`
     );
     return;
   }
 
   // ---------
 
-  const projectVersion = readProjectVersion();
-  const absoluteContentRoot = path.resolve(process.cwd(), contentRoot);
+  const absoluteContentRoot = path.resolve(
+    process.cwd(),
+    store.contentRoot || exportRoot(env, 'steam')
+  );
 
   steamLogger.log(`Publishing ${core.title} (appId ${appId})`);
 
-  // The env whose presets fill this content root: what `fox export` must be run
-  // on for the payload to become the version the repo is at.
-  const env = isDemo ? 'demo' : 'release';
-
-  let report = verifyContent(absoluteContentRoot, depots);
-
-  if (!report) {
-    return;
-  }
-
-  let version = payloadVersion(report) || projectVersion;
-  let decision = EXIT;
-
-  // One loop, driven entirely by the answers: exporting brings us back to the
-  // same table, now describing the bytes that were just written.
-  for (;;) {
-    decision = await confirmPayload({
-      title: core.title,
-      appId,
+  const version = await settleOnPayload({
+    settings,
+    logger: steamLogger,
+    title: core.title,
+    env,
+    target: 'steam',
+    contentRoot: absoluteContentRoot,
+    folders: depots,
+    details: {
+      app: `${core.title} (appId ${appId})`,
       login,
-      branch,
-      contentRoot: absoluteContentRoot,
-      env,
-      projectVersion,
-      version,
-      report
-    });
-
-    if (decision !== EXPORT) {
-      break;
+      branch: branch || '(none — build stays unassigned)',
+      env: envChip(env)
     }
+  });
 
-    steamLogger.log(`Running fox export on env "${env}"...`);
-
-    if (!(await exportBundle(settings, {forcedEnv: env}))) {
-      steamLogger.error('Export failed — nothing uploaded');
-      return;
-    }
-
-    report = verifyContent(absoluteContentRoot, depots);
-
-    if (!report) {
-      return;
-    }
-
-    version = payloadVersion(report) || projectVersion;
-  }
-
-  if (decision !== UPLOAD) {
+  if (!version) {
     steamLogger.done('Nothing uploaded');
     return;
   }
@@ -442,10 +594,10 @@ const publish = async (settings, params) => {
     depotScripts[depotId] = `depot_${depotId}.vdf`;
   }
 
-  const demoSuffix = isDemo ? ' (demo)' : '';
+  const envSuffix = env === 'release' ? '' : ` (${env})`;
   const appBuildPath = writeAppBuildScript(steamDir, {
     appId,
-    desc: `${core.title} ${version}${demoSuffix}${branch ? ` (${branch})` : ''}`,
+    desc: `${core.title} ${version}${envSuffix}${branch ? ` (${branch})` : ''}`,
     contentRoot: absoluteContentRoot,
     setlive: branch,
     depots: depotScripts

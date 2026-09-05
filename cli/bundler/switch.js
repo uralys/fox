@@ -7,6 +7,8 @@ import inquirer from 'inquirer';
 
 import {switchLogger} from '../logger.js';
 import ini from './ini.js';
+import {DEFAULT_TARGET} from './resolve-env-preset.js';
+import {readPublishConfig, SUPPORTED_TARGETS, TARGET_CHOICES} from './publish-config.js';
 import {toVersionNumber} from './versioning.js';
 import {readProjectVersion} from './tag.js';
 import {getSubtitle, getTitle} from './export.js';
@@ -23,19 +25,16 @@ const PLATFORM_BY_PROCESS = {
 
 // `prod` is the public label of the `release` env.
 // `staging` stays supported internally but is hidden from the prompt.
+//
+// The env says what the build CONTAINS. Where it is published is the OTHER axis,
+// `target` — see resolve-env-preset.js. A value like "itch" never belongs here.
 export const ENV_CHOICES = [
   {name: 'debug', value: 'debug'},
   {name: 'demo', value: 'demo'},
-  {name: 'itch', value: 'itch'},
   {name: 'prod', value: 'release'}
 ];
 
-const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo', 'itch'];
-
-// Envs that ship the same restricted content as the demo but run outside Steam
-// (itch.io downloadable, web). They never carry a Steam app_id: initializing
-// against one would make the build ask a Steam client that is not there.
-export const STEAMLESS_ENVS = ['itch'];
+const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo'];
 
 // -----------------------------------------------------------------------------
 
@@ -43,30 +42,38 @@ export const hostPlatform = () => PLATFORM_BY_PROCESS[process.platform] || 'Linu
 
 // -----------------------------------------------------------------------------
 
-// Steam app_id per env: the demo runs as a separate Steam app (own Cloud storage),
-// so the build must init Steam against the right id. `override.cfg` is loaded before
-// the autoloads, overriding `project.godot [steam] initialization/app_id` — the
+// Steam app_id per env, and ONLY when the build is aimed at Steam: the demo runs
+// as a separate Steam app (own Cloud storage), so the build must init Steam against
+// the right id, while an itch build must carry none at all — baking one would make
+// it ask for a Steam client that is not there. `override.cfg` is loaded before the
+// autoloads, overriding `project.godot [steam] initialization/app_id` — the
 // committed project keeps `app_id=0`, fox.config.json is the single source of truth.
-export const resolveSteamAppId = ({publish}, env) => {
-  if (STEAMLESS_ENVS.includes(env)) {
+export const resolveSteamAppId = ({publish}, env, target = DEFAULT_TARGET) => {
+  if (target !== 'steam') {
     return null;
   }
 
-  const steamConfig = env === 'demo' ? publish && publish.steamDemo : publish && publish.steam;
-  const appId = steamConfig && steamConfig.appId;
+  const appId = readPublishConfig({publish}, 'steam', env).appId;
+
   if (!appId || String(appId).startsWith('<')) {
     return null;
   }
+
   return appId;
 };
 
 // -----------------------------------------------------------------------------
 
-export const writeOverride = (settings, {bundleId, platform, env}) => {
+export const writeOverride = (settings, {bundleId, platform, env, target = DEFAULT_TARGET}) => {
   const {core, bundles} = settings;
 
   if (!SUPPORTED_ENVS.includes(env)) {
     switchLogger.error(`env:${env} is not supported, use one of [${SUPPORTED_ENVS}]`);
+    return null;
+  }
+
+  if (!SUPPORTED_TARGETS.includes(target)) {
+    switchLogger.error(`target:${target} is not supported, use one of [${SUPPORTED_TARGETS}]`);
     return null;
   }
 
@@ -82,6 +89,7 @@ export const writeOverride = (settings, {bundleId, platform, env}) => {
   override.bundle.versionCode = toVersionNumber(appVersion);
   override.bundle.platform = platform;
   override.bundle.env = env;
+  override.bundle.target = target;
 
   if (subtitle) {
     override.bundle.subtitle = subtitle;
@@ -121,7 +129,7 @@ export const writeOverride = (settings, {bundleId, platform, env}) => {
 
   // ---------
 
-  const steamAppId = resolveSteamAppId(settings, env);
+  const steamAppId = resolveSteamAppId(settings, env, target);
 
   if (steamAppId) {
     override.steam = {'initialization/app_id': steamAppId};
@@ -160,6 +168,12 @@ const inquireParams = async (bundles) => {
       name: 'env',
       type: 'list',
       choices: ENV_CHOICES
+    },
+    {
+      message: 'target',
+      name: 'target',
+      type: 'list',
+      choices: TARGET_CHOICES
     }
   ];
 
@@ -176,7 +190,8 @@ const inquireParams = async (bundles) => {
 
   return {
     bundleId: answers.bundleId || singleBundleId,
-    env: answers.env
+    env: answers.env,
+    target: answers.target
   };
 };
 
@@ -191,12 +206,12 @@ const switchBundle = async (settings) => {
     return;
   }
 
-  const {bundleId, env} = await inquireParams(bundles);
+  const {bundleId, env, target} = await inquireParams(bundles);
   const platform = hostPlatform();
 
-  switchLogger.log(`env: ${env} — platform: ${platform}`);
+  switchLogger.log(`env: ${env} — target: ${target} — platform: ${platform}`);
 
-  const override = writeOverride(settings, {bundleId, platform, env});
+  const override = writeOverride(settings, {bundleId, platform, env, target});
 
   if (!override) {
     switchLogger.error('Could not write override.cfg');
@@ -205,7 +220,7 @@ const switchBundle = async (settings) => {
 
   switchLogger.success('Bundle ready');
 
-  return {bundleId, env};
+  return {bundleId, env, target};
 };
 
 // -----------------------------------------------------------------------------

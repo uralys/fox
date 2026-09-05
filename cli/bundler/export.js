@@ -11,7 +11,8 @@ import {spawn} from 'child_process';
 import {colors, foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
 import {writeOverride, resolveSteamAppId, ENV_CHOICES} from './switch.js';
-import {readCurrentBundle, findPreset} from './resolve-env-preset.js';
+import {readCurrentBundle, findPreset, targetsForEnv, DEFAULT_TARGET} from './resolve-env-preset.js';
+import {TARGET_CHOICES} from './publish-config.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
 import ini from './ini.js';
 import {tagVersion, readProjectVersion} from './tag.js';
@@ -25,7 +26,7 @@ const ALL = 'all';
 const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
 
 // Envs exported with `--export-release`: shipped to players, whatever the store.
-const RELEASE_ENVS = ['release', 'demo', 'itch'];
+const RELEASE_ENVS = ['release', 'demo'];
 const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
 
 const BOLD = '\x1b[1m';
@@ -36,9 +37,13 @@ const RESET = '\x1b[0m';
 const ENV_FOREGROUNDS = {
   debug: '\x1b[94m',
   demo: '\x1b[95m',
-  itch: '\x1b[96m',
   staging: '\x1b[93m',
   release: '\x1b[92m'
+};
+
+const TARGET_FOREGROUNDS = {
+  steam: '\x1b[96m',
+  itch: '\x1b[91m'
 };
 
 // -----------------------------------------------------------------------------
@@ -150,11 +155,17 @@ const patchProjectGodotSecrets = (env) => {
   }
 };
 
-const patchProjectGodotBundle = ({platform, env, steamAppId}) => {
+const patchProjectGodotBundle = ({platform, env, target, steamAppId}) => {
   let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
 
   content = content.replace(/^platform=".*"$/m, `platform="${platform}"`);
   content = content.replace(/^env=".*"$/m, `env="${env}"`);
+
+  // A project that predates the target axis has no `target=` line to patch: adding
+  // one here would land outside [bundle], so it is left to the project to declare.
+  if (/^target=".*"$/m.test(content)) {
+    content = content.replace(/^target=".*"$/m, `target="${target}"`);
+  }
 
   if (steamAppId) {
     content = content.replace(
@@ -165,8 +176,10 @@ const patchProjectGodotBundle = ({platform, env, steamAppId}) => {
 
   fs.writeFileSync(PROJECT_GODOT, content);
 
-  const steamLog = steamAppId ? ` [steam] app_id=${steamAppId}` : '';
-  godotLogger.log(`project.godot [bundle] -> platform="${platform}" env="${env}"${steamLog}`);
+  const steamLog = steamAppId ? ` [steam] app_id=${steamAppId}` : ' (no Steam app_id)';
+  godotLogger.log(
+    `project.godot [bundle] -> platform="${platform}" env="${env}" target="${target}"${steamLog}`
+  );
 };
 
 // -----------------------------------------------------------------------------
@@ -256,8 +269,10 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
 // on Steamworks. Both the banner and the env prompt exist to make the target
 // folder impossible to miss before a single byte is written.
 
-const exportRootForEnv = (presets, env) => {
-  const preset = PLATFORMS.map((platform) => findPreset(presets, platform, env)).find(Boolean);
+const exportRootFor = (presets, env, target) => {
+  const preset = PLATFORMS.map((platform) => findPreset(presets, platform, env, target)).find(
+    Boolean
+  );
 
   if (!preset || !preset.export_path) {
     return null;
@@ -278,13 +293,23 @@ export const envChip = (env) => {
   return `${foreground}${BOLD}${envLabel(env)}${RESET}`;
 };
 
+const targetLabel = (target) => {
+  const choice = TARGET_CHOICES.find(({value}) => value === target);
+  return (choice ? choice.name : target).toUpperCase();
+};
+
+export const targetChip = (target) => {
+  const foreground = TARGET_FOREGROUNDS[target] || colors.white;
+  return `${foreground}${BOLD}${targetLabel(target)}${RESET}`;
+};
+
 // What already sits in a folder is what `fox publish` would ship if this run
 // filled a different one. Reading it off disk is the only way to tell a fresh
 // export from bytes left there weeks ago — the version in the banner describes
 // the build about to be made, never the one already lying in the other envs.
-const lastExportAt = (presets, env) => {
+const lastExportAt = (presets, env, target) => {
   const stamps = PLATFORMS.map((platform) => {
-    const preset = findPreset(presets, platform, env);
+    const preset = findPreset(presets, platform, env, target);
 
     if (!preset || !preset.export_path) {
       return null;
@@ -304,8 +329,8 @@ const lastExportAt = (presets, env) => {
   return new Date(Math.max(...stamps.map((stamp) => stamp.getTime())));
 };
 
-const exportedLabel = (presets, env) => {
-  const stamp = lastExportAt(presets, env);
+const exportedLabel = (presets, env, target) => {
+  const stamp = lastExportAt(presets, env, target);
 
   if (!stamp) {
     return `${colors.gray}(never exported)${colors.reset}`;
@@ -317,27 +342,36 @@ const exportedLabel = (presets, env) => {
 
 // Two lines on purpose: the identity of the build on one, the destination it is
 // about to fill on the other, arrowed so it reads as a consequence.
-const logBundleBanner = ({presets, title, bundleId, env, version, exportRoot}) => {
+const logBundleBanner = ({presets, title, bundleId, env, target, version, exportRoot}) => {
   const c = colors.cyan;
   const r = colors.reset;
-  const target = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${r}` : '';
+  const destination = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${r}` : '';
 
   console.log(`${c}├─${r} ${c}●${r} ${BOLD}${title}${r} ${colors.gray}(${bundleId})${r} ${BOLD}v${version}${r}`);
-  console.log(`${c}├────>${r}  ${envChip(env)}${target} ${exportedLabel(presets, env)}`);
+  console.log(
+    `${c}├────>${r}  ${envChip(env)} ${colors.gray}on${r} ${targetChip(target)}${destination} ${exportedLabel(presets, env, target)}`
+  );
 };
 
 // -----------------------------------------------------------------------------
 // Keeping the current env is the default answer: a switch is always an explicit
 // choice, never the consequence of hitting enter through the prompts.
 
-const inquireEnv = async (presets, currentEnv) => {
+const inquireEnv = async (presets, currentEnv, currentTarget) => {
   const others = ENV_CHOICES.filter(
-    ({value}) => value !== currentEnv && exportRootForEnv(presets, value)
+    ({value}) => value !== currentEnv && targetsForEnv(presets, value).length > 0
   );
 
   if (!others.length) {
     return currentEnv;
   }
+
+  const describe = (env) => {
+    const target = targetsForEnv(presets, env).includes(currentTarget)
+      ? currentTarget
+      : targetsForEnv(presets, env)[0];
+    return `${exportRootFor(presets, env, target)}/ ${exportedLabel(presets, env, target)}`;
+  };
 
   const {env} = await inquirer.prompt([
     {
@@ -346,11 +380,11 @@ const inquireEnv = async (presets, currentEnv) => {
       type: 'list',
       choices: [
         {
-          name: `keep ${envChip(currentEnv)} (no switch) -> ${exportRootForEnv(presets, currentEnv)}/ ${exportedLabel(presets, currentEnv)}`,
+          name: `keep ${envChip(currentEnv)} (no switch) -> ${describe(currentEnv)}`,
           value: currentEnv
         },
         ...others.map(({value}) => ({
-          name: `switch to ${envChip(value)} -> ${exportRootForEnv(presets, value)}/ ${exportedLabel(presets, value)}`,
+          name: `switch to ${envChip(value)} -> ${describe(value)}`,
           value
         }))
       ]
@@ -358,6 +392,37 @@ const inquireEnv = async (presets, currentEnv) => {
   ]);
 
   return env;
+};
+
+// -----------------------------------------------------------------------------
+// The target is asked only when the env can actually reach more than one store:
+// a game with a single destination should never have to answer for it.
+
+const inquireTarget = async (presets, env, currentTarget) => {
+  const available = targetsForEnv(presets, env);
+
+  if (available.length < 2) {
+    return available[0] || DEFAULT_TARGET;
+  }
+
+  const ordered = [
+    ...available.filter((target) => target === currentTarget),
+    ...available.filter((target) => target !== currentTarget)
+  ];
+
+  const {target} = await inquirer.prompt([
+    {
+      message: 'target',
+      name: 'target',
+      type: 'list',
+      choices: ordered.map((value) => ({
+        name: `${targetChip(value)} -> ${exportRootFor(presets, env, value)}/ ${exportedLabel(presets, env, value)}`,
+        value
+      }))
+    }
+  ]);
+
+  return target;
 };
 
 // -----------------------------------------------------------------------------
@@ -380,10 +445,10 @@ const inquirePlatforms = async () => {
 
 // -----------------------------------------------------------------------------
 
-// `forcedEnv` is how `fox publish` re-exports the env it is about to upload:
-// the caller already knows the answer, so asking would only be a chance to get
-// it wrong.
-const exportBundle = async (settings, {forcedEnv} = {}) => {
+// `forcedEnv` / `forcedTarget` are how `fox publish` re-exports the build it is
+// about to upload: the caller already knows both answers, so asking would only be
+// a chance to get one wrong.
+const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
   const {core: coreConfig, bundles} = settings;
   foxLogger.log('Exporting a bundle...');
 
@@ -434,6 +499,7 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
 
   const current = readCurrentBundle();
   const currentEnv = current && current.env;
+  const currentTarget = (current && current.target) || DEFAULT_TARGET;
   const bundleId = (current && current.id) || Object.keys(bundles)[0];
 
   if (!currentEnv) {
@@ -446,14 +512,21 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
     title: getTitle(coreConfig),
     bundleId,
     env: currentEnv,
+    target: currentTarget,
     version: readProjectVersion(),
-    exportRoot: exportRootForEnv(presets, currentEnv)
+    exportRoot: exportRootFor(presets, currentEnv, currentTarget)
   });
 
-  const env = forcedEnv || (await inquireEnv(presets, currentEnv));
+  const env = forcedEnv || (await inquireEnv(presets, currentEnv, currentTarget));
 
   if (env !== currentEnv) {
     foxLogger.warn(`switching env: ${currentEnv} -> ${env} (override.cfg is rewritten)`);
+  }
+
+  const target = forcedTarget || (await inquireTarget(presets, env, currentTarget));
+
+  if (target !== currentTarget) {
+    foxLogger.warn(`switching target: ${currentTarget} -> ${target} (override.cfg is rewritten)`);
   }
 
   // ---------
@@ -463,8 +536,8 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
   // --------- every target must resolve to a preset before any versioning
 
   for (const platform of platforms) {
-    if (!findPreset(presets, platform, env)) {
-      foxLogger.error(`No preset with env:${env} for platform "${platform}"`);
+    if (!findPreset(presets, platform, env, target)) {
+      foxLogger.error(`No preset with env:${env},target:${target} for platform "${platform}"`);
       foxLogger.error('Aborting: add the matching preset in export_presets.cfg');
       return;
     }
@@ -490,12 +563,17 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
 
   try {
     for (const platform of platforms) {
-      const preset = findPreset(presets, platform, env);
+      const preset = findPreset(presets, platform, env, target);
 
-      foxLogger.log(`--- ${platform} (${env}) -> ${preset.export_path} ---`);
+      foxLogger.log(`--- ${platform} (${env} on ${target}) -> ${preset.export_path} ---`);
 
-      writeOverride(settings, {bundleId, platform, env});
-      patchProjectGodotBundle({platform, env, steamAppId: resolveSteamAppId(settings, env)});
+      writeOverride(settings, {bundleId, platform, env, target});
+      patchProjectGodotBundle({
+        platform,
+        env,
+        target,
+        steamAppId: resolveSteamAppId(settings, env, target)
+      });
       patchProjectGodotSecrets(env);
 
       const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
@@ -510,12 +588,14 @@ const exportBundle = async (settings, {forcedEnv} = {}) => {
     }
   }
 
-  if (env !== currentEnv) {
-    foxLogger.warn(`override.cfg now holds env=${env} — \`fox switch\` to go back to ${currentEnv}`);
+  if (env !== currentEnv || target !== currentTarget) {
+    foxLogger.warn(
+      `override.cfg now holds env=${env} target=${target} — \`fox switch\` to go back to ${currentEnv}/${currentTarget}`
+    );
   }
 
   foxLogger.done(
-    `Exported ${platforms.length} platform(s) (${newVersion}) for env "${env}" -> ${exportRootForEnv(presets, env)}/`
+    `Exported ${platforms.length} platform(s) (${newVersion}) for "${env}" on "${target}" -> ${exportRootFor(presets, env, target)}/`
   );
 
   return true;

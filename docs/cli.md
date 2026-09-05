@@ -77,7 +77,8 @@ Commands:
 
   fox export                    export a bundle for one of your presets
 
-  fox publish [demo] [branch]   upload exported builds to Steam via steamcmd
+  fox publish [store] [env]     upload exported builds to a store
+                 [branch]       (steamcmd for steam, butler for itch)
 
   fox switch                    switch from a bundle to another (writes
                                 override.cfg)
@@ -99,6 +100,7 @@ Commands:
 ```
 
 - more details for exporting [here](./exporting/export.md)
+- the two axes a build is made of, `env` and `target`, are described [here](./exporting/envs-and-targets.md)
 
 ## ls
 
@@ -106,7 +108,7 @@ Commands:
 
 Neither half can answer it alone. Steam knows a `BuildID` and a branch, but nothing about what those bytes contain; the export folder knows a version, but not whether Steam ever shipped it. So both are read and confronted on the **PCK** — the payload itself, identical across platforms unlike the executable.
 
-Every Steam app declared under `publish` in `fox.config.json` is listed (`publish.steam` and `publish.steamDemo`), so a project shipping a demo next to the game gets both.
+Every Steam app declared under `publish.steam.envs` in `fox.config.json` is listed, so a project shipping a demo next to the game gets both.
 
 ```sh
 fox ls

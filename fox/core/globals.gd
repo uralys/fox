@@ -6,12 +6,20 @@ const RELEASE = 'release'
 const DEBUG = 'debug'
 const DEMO = 'demo'
 
+# Distribution targets. A build is (env, target): the env says what it CONTAINS,
+# the target says where it is published and which store plumbing it carries. The
+# same demo goes to Steam with an app id and a Workshop, and to itch.io with
+# neither — so a store question is never answered by reading G.ENV.
+const STEAM = 'steam'
+const ITCH = 'itch'
+
 # ------------------------------------------------------------------------------
 # Fox required globals
 
 var BUNDLE_ID
 var BUNDLES
 var ENV
+var TARGET
 var PLATFORM
 var RECORD_PATH
 var VERSION
@@ -28,6 +36,8 @@ var SCREEN_CENTER
 func _ready():
   G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
   G.ENV = ProjectSettings.get_setting('bundle/env')
+  # A project that predates the target axis has no setting: it ships to Steam.
+  G.TARGET = ProjectSettings.get_setting('bundle/target', STEAM)
   G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
   G.VERSION = ProjectSettings.get_setting('bundle/version')
   G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
@@ -40,6 +50,7 @@ func _ready():
   G.log('-------------------------------')
   G.log('bundle/id: ' + G.BUNDLE_ID)
   G.log('bundle/env: ' + G.ENV)
+  G.log('bundle/target: ' + G.TARGET)
   G.log('bundle/platform: ' + G.PLATFORM)
 
 # A demo ships as a separate Steam app (own app id, own Cloud) but shares the bundle
@@ -48,6 +59,12 @@ func _ready():
 # keep the plain `saved-data.<bundle>.bin` (backward compatible).
 func _recordSuffix(env):
   return '.demo' if env == DEMO else ''
+
+# True when the build is aimed at Steam, and therefore when Steam plumbing (the
+# SDK init, the overlay, the Workshop, Cloud) is expected to exist at all. This is
+# the ONLY question a store feature should ask — never `ENV == DEMO`.
+func isSteamTarget() -> bool:
+  return TARGET == STEAM
 
 # ------------------------------------------------------------------------------
 
