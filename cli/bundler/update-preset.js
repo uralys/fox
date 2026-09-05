@@ -102,13 +102,16 @@ export const updateVersionInPreset = (preset, newVersion) => {
 
 // -----------------------------------------------------------------------------
 
+const DEMO_ENVS = ['demo', 'itch'];
+
 const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
   const {platform} = preset;
   presetLogger.log(`Updating ${platform} preset`);
 
   const _applicationName = getApplicationName(coreConfig, bundle);
 
-  const envSuffix = env === 'release' ? '' : env === 'demo' ? ' Demo' : `(${env})`;
+  // `itch` ships the demo content outside Steam: same product name as the demo.
+  const envSuffix = env === 'release' ? '' : DEMO_ENVS.includes(env) ? ' Demo' : `(${env})`;
   const applicationName = `${_applicationName}${envSuffix}`;
   const bundleName = `${bundleId}${env === 'release' ? '' : `-${env}`}`;
 

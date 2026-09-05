@@ -26,10 +26,16 @@ const PLATFORM_BY_PROCESS = {
 export const ENV_CHOICES = [
   {name: 'debug', value: 'debug'},
   {name: 'demo', value: 'demo'},
+  {name: 'itch', value: 'itch'},
   {name: 'prod', value: 'release'}
 ];
 
-const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo'];
+const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo', 'itch'];
+
+// Envs that ship the same restricted content as the demo but run outside Steam
+// (itch.io downloadable, web). They never carry a Steam app_id: initializing
+// against one would make the build ask a Steam client that is not there.
+export const STEAMLESS_ENVS = ['itch'];
 
 // -----------------------------------------------------------------------------
 
@@ -42,6 +48,10 @@ export const hostPlatform = () => PLATFORM_BY_PROCESS[process.platform] || 'Linu
 // the autoloads, overriding `project.godot [steam] initialization/app_id` — the
 // committed project keeps `app_id=0`, fox.config.json is the single source of truth.
 export const resolveSteamAppId = ({publish}, env) => {
+  if (STEAMLESS_ENVS.includes(env)) {
+    return null;
+  }
+
   const steamConfig = env === 'demo' ? publish && publish.steamDemo : publish && publish.steam;
   const appId = steamConfig && steamConfig.appId;
   if (!appId || String(appId).startsWith('<')) {

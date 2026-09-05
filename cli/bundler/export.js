@@ -23,6 +23,9 @@ const PROJECT_GODOT = 'project.godot';
 
 const ALL = 'all';
 const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
+
+// Envs exported with `--export-release`: shipped to players, whatever the store.
+const RELEASE_ENVS = ['release', 'demo', 'itch'];
 const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
 
 const BOLD = '\x1b[1m';
@@ -33,6 +36,7 @@ const RESET = '\x1b[0m';
 const ENV_FOREGROUNDS = {
   debug: '\x1b[94m',
   demo: '\x1b[95m',
+  itch: '\x1b[96m',
   staging: '\x1b[93m',
   release: '\x1b[92m'
 };
@@ -209,7 +213,7 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
     }
   }
 
-  const exportType = `--export-${env === 'release' || env === 'demo' ? 'release' : 'debug'}`;
+  const exportType = `--export-${RELEASE_ENVS.includes(env) ? 'release' : 'debug'}`;
   godotLogger.log(`Exporting with ${exportType}...`);
 
   return new Promise((resolve) => {
