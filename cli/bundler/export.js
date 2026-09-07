@@ -10,7 +10,7 @@ import {spawn} from 'child_process';
 
 import {colors, foxLogger, godotLogger} from '../logger.js';
 import updatePreset from './update-preset.js';
-import {writeOverride, resolveSteamAppId, ENV_CHOICES} from './switch.js';
+import {writeOverride, resolveSteamAppId, bakesSecret, ENV_CHOICES} from './switch.js';
 import {readCurrentBundle, findPreset, targetsForEnv, DEFAULT_TARGET} from './resolve-env-preset.js';
 import {TARGET_CHOICES} from './publish-config.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
@@ -135,18 +135,19 @@ const restorePatchedFiles = () => {
 // its public GET reads kept working, so the board looked alive with the player
 // missing from it. They are baked here and reverted by restorePatchedFiles().
 //
-// ⛔ A WEB build is exempt, and that exemption is not a Faraday quirk: the pck of
-// an HTML5 build is downloaded by every visitor and readable with a text editor.
-// Baking an HMAC key there does not protect a leaderboard, it publishes the key.
-// A web build therefore ships with the committed (empty) `[custom]` values, and
-// the game is expected to degrade — read the board, do not write to it.
+// ⛔ Whether a WEB build carries its key is decided by `bakesSecret` (switch.js)
+// and by nothing here: the pck of an HTML5 build is downloaded by every visitor
+// and readable with a text editor, so a key baked there is PUBLISHED. That is
+// acceptable for a demo key — registered on its own row server side, revocable
+// alone, and the only way a web player can enter the board at all — and never
+// for the release key.
 //
-// ⛔ For WEB the exemption must ERASE, never merely abstain. `project.godot` is
-// patched once per platform and restored only after the whole loop, so in an
-// `all` run the desktop pass has already baked the key by the time the web pass
-// arrives: returning early there ships it. Measured on the published demo, whose
-// HTML5 pck carried the live key with the desktop fingerprint. A web export run
-// ALONE looked clean, which is exactly why the harness never caught it.
+// ⛔ When the key IS refused, the refusal must ERASE, never merely abstain.
+// `project.godot` is patched once per platform and restored only after the whole
+// loop, so in an `all` run the desktop pass has already baked the key by the time
+// the web pass arrives: returning early there ships it. Measured on the published
+// demo, whose HTML5 pck carried the live key with the desktop fingerprint. A web
+// export run ALONE looked clean, which is exactly why the harness never caught it.
 const patchProjectGodotSecrets = (env, platform) => {
   let secrets;
 
@@ -157,7 +158,7 @@ const patchProjectGodotSecrets = (env, platform) => {
     return;
   }
 
-  const web = platform === WEB;
+  const cleared = !bakesSecret(platform, env);
   let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
   const touched = [];
 
@@ -167,7 +168,7 @@ const patchProjectGodotSecrets = (env, platform) => {
       godotLogger.warn(`project.godot has no [custom] ${key} — secret NOT baked`);
       return;
     }
-    const value = web ? '' : String(secrets[key]);
+    const value = cleared ? '' : String(secrets[key]);
     content = content.replace(line, `${key}=${JSON.stringify(value)}`);
     touched.push(key);
   });
@@ -178,21 +179,28 @@ const patchProjectGodotSecrets = (env, platform) => {
     return;
   }
 
-  if (web) {
-    godotLogger.warn(`Web build: [custom] ${touched.join(', ')} CLEARED (a web pck is public)`);
+  if (cleared) {
+    godotLogger.warn(
+      `Web ${env} build: [custom] ${touched.join(', ')} CLEARED (a web pck is public)`
+    );
     return;
   }
 
   godotLogger.log(`project.godot [custom] -> baked ${touched.join(', ')} from secret.${env}.cfg`);
 };
 
-// A web pck that ships a secret is the regression this whole exemption exists to
-// prevent, and it already happened once: the exemption was written as "abstain",
-// so an `all` run leaked the key baked by the desktop pass before it. Intention
-// is not a proof, so the bytes actually produced are read back and the run is
-// failed on the spot. It is the cheapest guard in the file and the only one that
-// survives a future refactor of the order of things.
-const verifyWebCarriesNoSecret = (env, exportPath) => {
+// What the web pck ACTUALLY carries is read back from the bytes, because the two
+// doors into it (project.godot, override.cfg) are set far from here and an
+// intention proves nothing — the leak of 2026-09-07 was written as an exemption
+// that abstained instead of erasing, and shipped the desktop key.
+//
+// The check is symmetric, and that is the point: a web `release` must carry NO
+// secret, a web demo must carry EXACTLY the key of its own `secret.<env>.cfg`.
+// The second half is the negative control the first half lacks — a guard that
+// can only ever pass proves nothing, and comparing the VALUE (not its mere
+// presence) is what catches the real accident: the key of another env baked by
+// the desktop pass of an `all` run and left behind.
+export const verifyWebSecrets = (env, exportPath) => {
   let secrets;
 
   try {
@@ -209,17 +217,34 @@ const verifyWebCarriesNoSecret = (env, exportPath) => {
   }
 
   const buffer = fs.readFileSync(pck);
-  const leaked = Object.keys(secrets).filter((key) => {
-    const value = readSetting(buffer, `custom/${key}`);
-    return typeof value === 'string' && value.length > 0;
+  const expected = bakesSecret(WEB, env);
+
+  const wrong = Object.keys(secrets).filter((key) => {
+    const carried = readSetting(buffer, `custom/${key}`);
+
+    return expected
+      ? carried !== String(secrets[key])
+      : typeof carried === 'string' && carried.length > 0;
   });
 
-  if (leaked.length === 0) {
-    godotLogger.success(`Web build: ${path.basename(pck)} carries no [custom] secret`);
+  const name = path.basename(pck);
+
+  if (wrong.length === 0) {
+    godotLogger.success(
+      expected
+        ? `Web build: ${name} carries the ${env} [custom] ${Object.keys(secrets).join(', ')}`
+        : `Web build: ${name} carries no [custom] secret`
+    );
     return true;
   }
 
-  godotLogger.error(`Web build LEAKS [custom] ${leaked.join(', ')} into ${path.basename(pck)}`);
+  if (expected) {
+    godotLogger.error(`Web build MISSES the ${env} [custom] ${wrong.join(', ')} in ${name}`);
+    godotLogger.error(`Refusing this build: it could read the board but never post to it`);
+    return false;
+  }
+
+  godotLogger.error(`Web build LEAKS [custom] ${wrong.join(', ')} into ${name}`);
   godotLogger.error('Refusing this build: a web pck is downloaded by every visitor');
   return false;
 };
@@ -670,8 +695,8 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
         return;
       }
 
-      if (platform === WEB && !verifyWebCarriesNoSecret(env, preset.export_path)) {
-        foxLogger.error(`Aborting run: ${preset.name} would publish a secret`);
+      if (platform === WEB && !verifyWebSecrets(env, preset.export_path)) {
+        foxLogger.error(`Aborting run: ${preset.name} does not carry the secrets it should`);
         return;
       }
     }

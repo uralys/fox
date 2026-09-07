@@ -15,6 +15,9 @@ import {readProjectVersion} from './tag.js';
 // Kept local rather than imported from export.js: the two modules already
 // import each other, and this is a one-word constant.
 const WEB = 'Web';
+
+// The env whose secret must never become public, whatever the platform.
+const SEALED_ENV = 'release';
 import {getSubtitle, getTitle} from './export.js';
 
 // -----------------------------------------------------------------------------
@@ -43,6 +46,20 @@ const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo'];
 // -----------------------------------------------------------------------------
 
 export const hostPlatform = () => PLATFORM_BY_PROCESS[process.platform] || 'Linux';
+
+// -----------------------------------------------------------------------------
+
+// A WEB pck is downloaded by every visitor and readable with a text editor, so
+// whatever it carries is PUBLIC. That is a verdict on the KEY, not on the
+// platform: a demo key is MEANT to be public — it is registered on its own row
+// server side and revocable alone, without touching the full game — while the
+// release key never is. Hence the rule, and it is the single place expressing
+// it: a web build bakes its secret, EXCEPT on `release`.
+//
+// Both doors into the pck ask this question — project.godot (patched by
+// export.js) and override.cfg (written below), since Godot merges the latter
+// into ProjectSettings and serializes the result into project.binary.
+export const bakesSecret = (platform, env) => platform !== WEB || env !== SEALED_ENV;
 
 // -----------------------------------------------------------------------------
 
@@ -115,16 +132,19 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
 
   // ---------
 
-  // ⛔ A WEB build gets NO secret, and override.cfg is the second door into the
-  // pck: Godot merges it into ProjectSettings and serializes the result into
-  // project.binary at export time. Clearing project.godot alone (see
-  // patchProjectGodotSecrets) therefore bakes the key anyway, through here.
-  // Measured on a published build: the HTML5 pck carried the live HMAC key with
-  // the very same fingerprint as the desktop one.
+  // override.cfg is the second door into the pck: Godot merges it into
+  // ProjectSettings and serializes the result into project.binary at export
+  // time. Clearing project.godot alone (see patchProjectGodotSecrets) therefore
+  // bakes the key anyway, through here — measured on a published build, whose
+  // HTML5 pck carried the live HMAC key with the desktop fingerprint. Both
+  // doors follow bakesSecret(), so a web RELEASE stays sealed while a web demo
+  // ships the key it is supposed to sign with.
   let secretByEnv;
 
-  if (platform === WEB) {
-    switchLogger.warn('Web build: [custom] secrets kept OUT of override.cfg (a web pck is public)');
+  if (!bakesSecret(platform, env)) {
+    switchLogger.warn(
+      `Web ${env} build: [custom] secrets kept OUT of override.cfg (a web pck is public)`
+    );
     secretByEnv = {};
   } else {
     try {
