@@ -21,8 +21,8 @@ import path from 'path';
 const STRING_VARIANT = 4;
 const MAX_VALUE_LENGTH = 64;
 
-const readBakedValue = (buffer, key) => {
-  const needle = Buffer.from(`bundle/${key}`, 'latin1');
+const readSetting = (buffer, name) => {
+  const needle = Buffer.from(name, 'latin1');
   const header = needle.length + 4;
 
   let at = buffer.indexOf(needle);
@@ -42,6 +42,8 @@ const readBakedValue = (buffer, key) => {
 
   return null;
 };
+
+const readBakedValue = (buffer, key) => readSetting(buffer, `bundle/${key}`);
 
 // -----------------------------------------------------------------------------
 // The PCK is what an installed build and an export folder can be compared on:
@@ -170,4 +172,4 @@ const sha256 = (filePath) => {
 
 // -----------------------------------------------------------------------------
 
-export {readBakedBundle, newestMtime, formatStamp, findPck, sha256};
+export {readBakedBundle, readSetting, newestMtime, formatStamp, findPck, sha256};

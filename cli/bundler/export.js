@@ -16,6 +16,7 @@ import {TARGET_CHOICES} from './publish-config.js';
 import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
 import ini from './ini.js';
 import {tagVersion, readProjectVersion} from './tag.js';
+import {readSetting} from './baked-bundle.js';
 import resolveGodotPath from '../resolve-godot.js';
 
 // -----------------------------------------------------------------------------
@@ -183,6 +184,44 @@ const patchProjectGodotSecrets = (env, platform) => {
   }
 
   godotLogger.log(`project.godot [custom] -> baked ${touched.join(', ')} from secret.${env}.cfg`);
+};
+
+// A web pck that ships a secret is the regression this whole exemption exists to
+// prevent, and it already happened once: the exemption was written as "abstain",
+// so an `all` run leaked the key baked by the desktop pass before it. Intention
+// is not a proof, so the bytes actually produced are read back and the run is
+// failed on the spot. It is the cheapest guard in the file and the only one that
+// survives a future refactor of the order of things.
+const verifyWebCarriesNoSecret = (env, exportPath) => {
+  let secrets;
+
+  try {
+    secrets = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
+  } catch (e) {
+    return true;
+  }
+
+  const pck = exportPath.replace(/\.[^.]+$/, '.pck');
+
+  if (!fs.existsSync(pck)) {
+    godotLogger.warn(`Web build: no ${path.basename(pck)} to check for secrets`);
+    return true;
+  }
+
+  const buffer = fs.readFileSync(pck);
+  const leaked = Object.keys(secrets).filter((key) => {
+    const value = readSetting(buffer, `custom/${key}`);
+    return typeof value === 'string' && value.length > 0;
+  });
+
+  if (leaked.length === 0) {
+    godotLogger.success(`Web build: ${path.basename(pck)} carries no [custom] secret`);
+    return true;
+  }
+
+  godotLogger.error(`Web build LEAKS [custom] ${leaked.join(', ')} into ${path.basename(pck)}`);
+  godotLogger.error('Refusing this build: a web pck is downloaded by every visitor');
+  return false;
 };
 
 const patchProjectGodotBundle = ({platform, env, target, steamAppId}) => {
@@ -628,6 +667,11 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
       const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
       if (!ok) {
         foxLogger.error(`Aborting run: ${preset.name} failed`);
+        return;
+      }
+
+      if (platform === WEB && !verifyWebCarriesNoSecret(env, preset.export_path)) {
+        foxLogger.error(`Aborting run: ${preset.name} would publish a secret`);
         return;
       }
     }
