@@ -145,7 +145,7 @@ const payloadEnv = (report) => {
   return envs.length === 1 ? envs[0] : null;
 };
 
-const confirmPayload = async ({logger, title, details, contentRoot, env, projectVersion, version, report}) => {
+const confirmPayload = async ({logger, title, details, contentRoot, env, target, projectVersion, version, report}) => {
   // The env is read back from the payload whenever the folders carry it, so the
   // chip names what is IN the folder rather than what was asked for.
   const bakedEnv = payloadEnv(report) || env;
@@ -171,7 +171,9 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, project
     logger.warn('folders disagree on the version — check what you exported');
   }
 
-  const destination = `(${envChip(bakedEnv)}) to ${title}`;
+  // The store is half of the answer to "what am I about to publish": the same
+  // version and env go to two different places, so the chip names the target.
+  const destination = `(${envChip(bakedEnv)}) to ${title} on ${targetChip(target)}`;
 
   // When the payload matches the repo there is one sensible answer, so a plain
   // confirm is enough. When it does not, refusing is not the useful reply — the
@@ -192,7 +194,7 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, project
       name: 'choice',
       type: 'list',
       choices: [
-        {name: `fox export ${envChip(env)} now, then publish ${projectVersion}`, value: EXPORT},
+        {name: `fox export ${envChip(env)} on ${targetChip(target)} now, then publish ${projectVersion}`, value: EXPORT},
         {name: `upload ${version} anyway ${destination}`, value: UPLOAD},
         {name: 'exit', value: EXIT}
       ]
@@ -369,6 +371,7 @@ const settleOnPayload = async ({settings, logger, title, env, target, contentRoo
       details,
       contentRoot,
       env,
+      target,
       projectVersion,
       version,
       report
