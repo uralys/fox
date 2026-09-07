@@ -1,12 +1,17 @@
 // -----------------------------------------------------------------------------
-// Non-interactive HTML5/Web export.
+// Non-interactive HTML5/Web export — the SCRIPTABLE path, not the publishable one.
 //
-// Unlike `fox export` (interactive, desktop/Steam-oriented: inquires a platform,
-// requires a prior `fox switch`, tags a version and patches project.godot's
-// [bundle] + Steam app_id), this is a single scriptable step: it finds the
-// `platform="Web"` preset in export_presets.cfg and runs a headless
-// `--export-debug`, nothing else. Meant to be called from an automated pipeline
-// (e.g. Coucarel's generated games) that just needs a playable web build.
+// It finds the `platform="Web"` preset in export_presets.cfg and runs a headless
+// `--export-debug`, nothing else. Meant for an automated pipeline (e.g. Coucarel's
+// generated games) that just needs a playable web build out of a repo it also
+// generated, with no env to choose and no store behind it.
+//
+// ⛔ What comes out is NOT shippable: the build carries whatever `[bundle]` the
+// working tree happens to hold (`env`, `target`), so it can claim to be a debug
+// Steam build while sitting in an itch folder. A build meant for players goes
+// through `fox export`, which knows the Web platform: it asks for the
+// env and the target, bakes them into project.godot, exports with
+// `--export-release` for a shipping env, and restores the repo afterwards.
 // -----------------------------------------------------------------------------
 
 import fs from 'fs';

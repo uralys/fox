@@ -82,3 +82,43 @@ Each bundle must have its `uid`, can use another icon, a subtitle attached to th
   }
 }
 ```
+
+## web (HTML5)
+
+A `platform="Web"` preset is exported by `fox export` like any other platform: it
+is offered in the platform prompt as soon as it declares the `env` and `target`
+being exported, and `all` includes it.
+
+```ini
+[preset.12]
+
+name="Web (itch.io)"
+platform="Web"
+custom_features="env:demo,target:itch"
+export_path="export/demo/itch/web/index.html"
+```
+
+Two things differ, and they are handled by `fox`, not by the project:
+
+- **no Steam app id.** A web build has no Steam client to talk to, and the id is
+  only ever baked for `target:steam` anyway.
+- **no `[custom]` secret.** The pck of an HTML5 build is downloaded by every
+  visitor and readable with a text editor, so baking an HMAC key there publishes
+  it rather than protecting anything. `fox export` refuses to, says so, and the
+  build ships the committed (empty) values: the game is expected to degrade,
+  e.g. read a leaderboard without writing to it.
+
+What is baked stays baked: `[bundle] platform="Web" env=… target=…` lands in the
+pck, so `fox publish` and `fox ls` read a web payload back exactly as they read a
+depot.
+
+Publishing it to itch is a `butler` channel like the others: add it under
+`publish.itch.envs.<env>.channels`, mapped to the folder the preset writes:
+
+```json
+"channels": {"html5": "web", "windows-demo": "windows"}
+```
+
+⚠️ `fox export:web` is a different command with a different purpose: a scriptable
+`--export-debug` that bakes nothing. It is for generated projects that just need
+a playable page, never for a build handed to players.

@@ -9,6 +9,7 @@ import { toVersionNumber } from './versioning.js';
 const MAC_OSX = 'Mac OSX';
 const IOS = 'iOS';
 const ANDROID = 'Android';
+const WEB = 'Web';
 
 // -----------------------------------------------------------------------------
 
@@ -121,6 +122,13 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle) => {
       break;
     case MAC_OSX:
       updateMacOSPreset(env, preset, bundle, bundleId, applicationName, bundleName);
+      break;
+    case WEB:
+      // A web export has no application name, no bundle identifier and no icon
+      // set to rewrite: the page is named by its <title>, which the project owns.
+      // Its export_path is left exactly as the preset declares it — the folder
+      // under export/<env>/<target>/ is where `fox publish` will come looking.
+      presetLogger.log('Web preset kept as declared (no name, no uid, no icons)');
       break;
     default:
       presetLogger.warn(`Platform ${platform} has no preset specificity, applying defaults`);

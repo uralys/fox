@@ -23,11 +23,19 @@ import resolveGodotPath from '../resolve-godot.js';
 const PROJECT_GODOT = 'project.godot';
 
 const ALL = 'all';
-const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS'];
+
+// `Web` sits in the same list as the desktop platforms on purpose: an HTML5 build
+// is a build like any other — it carries a [bundle], it belongs to an env and to a
+// store, and `fox publish` reads it out of the same `export/<env>/<target>/` tree.
+// What differs is handled where it actually differs (no Steam app id, no secret,
+// no preset field to rewrite), never by keeping the platform outside the flow.
+const PLATFORMS = ['Linux', 'Windows Desktop', 'macOS', 'Web'];
+
+const WEB = 'Web';
 
 // Envs exported with `--export-release`: shipped to players, whatever the store.
 const RELEASE_ENVS = ['release', 'demo'];
-const PLATFORM_LABELS = {Linux: 'Linux-SteamOS'};
+const PLATFORM_LABELS = {Linux: 'Linux-SteamOS', Web: 'Web (HTML5)'};
 
 const BOLD = '\x1b[1m';
 const RESET = '\x1b[0m';
@@ -125,7 +133,18 @@ const restorePatchedFiles = () => {
 // and never POSTed one ("no secret configured, holding N submission(s)"), while
 // its public GET reads kept working, so the board looked alive with the player
 // missing from it. They are baked here and reverted by restorePatchedFiles().
-const patchProjectGodotSecrets = (env) => {
+//
+// ⛔ A WEB build is exempt, and that exemption is not a Faraday quirk: the pck of
+// an HTML5 build is downloaded by every visitor and readable with a text editor.
+// Baking an HMAC key there does not protect a leaderboard, it publishes the key.
+// A web build therefore ships with the committed (empty) `[custom]` values, and
+// the game is expected to degrade — read the board, do not write to it.
+const patchProjectGodotSecrets = (env, platform) => {
+  if (platform === WEB) {
+    godotLogger.warn('Web build: [custom] secrets NOT baked (a web pck is public)');
+    return;
+  }
+
   let secrets;
 
   try {
@@ -427,20 +446,33 @@ const inquireTarget = async (presets, env, currentTarget) => {
 
 // -----------------------------------------------------------------------------
 
-const inquirePlatforms = async () => {
-  const {target} = await inquirer.prompt([
+// Only the platforms this (env, target) pair actually has a preset for are
+// offered — and `all` means all of THOSE. Listing the full catalogue would let
+// `all` pick a platform with no preset, which the guard below turns into an abort:
+// asking for everything a store can build would then build nothing.
+const platformsFor = (presets, env, target) =>
+  PLATFORMS.filter((platform) => findPreset(presets, platform, env, target));
+
+const inquirePlatforms = async (presets, env, target) => {
+  const available = platformsFor(presets, env, target);
+
+  if (available.length < 2) {
+    return available;
+  }
+
+  const {choice} = await inquirer.prompt([
     {
       message: 'platform',
-      name: 'target',
+      name: 'choice',
       type: 'list',
       choices: [
         {name: '✨ all', value: ALL},
-        ...PLATFORMS.map((platform) => ({name: PLATFORM_LABELS[platform] || platform, value: platform}))
+        ...available.map((platform) => ({name: PLATFORM_LABELS[platform] || platform, value: platform}))
       ]
     }
   ]);
 
-  return target === ALL ? PLATFORMS : [target];
+  return choice === ALL ? available : [choice];
 };
 
 // -----------------------------------------------------------------------------
@@ -531,9 +563,15 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
 
   // ---------
 
-  const platforms = await inquirePlatforms();
+  const platforms = await inquirePlatforms(presets, env, target);
 
   // --------- every target must resolve to a preset before any versioning
+
+  if (!platforms.length) {
+    foxLogger.error(`No preset with env:${env},target:${target} for any known platform`);
+    foxLogger.error('Aborting: add the matching preset in export_presets.cfg');
+    return;
+  }
 
   for (const platform of platforms) {
     if (!findPreset(presets, platform, env, target)) {
@@ -574,7 +612,7 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
         target,
         steamAppId: resolveSteamAppId(settings, env, target)
       });
-      patchProjectGodotSecrets(env);
+      patchProjectGodotSecrets(env, platform);
 
       const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
       if (!ok) {
