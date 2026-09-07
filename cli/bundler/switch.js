@@ -11,6 +11,10 @@ import {DEFAULT_TARGET} from './resolve-env-preset.js';
 import {readPublishConfig, SUPPORTED_TARGETS, TARGET_CHOICES} from './publish-config.js';
 import {toVersionNumber} from './versioning.js';
 import {readProjectVersion} from './tag.js';
+
+// Kept local rather than imported from export.js: the two modules already
+// import each other, and this is a one-word constant.
+const WEB = 'Web';
 import {getSubtitle, getTitle} from './export.js';
 
 // -----------------------------------------------------------------------------
@@ -111,12 +115,23 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
 
   // ---------
 
+  // ⛔ A WEB build gets NO secret, and override.cfg is the second door into the
+  // pck: Godot merges it into ProjectSettings and serializes the result into
+  // project.binary at export time. Clearing project.godot alone (see
+  // patchProjectGodotSecrets) therefore bakes the key anyway, through here.
+  // Measured on a published build: the HTML5 pck carried the live HMAC key with
+  // the very same fingerprint as the desktop one.
   let secretByEnv;
 
-  try {
-    secretByEnv = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
-  } catch (e) {
+  if (platform === WEB) {
+    switchLogger.warn('Web build: [custom] secrets kept OUT of override.cfg (a web pck is public)');
     secretByEnv = {};
+  } else {
+    try {
+      secretByEnv = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
+    } catch (e) {
+      secretByEnv = {};
+    }
   }
 
   // ---------
