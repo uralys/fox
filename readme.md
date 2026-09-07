@@ -6,7 +6,7 @@
 
 **From the first scene to the store page**: hot reload while you code, GDScript libs that spare you the boilerplate, then one command to export and publish your game on Steam and itch.io.
 
-<p align="center"><img title="fox"  src="./assets/logo.jpg"></p>
+<p align="center"><img title="fox" alt="Fox" width="420" src="./assets/logo.png"></p>
 
 ## Scenes and scripts
 
