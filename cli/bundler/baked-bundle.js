@@ -6,6 +6,7 @@
 // `fox ls` compares an installed build against what sits in the export folder.
 
 import crypto from 'crypto';
+import {execFileSync} from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -71,21 +72,58 @@ const findPck = (depotPath, files) => {
   }
 };
 
+// -----------------------------------------------------------------------------
+// The macOS preset exports a .zip holding the .app, so on that platform there is
+// no PCK on disk at all and the guard was reading nothing. `unzip -p` streams
+// the entry to stdout: no temp folder to create and clean up, no zip parsing to
+// maintain, and nothing added to package.json — the binary ships with macOS and
+// every Linux the exports run on. The pattern is left as `*.pck` because the
+// entry is named after the game, which this reader has no business knowing.
+
+const MAX_PCK_BYTES = 512 * 1024 * 1024;
+
+const readZippedPck = (archivePath) => {
+  try {
+    // stderr is muted: an archive without a PCK is a "version unknown" line,
+    // not a warning in the middle of the publish confirmation.
+    return execFileSync('unzip', ['-p', archivePath, '*.pck'], {
+      maxBuffer: MAX_PCK_BYTES,
+      stdio: ['ignore', 'pipe', 'ignore']
+    });
+  } catch (e) {
+    return null;
+  }
+};
+
 // The settings are baked into the PCK, and into the binary itself when the
 // export embeds them.
 const EMBEDDED_EXTENSIONS = ['.exe', '.x86_64'];
+const ARCHIVE_EXTENSIONS = ['.zip'];
 
-const readBakedBundle = (depotPath, files) => {
-  const scanned = findPck(depotPath, files) || EMBEDDED_EXTENSIONS.map((extension) =>
+const readScanned = (depotPath, files) => {
+  const onDisk = findPck(depotPath, files) || EMBEDDED_EXTENSIONS.map((extension) =>
     files.find((file) => file.endsWith(extension))
   ).find(Boolean);
 
-  if (!scanned) {
-    return {version: null, env: null};
+  if (onDisk) {
+    return fs.readFileSync(path.join(depotPath, onDisk));
   }
 
+  const archive = ARCHIVE_EXTENSIONS.map((extension) =>
+    files.find((file) => file.endsWith(extension))
+  ).find(Boolean);
+
+  return archive ? readZippedPck(path.join(depotPath, archive)) : null;
+};
+
+const readBakedBundle = (depotPath, files) => {
   try {
-    const buffer = fs.readFileSync(path.join(depotPath, scanned));
+    const buffer = readScanned(depotPath, files);
+
+    if (!buffer || !buffer.length) {
+      return {version: null, env: null};
+    }
+
     return {
       version: readBakedValue(buffer, 'version'),
       env: readBakedValue(buffer, 'env')
