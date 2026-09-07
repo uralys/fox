@@ -328,9 +328,28 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
       stdio: [process.stdin, process.stdout, process.stderr]
     });
 
-    bundler.on('close', (code) => {
+    // A spawn that never starts (bad `core.godot` path, missing binary) emits
+    // 'error' and NOT a usable close code. Without this listener Node rethrows it
+    // as an uncaught exception in the middle of a baked run, i.e. with the secret
+    // still sitting in project.godot: resolving false instead routes it through
+    // the caller's restore path like any other failure.
+    bundler.on('error', (err) => {
+      godotLogger.error(`Could not run Godot at ${coreConfig.godot}: ${err.message}`);
+      resolve(false);
+    });
+
+    bundler.on('close', (code, signal) => {
       if (code !== 0) {
-        godotLogger.error(`Export failed for ${preset.name} (exit ${code})`);
+        // A child KILLED by a signal reports `code === null`, which used to print
+        // the useless "exit null". The signal is the whole diagnosis: SIGINT is a
+        // Ctrl+C (yours or your terminal's), SIGKILL is the OS reclaiming memory,
+        // SIGSEGV is an engine crash. Naming it is the difference between a
+        // mystery and a one-line answer.
+        const cause = signal ? `killed by ${signal}` : `exit ${code}`;
+        godotLogger.error(`Export failed for ${preset.name} (${cause})`);
+        if (signal === 'SIGINT') {
+          godotLogger.log('That is an interruption, not an export error: rerun it.');
+        }
         resolve(false);
         return;
       }
