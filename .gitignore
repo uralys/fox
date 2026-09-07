@@ -7,3 +7,6 @@ node_modules
 
 # osx
 *.DS_Store
+
+# claude plans
+.plans
