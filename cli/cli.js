@@ -23,7 +23,7 @@ import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
 import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
 import runGame from './run-game.js';
-import ls from './ls.js';
+import ls from './ls/index.js';
 import importAssets from './import-assets.js';
 import resolveGodotPath from './resolve-godot.js';
 
@@ -35,6 +35,8 @@ const EXPORT_WEB = 'export:web';
 const PUBLISH = 'publish';
 const SWITCH = 'switch';
 const LS = 'ls';
+const LS_STEAM = 'ls:steam';
+const LS_ITCH = 'ls:itch';
 
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
@@ -55,6 +57,8 @@ const commands = [
   PUBLISH,
   SWITCH,
   LS,
+  LS_STEAM,
+  LS_ITCH,
   GENERATE_ICONS,
   GENERATE_SCREENSHOTS,
   GENERATE_STEAM_SCREENSHOTS,
@@ -234,6 +238,12 @@ const cli = async (yargs, params) => {
     case LS: {
       return await ls(settings);
     }
+    case LS_STEAM: {
+      return await ls(settings, 'steam');
+    }
+    case LS_ITCH: {
+      return await ls(settings, 'itch');
+    }
   }
 
   // -------- IO commands
@@ -286,7 +296,9 @@ const execute = async () => {
     .command(EXPORT_WEB, 'scriptable HTML5 export, NOT shippable (no bundle bake) — use `fox export` to ship a web build')
     .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [demo] [branch])')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
-    .command(LS, 'list local exports and the builds installed on the Steam Deck, and compare them')
+    .command(LS, 'list local exports and confront them with every store: Steam Deck and itch.io')
+    .command(LS_STEAM, 'list local Steam exports and the builds installed on the Steam Deck, and compare them')
+    .command(LS_ITCH, 'list local itch exports and the builds live on the itch.io page, and compare them')
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
     .command(

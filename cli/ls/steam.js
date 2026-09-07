@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
-// `fox ls` answers one question: is the build installed on the Steam Deck the
-// one sitting in my export folder?
+// `fox ls:steam` answers one question: is the build installed on the Steam Deck
+// the one sitting in my export folder?
 //
 // Neither half can answer it alone. Steam knows a BuildID and a branch but
 // nothing about what those bytes contain; the export folder knows a version but
@@ -11,17 +11,15 @@
 // The Deck is optional by design: unreachable simply means the local half is
 // reported on its own. It is a listing, never a gate.
 
-import fs from 'fs';
 import path from 'path';
 import {execFile} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
-import {createLogger, foxLogger} from './logger.js';
-import {envChip} from './bundler/export.js';
-import {readProjectVersion} from './bundler/tag.js';
-import {exportRoot, publishableEnvs, readPublishConfig} from './bundler/publish-config.js';
-import {readBakedBundle, newestMtime, formatStamp, findPck, sha256} from './bundler/baked-bundle.js';
+import {createLogger, foxLogger} from '../logger.js';
+import {envChip, targetChip} from '../bundler/export.js';
+import {exportRoot, publishableEnvs, readPublishConfig} from '../bundler/publish-config.js';
+import {readLocalSlots, localLine, warnOnLocalVersions, SHORT_SHA} from './local.js';
 
 // -----------------------------------------------------------------------------
 
@@ -33,8 +31,6 @@ const DEFAULT_TIMEOUT = 8;
 
 // The Deck depot: the only platform folder a Linux handheld can be compared to.
 const DECK_PLATFORM = 'linux';
-
-const SHORT_SHA = 12;
 
 // -----------------------------------------------------------------------------
 // Remote reading, in shell, because the payload stays on the Deck: pulling a
@@ -130,61 +126,6 @@ const readDeck = (host, timeout, appIds) =>
   });
 
 // -----------------------------------------------------------------------------
-
-const readLocalDepots = (contentRoot, depots) =>
-  Object.entries(depots).map(([depotId, folder]) => {
-    const depotPath = path.resolve(contentRoot, folder);
-
-    if (!fs.existsSync(depotPath)) {
-      return {depotId, folder, missing: true};
-    }
-
-    const files = fs.readdirSync(depotPath).filter((file) => !file.startsWith('.'));
-
-    if (!files.length) {
-      return {depotId, folder, empty: true};
-    }
-
-    const {version, env} = readBakedBundle(depotPath, files);
-    const pck = findPck(depotPath, files);
-
-    return {
-      depotId,
-      folder,
-      version,
-      env,
-      pck,
-      archive: files.find((file) => ARCHIVE_EXTENSIONS.some((extension) => file.endsWith(extension))),
-      sha: pck ? sha256(path.join(depotPath, pck)) : null,
-      exportedAt: newestMtime(depotPath, files)
-    };
-  });
-
-// A notarized macOS export ships as an archive: the payload is in there, but
-// saying "version unknown" would read as a broken export rather than as a
-// format this listing does not open.
-const ARCHIVE_EXTENSIONS = ['.zip', '.dmg'];
-
-const localLine = (depot) => {
-  if (depot.missing) {
-    return 'never exported';
-  }
-
-  if (depot.empty) {
-    return 'empty folder';
-  }
-
-  if (!depot.version && depot.archive) {
-    return `${depot.archive} — archive not read — exported ${formatStamp(depot.exportedAt)}`;
-  }
-
-  const chip = depot.env ? ` ${envChip(depot.env)}` : '';
-  const short = depot.sha ? ` ${depot.sha.slice(0, SHORT_SHA)}` : '';
-
-  return `${depot.version || 'version unknown'}${chip} — exported ${formatStamp(depot.exportedAt)}${short}`;
-};
-
-// -----------------------------------------------------------------------------
 // StateFlags is a bitfield; 4 alone means "fully installed, nothing pending".
 // Anything else is worth showing raw rather than interpreted, because the
 // interesting cases (update required, update running) are exactly the ones a
@@ -209,10 +150,10 @@ const deckLine = (app) => {
 
 const reportTarget = ({label, appId, contentRoot, depots, deck, projectVersion}) => {
   const absoluteContentRoot = path.resolve(process.cwd(), contentRoot);
-  const local = readLocalDepots(absoluteContentRoot, depots);
+  const local = readLocalSlots(absoluteContentRoot, depots);
 
   localLogger.reset();
-  localLogger.log(`${label} — appId ${appId} — ${contentRoot}/`);
+  localLogger.log(`${targetChip('steam')} ${envChip(label)} — appId ${appId} — ${contentRoot}/`);
 
   const details = {};
   local.forEach((depot) => {
@@ -228,13 +169,7 @@ const reportTarget = ({label, appId, contentRoot, depots, deck, projectVersion})
 
   // -------- verdicts
 
-  const versions = [...new Set(local.filter((depot) => depot.version).map(({version}) => version))];
-
-  if (versions.length > 1) {
-    localLogger.warn(`depots disagree on the version: ${versions.join(', ')}`);
-  } else if (versions.length === 1 && versions[0] !== projectVersion) {
-    localLogger.warn(`export is ${versions[0]} while project.godot is ${projectVersion}`);
-  }
+  warnOnLocalVersions(localLogger, local, projectVersion, label);
 
   if (!deck || !deck.reachable) {
     return;
@@ -274,8 +209,8 @@ const reportTarget = ({label, appId, contentRoot, depots, deck, projectVersion})
 
 // -----------------------------------------------------------------------------
 
-const ls = async (settings) => {
-  const {core, config, publish} = settings;
+const lsSteam = async (settings, {projectVersion}) => {
+  const {config, publish} = settings;
 
   // The deck only ever runs Steam builds, so this listing walks the Steam target's
   // envs — one entry per Steam app the project publishes.
@@ -285,12 +220,8 @@ const ls = async (settings) => {
 
   if (!targets.length) {
     foxLogger.error('No Steam app configured — add "publish.steam.envs" to fox.config.json');
-    return;
+    return false;
   }
-
-  const projectVersion = readProjectVersion();
-
-  foxLogger.log(`${core.title} — project.godot is ${projectVersion}`);
 
   const host = (config && config.host) || DEFAULT_HOST;
   const timeout = (config && config.timeout) || DEFAULT_TIMEOUT;
@@ -316,4 +247,4 @@ const ls = async (settings) => {
   return true;
 };
 
-export default ls;
+export default lsSteam;
