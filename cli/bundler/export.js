@@ -139,12 +139,14 @@ const restorePatchedFiles = () => {
 // Baking an HMAC key there does not protect a leaderboard, it publishes the key.
 // A web build therefore ships with the committed (empty) `[custom]` values, and
 // the game is expected to degrade — read the board, do not write to it.
+//
+// ⛔ For WEB the exemption must ERASE, never merely abstain. `project.godot` is
+// patched once per platform and restored only after the whole loop, so in an
+// `all` run the desktop pass has already baked the key by the time the web pass
+// arrives: returning early there ships it. Measured on the published demo, whose
+// HTML5 pck carried the live key with the desktop fingerprint. A web export run
+// ALONE looked clean, which is exactly why the harness never caught it.
 const patchProjectGodotSecrets = (env, platform) => {
-  if (platform === WEB) {
-    godotLogger.warn('Web build: [custom] secrets NOT baked (a web pck is public)');
-    return;
-  }
-
   let secrets;
 
   try {
@@ -154,8 +156,9 @@ const patchProjectGodotSecrets = (env, platform) => {
     return;
   }
 
+  const web = platform === WEB;
   let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
-  const baked = [];
+  const touched = [];
 
   Object.keys(secrets).forEach((key) => {
     const line = new RegExp(`^${key}=.*$`, 'm');
@@ -163,15 +166,23 @@ const patchProjectGodotSecrets = (env, platform) => {
       godotLogger.warn(`project.godot has no [custom] ${key} — secret NOT baked`);
       return;
     }
-    content = content.replace(line, `${key}=${JSON.stringify(String(secrets[key]))}`);
-    baked.push(key);
+    const value = web ? '' : String(secrets[key]);
+    content = content.replace(line, `${key}=${JSON.stringify(value)}`);
+    touched.push(key);
   });
 
   fs.writeFileSync(PROJECT_GODOT, content);
 
-  if (baked.length > 0) {
-    godotLogger.log(`project.godot [custom] -> baked ${baked.join(', ')} from secret.${env}.cfg`);
+  if (touched.length === 0) {
+    return;
   }
+
+  if (web) {
+    godotLogger.warn(`Web build: [custom] ${touched.join(', ')} CLEARED (a web pck is public)`);
+    return;
+  }
+
+  godotLogger.log(`project.godot [custom] -> baked ${touched.join(', ')} from secret.${env}.cfg`);
 };
 
 const patchProjectGodotBundle = ({platform, env, target, steamAppId}) => {
