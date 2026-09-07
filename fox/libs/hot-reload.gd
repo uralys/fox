@@ -8,6 +8,13 @@ var _timer: Timer
 # ------------------------------------------------------------------------------
 
 func _ready():
+	# Hot-reload watches a trigger FILE next to the project on disk. A web build
+	# has no such folder — `res://` lives inside the pck, and the browser sandbox
+	# has no path to globalize — so the timer would stat a path that can never
+	# exist, twice a second, for the whole session.
+	if OS.has_feature("web"):
+		return
+
 	_trigger_path = ProjectSettings.globalize_path("res://") + ".hot-reload"
 	_timer = Timer.new()
 	_timer.wait_time = 0.5
