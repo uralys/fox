@@ -145,7 +145,7 @@ const payloadEnv = (report) => {
   return envs.length === 1 ? envs[0] : null;
 };
 
-const confirmPayload = async ({logger, title, details, contentRoot, env, target, projectVersion, version, report}) => {
+const confirmPayload = async ({logger, title, details, contentRoot, env, target, projectVersion, version, report, assumeYes}) => {
   // The env is read back from the payload whenever the folders carry it, so the
   // chip names what is IN the folder rather than what was asked for.
   const bakedEnv = payloadEnv(report) || env;
@@ -179,6 +179,14 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, target,
   // confirm is enough. When it does not, refusing is not the useful reply — the
   // useful reply is the export that would fix it, offered first and by default.
   if (version === projectVersion && !mismatched.length) {
+    // `--yes` answers THIS confirm and only this one: the payload matches the
+    // repo and every folder agrees, so there is one sensible answer and a
+    // scripted loop should not stop on it.
+    if (assumeYes) {
+      logger.log(`--yes: uploading ${version} ${destination}`);
+      return UPLOAD;
+    }
+
     const {go} = await inquirer.prompt([
       {message: `upload ${version} ${destination}?`, name: 'go', type: 'confirm', default: true}
     ]);
@@ -187,6 +195,14 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, target,
   }
 
   logger.warn(`payload is ${version} while project.godot is ${projectVersion}`);
+
+  // ⛔ `--yes` deliberately does NOT reach here. A payload that disagrees with the
+  // repo is exactly the case where the right answer depends on what the person
+  // meant, and uploading the wrong build to a store is not undoable.
+  if (assumeYes) {
+    logger.error('--yes refuses a mismatched payload: export first, or answer the prompt yourself');
+    return EXIT;
+  }
 
   const {choice} = await inquirer.prompt([
     {
@@ -354,7 +370,7 @@ const isPlaceholder = (value) => typeof value === 'string' && value.startsWith('
 // export folder, show it, and let the answer be the export that would fix it.
 // Returns the version to publish, or null when nothing should be uploaded.
 
-const settleOnPayload = async ({settings, logger, title, env, target, contentRoot, folders, details}) => {
+const settleOnPayload = async ({settings, logger, title, env, target, contentRoot, folders, details, assumeYes}) => {
   const projectVersion = readProjectVersion();
   let report = verifyContent(contentRoot, folders, logger);
 
@@ -374,7 +390,8 @@ const settleOnPayload = async ({settings, logger, title, env, target, contentRoo
       target,
       projectVersion,
       version,
-      report
+      report,
+      assumeYes
     });
 
     if (decision !== EXPORT) {
@@ -415,7 +432,7 @@ const runButler = (folder, itchTarget, version) =>
     butler.on('close', (code) => resolve(code === 0));
   });
 
-const publishToItch = async (settings, {env, store}) => {
+const publishToItch = async (settings, {env, store, assumeYes}) => {
   const {core} = settings;
   const {user, game, channels} = store;
 
@@ -446,7 +463,8 @@ const publishToItch = async (settings, {env, store}) => {
     target: 'itch',
     contentRoot,
     folders: channels,
-    details
+    details,
+    assumeYes
   });
 
   if (!version) {
@@ -486,6 +504,11 @@ const publish = async (settings, params) => {
   // missing is asked for. A first argument naming an env rather than a store is
   // read as one — `fox publish demo staging` predates the target axis and still
   // means the demo on Steam.
+  // `--yes` is stripped before the positional reading, so it can sit anywhere on
+  // the line without being mistaken for a store or an env.
+  const assumeYes = params.includes('--yes');
+  params = params.filter((param) => param !== '--yes');
+
   const knownTargets = publishableTargets({publish: config});
   const argTarget = knownTargets.includes(params[0]) ? params[0] : null;
   const rest = argTarget ? params.slice(1) : params;
@@ -517,15 +540,15 @@ const publish = async (settings, params) => {
   });
 
   if (target === 'itch') {
-    return publishToItch(settings, {env, store});
+    return publishToItch(settings, {env, store, assumeYes});
   }
 
-  return publishToSteam(settings, {env, store, argBranch, state});
+  return publishToSteam(settings, {env, store, argBranch, state, assumeYes});
 };
 
 // -----------------------------------------------------------------------------
 
-const publishToSteam = async (settings, {env, store, argBranch, state}) => {
+const publishToSteam = async (settings, {env, store, argBranch, state, assumeYes}) => {
   const {core} = settings;
 
   const remembered = (state.branches || {})[env];
@@ -578,7 +601,8 @@ const publishToSteam = async (settings, {env, store, argBranch, state}) => {
       login,
       branch: branch || '(none — build stays unassigned)',
       env: envChip(env)
-    }
+    },
+    assumeYes
   });
 
   if (!version) {

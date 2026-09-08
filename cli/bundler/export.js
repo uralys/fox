@@ -574,7 +574,48 @@ const inquirePlatforms = async (presets, env, target) => {
 // `forcedEnv` / `forcedTarget` are how `fox publish` re-exports the build it is
 // about to upload: the caller already knows both answers, so asking would only be
 // a chance to get one wrong.
-const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
+// --------- non-interactive mode
+//
+// Every prompt below has an argument that answers it, so a scripted run never
+// stops on one. This is what lets a perf loop export the very build it is about
+// to publish and measure, over and over, without a human in the terminal:
+//
+//   fox export --env demo --target itch --platform web
+//
+// Only the answers given are forced; a missing one is still asked for, so the
+// interactive path is untouched. `all` is accepted for --platform.
+export const readExportArgs = (params = []) => {
+  const value = (name) => {
+    const index = params.indexOf(`--${name}`);
+    if (index >= 0 && params[index + 1] && !params[index + 1].startsWith('--')) {
+      return params[index + 1];
+    }
+    const inline = params.find((param) => param.startsWith(`--${name}=`));
+    return inline ? inline.slice(name.length + 3) : null;
+  };
+
+  return {
+    forcedEnv: value('env'),
+    forcedTarget: value('target'),
+    forcedPlatform: value('platform')
+  };
+};
+
+// A platform is named on the command line the way a human says it ("web",
+// "windows"), never with the exact casing of the Godot preset ("Web Desktop").
+const matchPlatform = (available, asked) => {
+  if (!asked) {
+    return null;
+  }
+  if (asked === ALL) {
+    return available;
+  }
+  const wanted = asked.toLowerCase();
+  const found = available.filter((platform) => platform.toLowerCase().startsWith(wanted));
+  return found.length ? found : [];
+};
+
+const exportBundle = async (settings, {forcedEnv, forcedTarget, forcedPlatform} = {}) => {
   const {core: coreConfig, bundles} = settings;
   foxLogger.log('Exporting a bundle...');
 
@@ -657,7 +698,15 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget} = {}) => {
 
   // ---------
 
-  const platforms = await inquirePlatforms(presets, env, target);
+  const available = platformsFor(presets, env, target);
+  const platforms = forcedPlatform
+    ? matchPlatform(available, forcedPlatform)
+    : await inquirePlatforms(presets, env, target);
+
+  if (forcedPlatform && !platforms.length) {
+    foxLogger.error(`--platform ${forcedPlatform} matches none of: ${available.join(', ')}`);
+    return;
+  }
 
   // --------- every target must resolve to a preset before any versioning
 

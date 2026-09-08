@@ -17,7 +17,7 @@ import generateIcons from './generate-icons.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateScreenshots from './generate-screenshots.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
-import exportBundle from './bundler/export.js';
+import exportBundle, {readExportArgs} from './bundler/export.js';
 import exportWeb from './bundler/export-web.js';
 import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
@@ -220,7 +220,7 @@ const cli = async (yargs, params) => {
       return await importAssets(core.godot, params);
     }
     case EXPORT: {
-      exportBundle(settings);
+      await exportBundle(settings, readExportArgs(params));
       return;
     }
     case EXPORT_WEB: {
@@ -292,9 +292,9 @@ const execute = async () => {
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
-    .command(EXPORT, 'export a bundle for one of your presets')
+    .command(EXPORT, 'export a bundle for one of your presets (--env / --target / --platform to skip the prompts)')
     .command(EXPORT_WEB, 'scriptable HTML5 export, NOT shippable (no bundle bake) — use `fox export` to ship a web build')
-    .command(PUBLISH, 'upload exported builds to Steam via steamcmd (fox publish [demo] [branch])')
+    .command(PUBLISH, 'upload exported builds to a store (fox publish [store] [env] [branch], --yes to skip the confirm)')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(LS, 'list local exports and confront them with every store: Steam Deck and itch.io')
     .command(LS_STEAM, 'list local Steam exports and the builds installed on the Steam Deck, and compare them')
