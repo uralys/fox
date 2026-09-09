@@ -23,6 +23,20 @@ class_name HexSocketDraw
 
 const SettingsTokens = DesignTokens.SettingsTokens
 
+# Hover glow stamp. GLOW_EXTENT is how far past the socket edge the quad reaches
+# (the halo used to inflate the silhouette to 1.22, plus room for the fade);
+# HALO_EXTENT is where the halo actually dies. 128 px for a socket drawn at 54
+# to 64: the downscale antialiases the chamfers for free.
+const GLOW_STAMP_SIZE := 128
+const GLOW_EXTENT := 1.30
+const HALO_EXTENT := 1.22
+const HALO_ALPHA := 0.21
+const GLOW_PEAK := 0.38
+const GLOW_FALLOFF := 1.5
+const HALO_FALLOFF := 1.3
+
+static var _GLOW_STAMPS: Dictionary = {}
+
 
 # Returns the 8-vertex chamfered octagon polygon (origin at 0,0, square
 # `side` x `side`). Delegates to `OctagonGeom.points` with a chamfer equal to
@@ -51,17 +65,13 @@ static func draw_socket(
 	var translated: PackedVector2Array = _translate_polygon(polygon, origin)
 	var center: Vector2 = origin + Vector2(side, side) * 0.5
 
-	# Outer drop-shadow halo (simulates CSS drop-shadow blur on hover).
+	# Outer halo + inner ignition glow, in ONE textured quad (see `_glow_stamp`).
 	if hover_progress > 0.0:
-		_draw_outer_halo(target, translated, center, color, hover_progress)
+		_draw_glow(target, center, side, color, hover_progress)
 
 	# Idle fill ramps to hover fill.
 	var fill_alpha: float = lerp(fill_alpha_idle, fill_alpha_hover, hover_progress)
 	target.draw_colored_polygon(translated, Color(color.r, color.g, color.b, fill_alpha))
-
-	# Inner ignition glow — radial gradient masked by the octagon.
-	if hover_progress > 0.0:
-		_draw_ignition_glow(target, translated, center, color, hover_progress)
 
 	# Hairline border.
 	var border_alpha: float = lerp(border_alpha_idle, border_alpha_hover, hover_progress)
@@ -155,11 +165,12 @@ static func draw_spark_dot(
 	var dot_radius: float = dot_size * 0.5 * scale_factor
 	var dot_center: Vector2 = Vector2(center.x, origin.y - 2.0 + y_off)
 
-	# Soft halo (mirrors `box-shadow: 0 0 8px currentColor`).
-	target.draw_circle(dot_center, dot_radius * 3.0, Color(color.r, color.g, color.b, alpha * 0.20))
-	target.draw_circle(dot_center, dot_radius * 1.8, Color(color.r, color.g, color.b, alpha * 0.45))
+	# Soft halo (mirrors `box-shadow: 0 0 8px currentColor`). `Dot` rather than
+	# `draw_circle`: a disc stamp batches with its neighbours, a polygon does not.
+	Dot.draw(target, dot_center, dot_radius * 3.0, Color(color.r, color.g, color.b, alpha * 0.20))
+	Dot.draw(target, dot_center, dot_radius * 1.8, Color(color.r, color.g, color.b, alpha * 0.45))
 	# Bright core.
-	target.draw_circle(dot_center, dot_radius, Color(color.r, color.g, color.b, alpha))
+	Dot.draw(target, dot_center, dot_radius, Color(color.r, color.g, color.b, alpha))
 
 
 # ------------------------------------------------------------------------------
@@ -175,31 +186,60 @@ static func _translate_polygon(polygon: PackedVector2Array, offset: Vector2) -> 
 	return out
 
 
-# Simulates `filter: drop-shadow(0 0 10px color)` by drawing progressively
-# larger silhouettes with decreasing alpha behind the main polygon.
-static func _draw_outer_halo(target: CanvasItem, polygon: PackedVector2Array, center: Vector2, color: Color, hover_progress: float) -> void:
-	var layers: int = 3
-	for i in range(layers):
-		var t: float = float(i + 1) / float(layers)
-		var inflate: float = 1.0 + 0.22 * t
-		var alpha: float = 0.22 * (1.0 - t) * hover_progress
-		var ring: PackedVector2Array = PackedVector2Array()
-		ring.resize(polygon.size())
-		for j in range(polygon.size()):
-			ring[j] = center + (polygon[j] - center) * inflate
-		target.draw_colored_polygon(ring, Color(color.r, color.g, color.b, alpha))
+# The hover glow: outer halo AND inner ignition, in a SINGLE draw call.
+#
+# Both used to be stacks of `draw_colored_polygon` — 3 inflated silhouettes for
+# the halo, 5 shrunken ones for the ignition — rebuilt and repainted every frame
+# while the hover ramp ran. A polygon opens a new batch each time, so the pair
+# cost 8 draw calls per socket; a textured quad costs none of its own, batching
+# with its neighbours (see `Dot`).
+#
+# The stamp is the composite of the two ramps, baked once per cut ratio into a
+# white texture carrying the coverage in its alpha. `modulate` then supplies both
+# the socket colour and the hover progress, so the whole animation is one tint of
+# one quad. The visible change is that the 8 discrete steps become a continuous
+# gradient.
+static func _draw_glow(target: CanvasItem, center: Vector2, side: float, color: Color, hover_progress: float) -> void:
+	var span: float = side * GLOW_EXTENT
+	target.draw_texture_rect(
+		_glow_stamp(),
+		Rect2(center - Vector2(span, span) * 0.5, Vector2(span, span)),
+		false,
+		Color(color.r, color.g, color.b, hover_progress))
 
 
-# Approximates `radial-gradient(circle at center, currentColor, transparent 60%)`
-# by stacking concentric scaled-down polygons (bright at center → transparent).
-static func _draw_ignition_glow(target: CanvasItem, polygon: PackedVector2Array, center: Vector2, color: Color, hover_progress: float) -> void:
-	var layers: int = 5
-	var peak: float = 0.22 * hover_progress
-	for i in range(layers):
-		var t: float = float(i + 1) / float(layers) # 0.2 → 1.0 (outer extent)
-		var alpha: float = peak * (1.0 - t)
-		var inner: PackedVector2Array = PackedVector2Array()
-		inner.resize(polygon.size())
-		for j in range(polygon.size()):
-			inner[j] = center.lerp(polygon[j], t)
-		target.draw_colored_polygon(inner, Color(color.r, color.g, color.b, alpha))
+static func _glow_stamp(cut_ratio: float = SettingsTokens.HEX_CUT_RATIO) -> ImageTexture:
+	if _GLOW_STAMPS.has(cut_ratio):
+		return _GLOW_STAMPS[cut_ratio]
+	var stamp: ImageTexture = _build_glow_stamp(cut_ratio)
+	_GLOW_STAMPS[cut_ratio] = stamp
+	return stamp
+
+
+# `s` is the scale at which the octagon boundary passes through a pixel: 0 at the
+# centre, 1 on the edge, GLOW_EXTENT at the corner of the stamp. For a chamfered
+# square it is closed-form — the octagon is the intersection of |x|, |y| and the
+# 45° chamfer half-planes, all homogeneous — so no polygon rasterisation is
+# needed. Alphas are the source-over composite of the two ramps they replace,
+# fitted to the brightness the stacks produced at full hover.
+static func _build_glow_stamp(cut_ratio: float) -> ImageTexture:
+	var image: Image = Image.create_empty(GLOW_STAMP_SIZE, GLOW_STAMP_SIZE, false, Image.FORMAT_RGBA8)
+	var diagonal: float = 1.0 - cut_ratio
+	for py in range(GLOW_STAMP_SIZE):
+		for px in range(GLOW_STAMP_SIZE):
+			var x: float = absf(((float(px) + 0.5) / float(GLOW_STAMP_SIZE) - 0.5) * GLOW_EXTENT)
+			var y: float = absf(((float(py) + 0.5) / float(GLOW_STAMP_SIZE) - 0.5) * GLOW_EXTENT)
+			var s: float = maxf(maxf(x, y) * 2.0, (x + y) / diagonal)
+
+			var glow: float = 0.0
+			if s < 1.0:
+				glow = GLOW_PEAK * pow(1.0 - s, GLOW_FALLOFF)
+
+			var halo: float = 0.0
+			if s <= 1.0:
+				halo = HALO_ALPHA
+			elif s < HALO_EXTENT:
+				halo = HALO_ALPHA * pow(1.0 - (s - 1.0) / (HALO_EXTENT - 1.0), HALO_FALLOFF)
+
+			image.set_pixel(px, py, Color(1.0, 1.0, 1.0, 1.0 - (1.0 - halo) * (1.0 - glow)))
+	return ImageTexture.create_from_image(image)
