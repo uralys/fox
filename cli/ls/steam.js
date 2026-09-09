@@ -1,15 +1,16 @@
 // -----------------------------------------------------------------------------
-// `fox ls:steam` answers one question: is the build installed on the Steam Deck
-// the one sitting in my export folder?
+// `fox ls:steam` answers one question: are the bytes in my export folder the
+// ones Steam serves — and the ones the Deck runs?
 //
-// Neither half can answer it alone. Steam knows a BuildID and a branch but
-// nothing about what those bytes contain; the export folder knows a version but
-// not whether Steam ever shipped it. So both sides are read and confronted on
-// the PCK — the payload itself, identical across platforms, unlike the
-// executable.
+// No half can answer it alone. Steam knows a BuildID and a manifest but nothing
+// about what those bytes contain; the export folder knows a version but not
+// whether Steam ever shipped it; the Deck knows what it downloaded but not what
+// the branch points at now. So three sides are read and joined on the only
+// identifier each pair shares: the MANIFEST between the store and the last
+// upload, the PCK sha between the Deck and the export folder.
 //
-// The Deck is optional by design: unreachable simply means the local half is
-// reported on its own. It is a listing, never a gate.
+// Store and Deck are both optional by design: unreachable simply means the local
+// half is reported on its own. It is a listing, never a gate.
 
 import path from 'path';
 import {execFile} from 'child_process';
@@ -18,13 +19,16 @@ import {execFile} from 'child_process';
 
 import {createLogger, foxLogger} from '../logger.js';
 import {envChip, targetChip} from '../bundler/export.js';
+import {formatStamp} from '../bundler/baked-bundle.js';
 import {exportRoot, publishableEnvs, readPublishConfig} from '../bundler/publish-config.js';
-import {readLocalSlots, localLine, warnOnLocalVersions, SHORT_SHA} from './local.js';
+import {readLocalSlots, localLine, localVersions, warnOnLocalVersions, SHORT_SHA} from './local.js';
+import {readSteamStore, readLastUpload, storeSlot, DEFAULT_BRANCH} from './steam-store.js';
 
 // -----------------------------------------------------------------------------
 
 const localLogger = createLogger({name: 'Local', color: 'green'});
 const deckLogger = createLogger({name: 'SteamDeck', color: 'magenta'});
+const steamLogger = createLogger({name: 'Steam', color: 'magenta'});
 
 const DEFAULT_HOST = 'deck@steamdeck.local';
 const DEFAULT_TIMEOUT = 8;
@@ -147,22 +151,116 @@ const deckLine = (app) => {
 };
 
 // -----------------------------------------------------------------------------
+// What the store serves, in one line per depot.
 
-const reportTarget = ({label, appId, contentRoot, depots, deck, projectVersion}) => {
+const storeLine = (remote) => {
+  if (!remote) {
+    return 'never shipped on this branch';
+  }
+
+  const build = remote.buildId ? `build ${remote.buildId}` : 'build unknown';
+  const manifest = remote.manifest ? ` — manifest ${remote.manifest}` : '';
+  const updated = remote.updatedAt ? ` — set live ${formatStamp(remote.updatedAt)}` : '';
+
+  return `${build} on "${remote.branch}"${manifest}${updated}`;
+};
+
+// -----------------------------------------------------------------------------
+// The store verdict: does the branch serve the manifests this machine last
+// uploaded? Anything that breaks the join is named rather than guessed at — a
+// silent "not live" would be indistinguishable from a listing that simply cannot
+// tell.
+
+const reportStore = ({label, appId, contentRoot, depots, branch, app, local}) => {
+  const upload = readLastUpload(appId, Object.keys(depots));
+  const absoluteContentRoot = path.resolve(process.cwd(), contentRoot);
+  const versions = localVersions(local);
+
+  let diverged = false;
+  const live = [];
+
+  Object.keys(depots).forEach((depotId) => {
+    const remote = storeSlot(app, branch, depotId);
+    const uploaded = upload.depots[depotId] || {};
+
+    if (!remote) {
+      steamLogger.warn(`${label}: depot ${depotId} is not served on branch "${branch}"`);
+      diverged = true;
+      return;
+    }
+
+    if (!uploaded.manifest) {
+      // Nothing to join on: another machine published, or _build was wiped.
+      steamLogger.log(
+        `${label}: depot ${depotId} serves manifest ${remote.manifest} — no local upload record to compare it to`
+      );
+      diverged = true;
+      return;
+    }
+
+    if (uploaded.contentPath && !uploaded.contentPath.startsWith(absoluteContentRoot)) {
+      steamLogger.warn(
+        `${label}: the last upload of depot ${depotId} came from ${uploaded.contentPath}, not from ${contentRoot}/`
+      );
+      diverged = true;
+      return;
+    }
+
+    if (remote.manifest !== uploaded.manifest) {
+      steamLogger.warn(
+        `${label}: depot ${depotId} serves manifest ${remote.manifest} while the last upload created ${uploaded.manifest}`
+      );
+      diverged = true;
+      return;
+    }
+
+    live.push(depotId);
+  });
+
+  if (upload.buildId && app && storeSlot(app, branch, Object.keys(depots)[0])) {
+    const head = storeSlot(app, branch, Object.keys(depots)[0]);
+
+    if (head.buildId && head.buildId !== upload.buildId) {
+      steamLogger.log(
+        `${label}: branch "${branch}" is on build ${head.buildId}, the last upload from here was ${upload.buildId}`
+      );
+    }
+  }
+
+  if (diverged || live.length !== Object.keys(depots).length || !live.length) {
+    return;
+  }
+
+  const version = versions.length === 1 ? versions[0] : null;
+  const build = upload.buildId ? ` (build ${upload.buildId})` : '';
+
+  steamLogger.success(
+    `${label}: appId ${appId} is live${version ? ` in ${version}` : ''} on branch "${branch}" on all ${live.length} depots${build}`
+  );
+};
+
+// -----------------------------------------------------------------------------
+
+const reportTarget = ({label, appId, contentRoot, depots, branch, store, deck, projectVersion}) => {
   const absoluteContentRoot = path.resolve(process.cwd(), contentRoot);
   const local = readLocalSlots(absoluteContentRoot, depots);
+  const app = store && store.reachable ? store.apps[appId] : null;
 
   localLogger.reset();
   localLogger.log(`${targetChip('steam')} ${envChip(label)} — appId ${appId} — ${contentRoot}/`);
 
   const details = {};
   local.forEach((depot) => {
-    details[depot.folder] = localLine(depot);
+    const line = localLine(depot);
+
+    details[depot.folder] = app
+      ? `${line}\n  live: ${storeLine(storeSlot(app, branch, depot.slot))}`
+      : line;
   });
 
   if (deck && deck.reachable) {
-    const app = deck.apps[appId];
-    details['steam deck'] = app && app.installed === 'yes' ? deckLine(app) : 'not installed';
+    const installed = deck.apps[appId];
+    details['steam deck'] = installed && installed.installed === 'yes' ? deckLine(installed) : 'not installed';
   }
 
   localLogger.data(details);
@@ -171,39 +269,44 @@ const reportTarget = ({label, appId, contentRoot, depots, deck, projectVersion})
 
   warnOnLocalVersions(localLogger, local, projectVersion, label);
 
+  if (app) {
+    steamLogger.reset();
+    reportStore({label, appId, contentRoot, depots, branch, app, local});
+  }
+
   if (!deck || !deck.reachable) {
     return;
   }
 
-  const app = deck.apps[appId];
+  const installed = deck.apps[appId];
 
-  if (!app || app.installed !== 'yes') {
+  if (!installed || installed.installed !== 'yes') {
     return;
   }
 
-  if (app.wantedBranch !== app.mountedBranch) {
+  if (installed.wantedBranch !== installed.mountedBranch) {
     deckLogger.warn(
-      `${label}: branch "${app.wantedBranch || 'default'}" requested but "${app.mountedBranch || 'default'}" is mounted — restart Steam`
+      `${label}: branch "${installed.wantedBranch || 'default'}" requested but "${installed.mountedBranch || 'default'}" is mounted — restart Steam`
     );
   }
 
-  if (app.targetBuildId && app.targetBuildId !== app.buildid) {
-    deckLogger.warn(`${label}: build ${app.buildid} installed, ${app.targetBuildId} available — update pending`);
+  if (installed.targetBuildId && installed.targetBuildId !== installed.buildid) {
+    deckLogger.warn(`${label}: build ${installed.buildid} installed, ${installed.targetBuildId} available — update pending`);
   }
 
   const reference = local.find(({folder}) => folder === DECK_PLATFORM);
 
-  if (!reference || !reference.sha || !app.sha) {
+  if (!reference || !reference.sha || !installed.sha) {
     return;
   }
 
-  if (reference.sha === app.sha) {
-    deckLogger.success(`${label}: the deck runs the exact ${contentRoot}/${DECK_PLATFORM} payload (${app.version})`);
+  if (reference.sha === installed.sha) {
+    deckLogger.success(`${label}: the deck runs the exact ${contentRoot}/${DECK_PLATFORM} payload (${installed.version})`);
     return;
   }
 
   deckLogger.warn(
-    `${label}: the deck PCK is NOT the local one — deck ${app.version || '?'} ${app.sha.slice(0, SHORT_SHA)}, local ${reference.version || '?'} ${reference.sha.slice(0, SHORT_SHA)}`
+    `${label}: the deck PCK is NOT the local one — deck ${installed.version || '?'} ${installed.sha.slice(0, SHORT_SHA)}, local ${reference.version || '?'} ${reference.sha.slice(0, SHORT_SHA)}`
   );
 };
 
@@ -225,11 +328,21 @@ const lsSteam = async (settings, {projectVersion}) => {
 
   const host = (config && config.host) || DEFAULT_HOST;
   const timeout = (config && config.timeout) || DEFAULT_TIMEOUT;
+  const appIds = targets.map(({steam}) => steam.appId);
 
-  const deck = await readDeck(host, timeout, targets.map(({steam}) => steam.appId));
+  // Both remote reads are independent and both are slow: the Deck waits on SSH,
+  // steamcmd on a session and the appinfo cache.
+  const [deck, store] = await Promise.all([
+    readDeck(host, timeout, appIds),
+    readSteamStore((publish.steam || {}).login, appIds)
+  ]);
+
+  if (!store.reachable) {
+    // Not an error: the listing is still worth printing without it.
+    steamLogger.log(`Steamworks not read — local builds only (${store.reason})`);
+  }
 
   if (!deck.reachable) {
-    // Not an error: the listing is still worth printing without it.
     deckLogger.log(`${host} not connected — local builds only${deck.reason ? ` (${deck.reason})` : ''}`);
   }
 
@@ -239,6 +352,8 @@ const lsSteam = async (settings, {projectVersion}) => {
       appId: steam.appId,
       contentRoot: steam.contentRoot || exportRoot(env, 'steam'),
       depots: steam.depots,
+      branch: steam.branch || DEFAULT_BRANCH,
+      store,
       deck,
       projectVersion
     });
