@@ -15,6 +15,7 @@ import { foxLogger, godotLogger } from './logger.js';
 
 import generateIcons from './generate-icons.js';
 import generateSplashscreens from './generate-splashscreens.js';
+import generateBootSplash from './generate-boot-splash.js';
 import generateScreenshots from './generate-screenshots.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import exportBundle, {readExportArgs} from './bundler/export.js';
@@ -40,6 +41,7 @@ const LS_ITCH = 'ls:itch';
 
 const GENERATE_ICONS = 'generate:icons';
 const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
+const GENERATE_BOOT_SPLASH = 'generate:boot-splash';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
 const GENERATE_STEAM_SCREENSHOTS = 'generate:steam-screenshots';
 const UPDATE_PO_FILES = 'update-po-files';
@@ -63,6 +65,7 @@ const commands = [
   GENERATE_SCREENSHOTS,
   GENERATE_STEAM_SCREENSHOTS,
   GENERATE_SPLASHSCREENS,
+  GENERATE_BOOT_SPLASH,
   UPDATE_PO_FILES,
   RUN_EDITOR,
   RUN_GAME,
@@ -88,9 +91,11 @@ const getSettings = async (command, defaultConfig) => {
     foxLogger.log(`Reading ${CONFIG_FILE}`);
     config = (await import(pathToFileURL(configPath), { with: { type: "json" } })).default;
 
+    // Only the command block falls back: swapping the whole config in would
+    // also swap `bundles`, and every generated asset would land under the
+    // example bundle of the default config instead of the project's own.
     if (!config[command] && defaultConfig[command]) {
       foxLogger.warn(`Using default config for command "${command}"`);
-      config = defaultConfig;
     }
   } catch (e) {
     foxLogger.warn(`Could not find ${CONFIG_FILE}, using default config for "${command}"`);
@@ -123,11 +128,15 @@ const verifyConfig = (config, defaultConfig) => {
     const projectPath = path.resolve(process.cwd(), './');
     const output = `${projectPath}/${config.output}`;
 
-    foxLogger.log(`Verifying output path`);
-    foxLogger.data({output});
+    // An `output` naming a file (the boot splash frame) only needs its parent
+    // directory: creating `boot-splash.png` as a folder would break the render.
+    const directory = path.extname(output) ? path.dirname(output) : output;
 
-    if (!fs.existsSync(output)) {
-      shell.mkdir('-p', output);
+    foxLogger.log(`Verifying output path`);
+    foxLogger.data({output: directory});
+
+    if (!fs.existsSync(directory)) {
+      shell.mkdir('-p', directory);
       foxLogger.success('Created output directory');
     }
   }
@@ -252,10 +261,13 @@ const cli = async (yargs, params) => {
 
   switch (command) {
     case GENERATE_ICONS: {
-      return generateIcons(config);
+      return generateIcons(config, bundles);
     }
     case GENERATE_SPLASHSCREENS: {
-      return generateSplashscreens(config);
+      return generateSplashscreens(config, bundles);
+    }
+    case GENERATE_BOOT_SPLASH: {
+      return generateBootSplash(config);
     }
     case UPDATE_PO_FILES: {
       const { poFiles, potTemplate } = config;
@@ -296,10 +308,17 @@ const execute = async () => {
     .command(LS_STEAM, 'list local Steam exports and the builds installed on the Steam Deck, and compare them')
     .command(LS_ITCH, 'list local itch exports and the builds live on the itch.io page, and compare them')
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
-    .command(GENERATE_ICONS, 'generate icons, using a base 1200x1200 image')
+    .command(
+      GENERATE_ICONS,
+      'generate icons from a base 1200x1200 image, per bundle and per platform, into assets/generated/<bundleId>/{ios,android,desktop,web}'
+    )
     .command(
       GENERATE_SPLASHSCREENS,
-      'generate splashscreens, extending a background color from a centered base image'
+      'generate the iOS launch storyboard images (@2x, @3x) into assets/generated/<bundleId>/ios'
+    )
+    .command(
+      GENERATE_BOOT_SPLASH,
+      'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from fox/components/splash/splash-screen.gd'
     )
     .command(
       GENERATE_SCREENSHOTS,

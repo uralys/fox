@@ -292,6 +292,59 @@ const unzipIPA = (bundleName) => {
 };
 
 // -----------------------------------------------------------------------------
+// The generated assets are gitignored: on a fresh clone, or after a bundle was
+// added without regenerating, Godot exports happily with a missing icon and the
+// store rejects the build hours later. Naming the file and the command that
+// makes it turns that into a five-second fix, before a single byte is written.
+
+const GENERATED_RES_PREFIX = 'res://assets/generated/';
+
+const generateCommandFor = (resPath) => {
+  // `boot-splash.png` sits at the root of the generated folder and is spelled
+  // with a dash, so it has to be matched before the storyboard images: a
+  // `/splash` test alone sends it to the command that never creates it.
+  if (resPath.includes('boot-splash')) {
+    return 'fox generate:boot-splash';
+  }
+
+  if (resPath.includes('/splash')) {
+    return 'fox generate:splashscreens';
+  }
+
+  return 'fox generate:icons';
+};
+
+export const verifyGeneratedAssets = (preset) => {
+  const declared = [...new Set(
+    Object.values(preset.options || {}).filter(
+      (value) => typeof value === 'string' && value.startsWith(GENERATED_RES_PREFIX)
+    )
+  )];
+
+  const missing = declared.filter(
+    (resPath) => !fs.existsSync(path.resolve(process.cwd(), resPath.replace('res://', '')))
+  );
+
+  if (!missing.length) {
+    godotLogger.success(`${declared.length} generated asset(s) in place`);
+    return true;
+  }
+
+  foxLogger.error(`${preset.name} declares ${missing.length} generated asset(s) that do not exist:`);
+  missing.forEach((resPath) => foxLogger.error(`  ${resPath}`));
+
+  [...new Set(missing.map(generateCommandFor))].forEach((command) =>
+    foxLogger.log(`Run \`${command}\` then export again`)
+  );
+
+  // `fox export` is called from scripts and CI: a refused export has to be
+  // visible in the exit code, not only in the terminal.
+  process.exitCode = 1;
+
+  return false;
+};
+
+// -----------------------------------------------------------------------------
 
 const exportOnePreset = async (settings, presets, bundleSettings) => {
   const {core: coreConfig, bundles} = settings;
@@ -305,10 +358,14 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
     coreConfig,
     preset,
     bundles[bundleId],
-    newVersion
+    Object.keys(bundles)
   );
 
   writePresets(presets);
+
+  if (!verifyGeneratedAssets(preset)) {
+    return false;
+  }
 
   // ---------
 

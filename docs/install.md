@@ -6,13 +6,21 @@
 |------|-----------|---------|
 | Godot 4 | everything | [godotengine.org](https://godotengine.org/download) |
 | NodeJS >= 22 | the `fox` CLI | [nodejs.org](https://nodejs.org) |
-| ImageMagick 7 | `fox generate:icons`, `generate:splashscreens`, `generate:screenshots`, `generate:steam-screenshots` | `brew install imagemagick` |
+| ImageMagick 7 | every `fox generate:*` command | `brew install imagemagick` |
+| iconutil | the macOS `.icns` desktop icon written by `fox generate:icons` | shipped with macOS, nothing to install |
 | bundletool | inspecting Android `.aab` bundles, see [exporting/android](./exporting/android.md) | `brew install bundletool` |
 | libimobiledevice | installing iOS builds on a device, see [exporting/ios](./exporting/ios.md) | `brew install libimobiledevice` |
 
 ImageMagick 7 provides the `magick` binary. The deprecated `convert` shim is
 never used: if `magick` is missing from your `PATH`, the `generate:*` commands
 stop right away with a non-zero exit code instead of pretending to work.
+
+`iconutil` is the only tool able to write a real `.icns`: ImageMagick silently
+writes a PNG wearing an `.icns` extension. It ships with macOS, so nothing has
+to be installed there. On Linux and Windows `fox generate:icons` **skips the
+`.icns` output with a warning** and keeps going: the run stays green, and the
+`icon.png` and `icon.ico` desktop icons are produced as usual. Only a macOS
+export needs the `.icns`, and only macOS can build it.
 
 ## starting from scratch
 

@@ -5,7 +5,7 @@
   },
   "generate:icons": {
     "input": "_release/images/",
-    "output": "assets/generated/icons",
+    "output": "assets/generated",
     "base": "icon-1200x1200.png",
     "desktop": "icon-desktop-512x512.png",
     "background": "adaptive-background.png",
@@ -13,7 +13,12 @@
   },
   "generate:splashscreens": {
     "input": "_release/images/base-splashscreen.png",
-    "output": "assets/generated/splashscreens"
+    "output": "assets/generated"
+  },
+  "generate:boot-splash": {
+    "input": "res://fox/assets/splash/logo-uralys.png",
+    "output": "assets/generated/boot-splash.png",
+    "backgroundColor": "#000000"
   },
   "generate:screenshots": {
     "input": "_release/images/raw-shots",
