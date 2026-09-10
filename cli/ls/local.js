@@ -6,13 +6,13 @@
 // are read the same way here, and only the confrontation with the remote side
 // differs (steam.js, itch.js).
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // -----------------------------------------------------------------------------
 
-import {envChip} from '../bundler/export.js';
-import {readBakedBundle, newestMtime, formatStamp, findPck, sha256} from '../bundler/baked-bundle.js';
+import { findPck, formatStamp, newestMtime, readBakedBundle, sha256 } from '../bundler/baked-bundle.js';
+import { envChip } from '../bundler/export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -32,16 +32,16 @@ export const readLocalSlots = (contentRoot, slots) =>
     const slotPath = path.resolve(contentRoot, folder);
 
     if (!fs.existsSync(slotPath)) {
-      return {slot, folder, missing: true};
+      return { slot, folder, missing: true };
     }
 
     const files = fs.readdirSync(slotPath).filter((file) => !file.startsWith('.'));
 
     if (!files.length) {
-      return {slot, folder, empty: true};
+      return { slot, folder, empty: true };
     }
 
-    const {version, env} = readBakedBundle(slotPath, files);
+    const { version, env } = readBakedBundle(slotPath, files);
     const pck = findPck(slotPath, files);
 
     return {
@@ -52,7 +52,7 @@ export const readLocalSlots = (contentRoot, slots) =>
       pck,
       archive: files.find((file) => ARCHIVE_EXTENSIONS.some((extension) => file.endsWith(extension))),
       sha: pck ? sha256(path.join(slotPath, pck)) : null,
-      exportedAt: newestMtime(slotPath, files)
+      exportedAt: newestMtime(slotPath, files),
     };
   });
 
@@ -82,7 +82,7 @@ export const localLine = (slot) => {
 // it is what tells a half-finished export from a coherent one.
 
 export const localVersions = (slots) => [
-  ...new Set(slots.filter((slot) => slot.version).map(({version}) => version))
+  ...new Set(slots.filter((slot) => slot.version).map(({ version }) => version)),
 ];
 
 export const warnOnLocalVersions = (logger, slots, projectVersion, label) => {

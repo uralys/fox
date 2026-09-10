@@ -3,16 +3,16 @@
 // requires ImageMagick, see docs/install.md
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import shell from 'shelljs';
-import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
-import {screenshotsLogger} from './logger.js';
+import { ensureImageMagick, quote, runMagick } from './imagemagick.js';
+import { screenshotsLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
 const generateScreenshots = (config) => {
-  const {orientation, input, output, sizes} = config;
+  const { orientation, input, output, sizes } = config;
   const projectPath = path.resolve(process.cwd(), './');
 
   if (!ensureImageMagick(screenshotsLogger)) {
@@ -20,11 +20,11 @@ const generateScreenshots = (config) => {
   }
 
   screenshotsLogger.log('Generating screenshots');
-  screenshotsLogger.data({orientation, input, output});
+  screenshotsLogger.data({ orientation, input, output });
 
   screenshotsLogger.step(0, 'Verifying folders');
 
-  sizes.forEach(({name}) => {
+  sizes.forEach(({ name }) => {
     const sizeFolder = `${projectPath}/${output}/${name}`;
 
     if (!fs.existsSync(sizeFolder)) {
@@ -58,9 +58,9 @@ const generateScreenshots = (config) => {
           'center',
           '-extent',
           quote(resolution),
-          quote(outputPath)
+          quote(outputPath),
         ],
-        screenshotsLogger
+        screenshotsLogger,
       );
 
       if (!resized) {

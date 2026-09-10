@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 
-import {presetLogger} from '../logger.js';
+import { presetLogger } from '../logger.js';
 import { androidExtension, getApplicationName } from './export.js';
 import { toVersionNumber } from './versioning.js';
 
@@ -34,7 +34,7 @@ const FOLDER_BY_PLATFORM = {
   [MAC_OSX]: DESKTOP_FOLDER,
   [MACOS]: DESKTOP_FOLDER,
   [WINDOWS]: DESKTOP_FOLDER,
-  [LINUX]: DESKTOP_FOLDER
+  [LINUX]: DESKTOP_FOLDER,
 };
 
 // macOS only reads a real .icns, Windows only a real .ico; Linux takes the png.
@@ -42,7 +42,7 @@ const DESKTOP_ICON_FILE = {
   [MAC_OSX]: 'icon.icns',
   [MACOS]: 'icon.icns',
   [WINDOWS]: 'icon.ico',
-  [LINUX]: 'icon.png'
+  [LINUX]: 'icon.png',
 };
 
 // Windows stamps both into the exe metadata; Godot refuses anything but x.y.z[.w].
@@ -64,11 +64,9 @@ const updateMain = (preset, key, value) => {
 
 // -----------------------------------------------------------------------------
 
-const isGeneratedPath = (value) =>
-  typeof value === 'string' && value.startsWith(GENERATED_PREFIX);
+const isGeneratedPath = (value) => typeof value === 'string' && value.startsWith(GENERATED_PREFIX);
 
-const generatedPath = (bundleId, folder, file) =>
-  `${GENERATED_PREFIX}${bundleId}/${folder}/${file}`;
+const generatedPath = (bundleId, folder, file) => `${GENERATED_PREFIX}${bundleId}/${folder}/${file}`;
 
 // -----------------------------------------------------------------------------
 // Godot has no "exclude everything but this" filter, so the foreign folders are
@@ -90,13 +88,11 @@ const updateGeneratedFilters = (preset, bundleId, bundleIds) => {
     .filter((token) => token.length > 0 && !token.startsWith(`${GENERATED_ROOT}/`));
 
   const foreign = [
-    ...PLATFORM_FOLDERS.filter((name) => name !== folder).map(
-      (name) => `${GENERATED_ROOT}/${bundleId}/${name}/*`
-    ),
+    ...PLATFORM_FOLDERS.filter((name) => name !== folder).map((name) => `${GENERATED_ROOT}/${bundleId}/${name}/*`),
     ...bundleIds
       .filter((id) => id !== bundleId)
       .sort()
-      .map((id) => `${GENERATED_ROOT}/${id}/*`)
+      .map((id) => `${GENERATED_ROOT}/${id}/*`),
   ];
 
   updateMain(preset, 'exclude_filter', [...gameFilters, ...foreign].join(','));
@@ -127,18 +123,14 @@ const updateIOSIcons = (preset, bundleId) => {
 const ANDROID_ICON_FILES = {
   'launcher_icons/main_192x192': 'icon-192x192.png',
   'launcher_icons/adaptive_foreground_432x432': 'adaptive-foreground.png',
-  'launcher_icons/adaptive_background_432x432': 'adaptive-background.png'
+  'launcher_icons/adaptive_background_432x432': 'adaptive-background.png',
 };
 
 const updateAndroidIcons = (preset, bundleId) => {
   Object.keys(ANDROID_ICON_FILES)
     .filter((key) => isGeneratedPath(preset.options[key]))
     .forEach((key) => {
-      updateOptions(
-        preset,
-        key,
-        generatedPath(bundleId, ANDROID_FOLDER, ANDROID_ICON_FILES[key])
-      );
+      updateOptions(preset, key, generatedPath(bundleId, ANDROID_FOLDER, ANDROID_ICON_FILES[key]));
     });
 };
 
@@ -149,7 +141,7 @@ const updateAndroidIcons = (preset, bundleId) => {
 const WEB_ICON_FILES = {
   'progressive_web_app/icon_144x144': 'pwa-144x144.png',
   'progressive_web_app/icon_180x180': 'pwa-180x180.png',
-  'progressive_web_app/icon_512x512': 'pwa-512x512.png'
+  'progressive_web_app/icon_512x512': 'pwa-512x512.png',
 };
 
 const updateWebIcons = (preset, bundleId) => {
@@ -164,19 +156,11 @@ const updateDesktopIcons = (preset, bundleId) => {
   const iconFile = DESKTOP_ICON_FILE[preset.platform] || 'icon.png';
 
   if (isGeneratedPath(preset.options['application/icon'])) {
-    updateOptions(
-      preset,
-      'application/icon',
-      generatedPath(bundleId, DESKTOP_FOLDER, iconFile)
-    );
+    updateOptions(preset, 'application/icon', generatedPath(bundleId, DESKTOP_FOLDER, iconFile));
   }
 
   if (isGeneratedPath(preset.options['application/console_wrapper_icon'])) {
-    updateOptions(
-      preset,
-      'application/console_wrapper_icon',
-      generatedPath(bundleId, DESKTOP_FOLDER, 'icon.ico')
-    );
+    updateOptions(preset, 'application/console_wrapper_icon', generatedPath(bundleId, DESKTOP_FOLDER, 'icon.ico'));
   }
 };
 
@@ -188,7 +172,7 @@ const updateDesktopIcons = (preset, bundleId) => {
 
 const updateIOSStoryboard = (preset, bundleId) => {
   const legacyKeys = Object.keys(preset.options).filter((key) =>
-    LEGACY_LAUNCH_SCREEN_PREFIXES.some((prefix) => key.startsWith(prefix))
+    LEGACY_LAUNCH_SCREEN_PREFIXES.some((prefix) => key.startsWith(prefix)),
   );
 
   const wasGenerated =
@@ -200,20 +184,14 @@ const updateIOSStoryboard = (preset, bundleId) => {
   }
 
   updateOptions(preset, 'storyboard/use_launch_screen_storyboard', true);
-  updateOptions(
-    preset,
-    'storyboard/custom_image@2x',
-    generatedPath(bundleId, IOS_FOLDER, 'splash@2x.png')
-  );
-  updateOptions(
-    preset,
-    'storyboard/custom_image@3x',
-    generatedPath(bundleId, IOS_FOLDER, 'splash@3x.png')
-  );
+  updateOptions(preset, 'storyboard/custom_image@2x', generatedPath(bundleId, IOS_FOLDER, 'splash@2x.png'));
+  updateOptions(preset, 'storyboard/custom_image@3x', generatedPath(bundleId, IOS_FOLDER, 'splash@3x.png'));
 
   legacyKeys
     .filter((key) => preset.options[key] !== '')
-    .forEach((key) => updateOptions(preset, key, ''));
+    .forEach((key) => {
+      updateOptions(preset, key, '');
+    });
 };
 
 // -----------------------------------------------------------------------------
@@ -224,7 +202,7 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bun
   updateOptions(preset, 'package/name', applicationName);
 
   const packageUIDKey = 'package/unique_name';
-  const packageUID = (bundle[ANDROID] && bundle[ANDROID][packageUIDKey]) || bundle.uid;
+  const packageUID = bundle[ANDROID]?.[packageUIDKey] || bundle.uid;
   updateOptions(preset, packageUIDKey, packageUID);
 
   if (env === 'release' && bundle[ANDROID]['keystore/release_user']) {
@@ -236,12 +214,12 @@ const updateAndroidPreset = (env, preset, bundle, bundleId, applicationName, bun
 
 // -----------------------------------------------------------------------------
 
-const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
+const updateIOSPreset = (_env, preset, bundle, bundleId, applicationName, bundleName) => {
   updateMain(preset, 'export_path', `_build/iOS/${bundleName}.ipa`);
 
   updateOptions(preset, 'application/name', applicationName);
 
-  const packageUID = (bundle[IOS] && bundle[IOS]['application/bundle_identifier']) || bundle.uid;
+  const packageUID = bundle[IOS]?.['application/bundle_identifier'] || bundle.uid;
   updateOptions(preset, 'application/bundle_identifier', packageUID);
 
   updateIOSIcons(preset, bundleId);
@@ -250,12 +228,12 @@ const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleN
 
 // -----------------------------------------------------------------------------
 
-const updateMacOSXPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
+const updateMacOSXPreset = (_env, preset, bundle, bundleId, applicationName, bundleName) => {
   updateMain(preset, 'export_path', `_build/macOS/${bundleName}`);
 
   updateOptions(preset, 'application/name', applicationName);
 
-  const packageUID = (bundle[IOS] && bundle[IOS]['application/bundle_identifier']) || bundle.uid;
+  const packageUID = bundle[IOS]?.['application/bundle_identifier'] || bundle.uid;
   updateOptions(preset, 'application/bundle_identifier', packageUID);
 
   updateDesktopIcons(preset, bundleId);
@@ -277,7 +255,7 @@ const updateMacOSXPreset = (env, preset, bundle, bundleId, applicationName, bund
 const DESKTOP_NAME_KEY = {
   [MACOS]: 'application/name',
   [WINDOWS]: 'application/product_name',
-  [LINUX]: 'application/product_name'
+  [LINUX]: 'application/product_name',
 };
 
 const updateDesktopPreset = (preset, bundleId, applicationName) => {
@@ -301,36 +279,36 @@ const updateDesktopPreset = (preset, bundleId, applicationName) => {
 // -----------------------------------------------------------------------------
 
 export const updateVersionInPreset = (preset, newVersion) => {
-  const {platform, name} = preset;
+  const { platform, name } = preset;
   presetLogger.log(`Updating version for ${name}`);
 
   switch (platform) {
     case ANDROID:
       updateOptions(preset, 'version/code', toVersionNumber(newVersion));
       updateOptions(preset, 'version/name', newVersion);
-      break
+      break;
     case IOS:
     case MAC_OSX:
     case MACOS:
       updateOptions(preset, 'application/short_version', newVersion);
       updateOptions(preset, 'application/version', newVersion);
-      break
+      break;
     // The Windows exe carries its version in its own metadata, read by the OS
     // and by Steam's crash reports. Left alone it kept the number of whichever
     // release first filled it, months behind the tag being built.
     case WINDOWS:
     case LINUX:
-      DESKTOP_VERSION_KEYS.filter((key) => key in preset.options).forEach((key) =>
-        updateOptions(preset, key, newVersion)
-      );
-      break
+      DESKTOP_VERSION_KEYS.filter((key) => key in preset.options).forEach((key) => {
+        updateOptions(preset, key, newVersion);
+      });
+      break;
   }
 };
 
 // -----------------------------------------------------------------------------
 
 const updatePreset = (bundleId, env, coreConfig, preset, bundle, bundleIds = [bundleId]) => {
-  const {platform} = preset;
+  const { platform } = preset;
   presetLogger.log(`Updating ${platform} preset`);
 
   const _applicationName = getApplicationName(coreConfig, bundle);
@@ -374,7 +352,7 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, bundleIds = [bu
 
   return {
     applicationName,
-    bundleName
+    bundleName,
   };
 };
 

@@ -1,30 +1,24 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
-import shell from 'shelljs';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import inquirer from 'inquirer';
-import {spawn} from 'child_process';
+import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
-import {createLogger, foxLogger} from '../logger.js';
-import {readProjectVersion} from './tag.js';
-import exportBundle, {envChip, targetChip} from './export.js';
+import { createLogger, foxLogger } from '../logger.js';
+import { formatStamp, newestMtime, readBakedBundle } from './baked-bundle.js';
+import exportBundle, { envChip, targetChip } from './export.js';
+import { exportRoot, publishableEnvs, publishableTargets, readPublishConfig } from './publish-config.js';
 import createSteamcmdLog from './steamcmd-log.js';
-import {readBakedBundle, newestMtime, formatStamp} from './baked-bundle.js';
-import {
-  exportRoot,
-  publishableEnvs,
-  publishableTargets,
-  readPublishConfig,
-  TARGET_CHOICES
-} from './publish-config.js';
+import { readProjectVersion } from './tag.js';
 
 // -----------------------------------------------------------------------------
 
-const steamLogger = createLogger({name: 'Steam', color: 'magenta'});
-const itchLogger = createLogger({name: 'itch', color: 'red'});
+const steamLogger = createLogger({ name: 'Steam', color: 'magenta' });
+const itchLogger = createLogger({ name: 'itch', color: 'red' });
 
 const STEAM_DIR = '_build/steam';
 
@@ -65,16 +59,16 @@ const writeDepotScript = (steamDir, depotId, contentRoot) => {
       FileMapping: {
         LocalPath: '*',
         DepotPath: '.',
-        recursive: '1'
+        recursive: '1',
       },
-      FileExclusion: ['*.pdb', 'steam_appid.txt']
-    }
+      FileExclusion: ['*.pdb', 'steam_appid.txt'],
+    },
   });
 
   return filePath;
 };
 
-const writeAppBuildScript = (steamDir, {appId, desc, contentRoot, setlive, depots}) => {
+const writeAppBuildScript = (steamDir, { appId, desc, contentRoot, setlive, depots }) => {
   const filePath = path.join(steamDir, `app_build_${appId}.vdf`);
 
   writeVdf(filePath, {
@@ -84,8 +78,8 @@ const writeAppBuildScript = (steamDir, {appId, desc, contentRoot, setlive, depot
       buildoutput: path.join(steamDir, 'output'),
       contentroot: contentRoot,
       setlive,
-      depots
-    }
+      depots,
+    },
   });
 
   return filePath;
@@ -118,8 +112,8 @@ const verifyContent = (contentRoot, slots, logger) => {
       return null;
     }
 
-    const {version, env} = readBakedBundle(slotPath, files);
-    report.push({slot, folder, files: files.length, version, env, exportedAt: newestMtime(slotPath, files)});
+    const { version, env } = readBakedBundle(slotPath, files);
+    report.push({ slot, folder, files: files.length, version, env, exportedAt: newestMtime(slotPath, files) });
   }
 
   return report;
@@ -136,16 +130,27 @@ const EXPORT = 'export';
 const EXIT = 'exit';
 
 const payloadVersion = (report) => {
-  const versions = [...new Set(report.map(({version}) => version).filter(Boolean))];
+  const versions = [...new Set(report.map(({ version }) => version).filter(Boolean))];
   return versions.length === 1 ? versions[0] : null;
 };
 
 const payloadEnv = (report) => {
-  const envs = [...new Set(report.map(({env}) => env).filter(Boolean))];
+  const envs = [...new Set(report.map(({ env }) => env).filter(Boolean))];
   return envs.length === 1 ? envs[0] : null;
 };
 
-const confirmPayload = async ({logger, title, details, contentRoot, env, target, projectVersion, version, report, assumeYes}) => {
+const confirmPayload = async ({
+  logger,
+  title,
+  details,
+  contentRoot,
+  env,
+  target,
+  projectVersion,
+  version,
+  report,
+  assumeYes,
+}) => {
   // The env is read back from the payload whenever the folders carry it, so the
   // chip names what is IN the folder rather than what was asked for.
   const bakedEnv = payloadEnv(report) || env;
@@ -154,10 +159,10 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, target,
     ...details,
     contentRoot,
     env: envChip(bakedEnv),
-    version: `${version}${version === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`
+    version: `${version}${version === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`,
   };
 
-  report.forEach(({slot, folder, files, version: slotVersion, env: slotEnv, exportedAt}) => {
+  report.forEach(({ slot, folder, files, version: slotVersion, env: slotEnv, exportedAt }) => {
     shown[slot] =
       `${folder}/ — ${slotVersion || 'version unknown'} ${slotEnv ? `(${slotEnv})` : ''} — ` +
       `${files} files — exported ${formatStamp(exportedAt)}`;
@@ -165,7 +170,7 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, target,
 
   logger.data(shown);
 
-  const mismatched = report.filter(({version: slotVersion}) => slotVersion && slotVersion !== version);
+  const mismatched = report.filter(({ version: slotVersion }) => slotVersion && slotVersion !== version);
 
   if (mismatched.length) {
     logger.warn('folders disagree on the version — check what you exported');
@@ -187,8 +192,8 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, target,
       return UPLOAD;
     }
 
-    const {go} = await inquirer.prompt([
-      {message: `upload ${version} ${destination}?`, name: 'go', type: 'confirm', default: true}
+    const { go } = await inquirer.prompt([
+      { message: `upload ${version} ${destination}?`, name: 'go', type: 'confirm', default: true },
     ]);
 
     return go ? UPLOAD : EXIT;
@@ -204,17 +209,20 @@ const confirmPayload = async ({logger, title, details, contentRoot, env, target,
     return EXIT;
   }
 
-  const {choice} = await inquirer.prompt([
+  const { choice } = await inquirer.prompt([
     {
       message: `payload is ${version}, what now?`,
       name: 'choice',
       type: 'list',
       choices: [
-        {name: `fox export ${envChip(env)} on ${targetChip(target)} now, then publish ${projectVersion}`, value: EXPORT},
-        {name: `upload ${version} anyway ${destination}`, value: UPLOAD},
-        {name: 'exit', value: EXIT}
-      ]
-    }
+        {
+          name: `fox export ${envChip(env)} on ${targetChip(target)} now, then publish ${projectVersion}`,
+          value: EXPORT,
+        },
+        { name: `upload ${version} anyway ${destination}`, value: UPLOAD },
+        { name: 'exit', value: EXIT },
+      ],
+    },
   ]);
 
   return choice;
@@ -230,11 +238,9 @@ const runSteamcmd = (login, appBuildPath, depots) =>
 
     // stdin stays inherited: steamcmd may still ask for a Steam Guard code, and
     // that prompt has to reach the real terminal.
-    const steamcmd = spawn(
-      'steamcmd',
-      ['+login', login, '+run_app_build', appBuildPath, '+quit'],
-      {stdio: ['inherit', 'pipe', 'pipe']}
-    );
+    const steamcmd = spawn('steamcmd', ['+login', login, '+run_app_build', appBuildPath, '+quit'], {
+      stdio: ['inherit', 'pipe', 'pipe'],
+    });
 
     steamcmd.stdout.on('data', (chunk) => steamLog.push(chunk.toString()));
     steamcmd.stderr.on('data', (chunk) => steamLog.push(chunk.toString()));
@@ -265,7 +271,7 @@ const OTHER_BRANCH = '\u0000other';
 const readState = () => {
   try {
     return JSON.parse(fs.readFileSync(path.resolve(process.cwd(), STATE_FILE), 'utf8'));
-  } catch (e) {
+  } catch {
     return {};
   }
 };
@@ -274,11 +280,6 @@ const writeState = (state) => {
   const filePath = path.resolve(process.cwd(), STATE_FILE);
   shell.mkdir('-p', path.dirname(filePath));
   fs.writeFileSync(filePath, `${JSON.stringify(state, null, 2)}\n`);
-};
-
-const targetLabel = (target) => {
-  const choice = TARGET_CHOICES.find(({value}) => value === target);
-  return choice ? choice.name : target;
 };
 
 const inquireTarget = async (settings, lastTarget) => {
@@ -290,19 +291,19 @@ const inquireTarget = async (settings, lastTarget) => {
 
   const ordered = [
     ...targets.filter((target) => target === lastTarget),
-    ...targets.filter((target) => target !== lastTarget)
+    ...targets.filter((target) => target !== lastTarget),
   ];
 
-  const {target} = await inquirer.prompt([
+  const { target } = await inquirer.prompt([
     {
       message: 'store',
       name: 'target',
       type: 'list',
       choices: ordered.map((value) => ({
         name: `${targetChip(value)} ${colorless(publishableEnvs(settings, value).join(', '))}`,
-        value
-      }))
-    }
+        value,
+      })),
+    },
   ]);
 
   return target;
@@ -319,16 +320,16 @@ const inquireEnv = async (settings, target, lastEnv) => {
 
   const ordered = [...envs.filter((env) => env === lastEnv), ...envs.filter((env) => env !== lastEnv)];
 
-  const {env} = await inquirer.prompt([
+  const { env } = await inquirer.prompt([
     {
       message: 'env',
       name: 'env',
       type: 'list',
       choices: ordered.map((value) => {
-        const {appId} = readPublishConfig(settings, target, value);
-        return {name: `${envChip(value)}${appId ? ` (appId ${appId})` : ''}`, value};
-      })
-    }
+        const { appId } = readPublishConfig(settings, target, value);
+        return { name: `${envChip(value)}${appId ? ` (appId ${appId})` : ''}`, value };
+      }),
+    },
   ]);
 
   return env;
@@ -337,26 +338,24 @@ const inquireEnv = async (settings, target, lastEnv) => {
 const inquireBranch = async (steam, lastBranch) => {
   const known = [...new Set([lastBranch, steam.branch].filter((branch) => branch))];
 
-  const {branch} = await inquirer.prompt([
+  const { branch } = await inquirer.prompt([
     {
       message: 'branch',
       name: 'branch',
       type: 'list',
       choices: [
-        ...known.map((value) => ({name: value, value})),
-        {name: '(none — build stays unassigned)', value: NO_BRANCH},
-        {name: 'other...', value: OTHER_BRANCH}
-      ]
-    }
+        ...known.map((value) => ({ name: value, value })),
+        { name: '(none — build stays unassigned)', value: NO_BRANCH },
+        { name: 'other...', value: OTHER_BRANCH },
+      ],
+    },
   ]);
 
   if (branch !== OTHER_BRANCH) {
     return branch;
   }
 
-  const {typed} = await inquirer.prompt([
-    {message: 'branch name', name: 'typed', type: 'input'}
-  ]);
+  const { typed } = await inquirer.prompt([{ message: 'branch name', name: 'typed', type: 'input' }]);
 
   return typed.trim();
 };
@@ -370,7 +369,7 @@ const isPlaceholder = (value) => typeof value === 'string' && value.startsWith('
 // export folder, show it, and let the answer be the export that would fix it.
 // Returns the version to publish, or null when nothing should be uploaded.
 
-const settleOnPayload = async ({settings, logger, title, env, target, contentRoot, folders, details, assumeYes}) => {
+const settleOnPayload = async ({ settings, logger, title, env, target, contentRoot, folders, details, assumeYes }) => {
   const projectVersion = readProjectVersion();
   let report = verifyContent(contentRoot, folders, logger);
 
@@ -391,7 +390,7 @@ const settleOnPayload = async ({settings, logger, title, env, target, contentRoo
       projectVersion,
       version,
       report,
-      assumeYes
+      assumeYes,
     });
 
     if (decision !== EXPORT) {
@@ -400,7 +399,7 @@ const settleOnPayload = async ({settings, logger, title, env, target, contentRoo
 
     logger.log(`Running fox export on "${env}" for "${target}"...`);
 
-    if (!(await exportBundle(settings, {forcedEnv: env, forcedTarget: target}))) {
+    if (!(await exportBundle(settings, { forcedEnv: env, forcedTarget: target }))) {
       logger.error('Export failed — nothing uploaded');
       return null;
     }
@@ -423,18 +422,16 @@ const runButler = (folder, itchTarget, version) =>
   new Promise((resolve) => {
     itchLogger.log(`butler push ${folder} -> ${itchTarget}`);
 
-    const butler = spawn(
-      'butler',
-      ['push', folder, itchTarget, '--userversion', version],
-      {stdio: ['inherit', 'inherit', 'inherit']}
-    );
+    const butler = spawn('butler', ['push', folder, itchTarget, '--userversion', version], {
+      stdio: ['inherit', 'inherit', 'inherit'],
+    });
 
     butler.on('close', (code) => resolve(code === 0));
   });
 
-const publishToItch = async (settings, {env, store, assumeYes}) => {
-  const {core} = settings;
-  const {user, game, channels} = store;
+const publishToItch = async (settings, { env, store, assumeYes }) => {
+  const { core } = settings;
+  const { user, game, channels } = store;
 
   if (!user || !game || !channels) {
     itchLogger.error('publish.itch requires user, game, and envs.<env>.channels');
@@ -452,7 +449,7 @@ const publishToItch = async (settings, {env, store, assumeYes}) => {
 
   const details = {
     page: `https://${user}.itch.io/${game}`,
-    env: envChip(env)
+    env: envChip(env),
   };
 
   const version = await settleOnPayload({
@@ -464,7 +461,7 @@ const publishToItch = async (settings, {env, store, assumeYes}) => {
     contentRoot,
     folders: channels,
     details,
-    assumeYes
+    assumeYes,
   });
 
   if (!version) {
@@ -478,11 +475,7 @@ const publishToItch = async (settings, {env, store, assumeYes}) => {
   }
 
   for (const [channel, folder] of Object.entries(channels)) {
-    const ok = await runButler(
-      path.resolve(contentRoot, folder),
-      `${user}/${game}:${channel}`,
-      version
-    );
+    const ok = await runButler(path.resolve(contentRoot, folder), `${user}/${game}:${channel}`, version);
 
     if (!ok) {
       itchLogger.error(`butler failed on channel "${channel}" — later channels not pushed`);
@@ -496,7 +489,7 @@ const publishToItch = async (settings, {env, store, assumeYes}) => {
 // -----------------------------------------------------------------------------
 
 const publish = async (settings, params) => {
-  const {config} = settings;
+  const { config } = settings;
 
   const state = readState();
 
@@ -509,58 +502,58 @@ const publish = async (settings, params) => {
   const assumeYes = params.includes('--yes');
   params = params.filter((param) => param !== '--yes');
 
-  const knownTargets = publishableTargets({publish: config});
+  const knownTargets = publishableTargets({ publish: config });
   const argTarget = knownTargets.includes(params[0]) ? params[0] : null;
   const rest = argTarget ? params.slice(1) : params;
 
-  const target = argTarget || (await inquireTarget({publish: config}, state.target));
+  const target = argTarget || (await inquireTarget({ publish: config }, state.target));
 
   if (!target) {
     foxLogger.error('Nothing to publish: fox.config.json declares no "publish.<store>"');
     return;
   }
 
-  const knownEnvs = publishableEnvs({publish: config}, target);
+  const knownEnvs = publishableEnvs({ publish: config }, target);
   const argEnv = knownEnvs.includes(rest[0]) ? rest[0] : null;
   const argBranch = argEnv ? rest[1] : rest[0];
 
-  const env = argEnv || (await inquireEnv({publish: config}, target, (state.envs || {})[target]));
+  const env = argEnv || (await inquireEnv({ publish: config }, target, state.envs?.[target]));
 
   if (!env) {
     foxLogger.error(`publish.${target} declares no envs in fox.config.json`);
     return;
   }
 
-  const store = readPublishConfig({publish: config}, target, env);
+  const store = readPublishConfig({ publish: config }, target, env);
 
   writeState({
     ...state,
     target,
-    envs: {...(state.envs || {}), [target]: env}
+    envs: { ...(state.envs || {}), [target]: env },
   });
 
   if (target === 'itch') {
-    return publishToItch(settings, {env, store, assumeYes});
+    return publishToItch(settings, { env, store, assumeYes });
   }
 
-  return publishToSteam(settings, {env, store, argBranch, state, assumeYes});
+  return publishToSteam(settings, { env, store, argBranch, state, assumeYes });
 };
 
 // -----------------------------------------------------------------------------
 
-const publishToSteam = async (settings, {env, store, argBranch, state, assumeYes}) => {
-  const {core} = settings;
+const publishToSteam = async (settings, { env, store, argBranch, state, assumeYes }) => {
+  const { core } = settings;
 
-  const remembered = (state.branches || {})[env];
+  const remembered = state.branches?.[env];
 
   const branch =
     argBranch !== undefined && argBranch !== null
       ? argBranch
       : await inquireBranch(store, remembered === undefined ? store.branch : remembered);
 
-  writeState({...readState(), branches: {...(state.branches || {}), [env]: branch}});
+  writeState({ ...readState(), branches: { ...(state.branches || {}), [env]: branch } });
 
-  const {appId, login, depots} = store;
+  const { appId, login, depots } = store;
 
   if (!appId || !login || !depots) {
     steamLogger.error(`publish.steam.envs.${env} requires appId, login and depots`);
@@ -574,17 +567,14 @@ const publishToSteam = async (settings, {env, store, argBranch, state, assumeYes
 
   if (isPlaceholder(appId)) {
     steamLogger.error(
-      `Create the app in Steamworks, then set publish.steam.envs.${env}.appId/depots in fox.config.json (got placeholder "${appId}")`
+      `Create the app in Steamworks, then set publish.steam.envs.${env}.appId/depots in fox.config.json (got placeholder "${appId}")`,
     );
     return;
   }
 
   // ---------
 
-  const absoluteContentRoot = path.resolve(
-    process.cwd(),
-    store.contentRoot || exportRoot(env, 'steam')
-  );
+  const absoluteContentRoot = path.resolve(process.cwd(), store.contentRoot || exportRoot(env, 'steam'));
 
   steamLogger.log(`Publishing ${core.title} (appId ${appId})`);
 
@@ -600,9 +590,9 @@ const publishToSteam = async (settings, {env, store, argBranch, state, assumeYes
       app: `${core.title} (appId ${appId})`,
       login,
       branch: branch || '(none — build stays unassigned)',
-      env: envChip(env)
+      env: envChip(env),
     },
-    assumeYes
+    assumeYes,
   });
 
   if (!version) {
@@ -627,7 +617,7 @@ const publishToSteam = async (settings, {env, store, argBranch, state, assumeYes
     desc: `${core.title} ${version}${envSuffix}${branch ? ` (${branch})` : ''}`,
     contentRoot: absoluteContentRoot,
     setlive: branch,
-    depots: depotScripts
+    depots: depotScripts,
   });
 
   steamLogger.success(`Generated VDF scripts in ${STEAM_DIR}/`);
@@ -649,7 +639,7 @@ const publishToSteam = async (settings, {env, store, argBranch, state, assumeYes
     steamLogger.done(`Build uploaded and set live on branch "${branch}"`);
   } else {
     steamLogger.done(
-      `Build uploaded — assign it to a branch in Steamworks › SteamPipe › Builds: https://partner.steamgames.com/apps/builds/${appId}`
+      `Build uploaded — assign it to a branch in Steamworks › SteamPipe › Builds: https://partner.steamgames.com/apps/builds/${appId}`,
     );
   }
 

@@ -10,10 +10,10 @@
 // surfaces would drift apart at the first tweak. See docs/splash.md
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
-import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
-import {splashLogger} from './logger.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { ensureImageMagick, quote, runMagick } from './imagemagick.js';
+import { splashLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -32,9 +32,7 @@ const LOGO_WIDTH_PATTERN = /const\s+LOGO_BASE_WIDTH\s*:?=\s*([\d.]+)/;
 // -----------------------------------------------------------------------------
 
 const resolveResPath = (value, projectRoot) =>
-  value.startsWith('res://')
-    ? path.join(projectRoot, value.slice('res://'.length))
-    : path.resolve(projectRoot, value);
+  value.startsWith('res://') ? path.join(projectRoot, value.slice('res://'.length)) : path.resolve(projectRoot, value);
 
 // -----------------------------------------------------------------------------
 
@@ -66,7 +64,7 @@ const readSplashGeometry = (projectRoot) => {
   return {
     width: Math.round(Number(canvas[1])),
     height: Math.round(Number(canvas[2])),
-    logoWidth: Math.round(Number(logoWidth[1]))
+    logoWidth: Math.round(Number(logoWidth[1])),
   };
 };
 
@@ -75,11 +73,7 @@ const readSplashGeometry = (projectRoot) => {
 const generateBootSplash = (config = {}) => {
   const projectRoot = config.projectRoot || process.cwd();
 
-  const {
-    input = DEFAULT_LOGO,
-    output = DEFAULT_OUTPUT,
-    backgroundColor = DEFAULT_BACKGROUND
-  } = config;
+  const { input = DEFAULT_LOGO, output = DEFAULT_OUTPUT, backgroundColor = DEFAULT_BACKGROUND } = config;
 
   if (!ensureImageMagick(splashLogger)) {
     return false;
@@ -97,7 +91,7 @@ const generateBootSplash = (config = {}) => {
   }
 
   const outputFile = resolveResPath(output, projectRoot);
-  fs.mkdirSync(path.dirname(outputFile), {recursive: true});
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
 
   const canvas = `${geometry.width}x${geometry.height}`;
 
@@ -107,7 +101,7 @@ const generateBootSplash = (config = {}) => {
     output: outputFile,
     canvas,
     logoWidth: geometry.logoWidth,
-    backgroundColor
+    backgroundColor,
   });
 
   // `contain`: the logo keeps its ratio and never exceeds the canvas height,
@@ -127,9 +121,9 @@ const generateBootSplash = (config = {}) => {
       '-composite',
       '-depth',
       '8',
-      quote(outputFile)
+      quote(outputFile),
     ],
-    splashLogger
+    splashLogger,
   );
 
   if (!created) {

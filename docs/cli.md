@@ -67,6 +67,22 @@ Example:
 fox run:game --headless --debug-collisions
 ```
 
+### lint
+
+The CLI sources under `cli/` are linted and formatted with
+[Biome](https://biomejs.dev/), configured in `biome.json` at the root of the
+repository. Check the sources without touching them:
+
+```sh
+npm run lint
+```
+
+Apply the fixes Biome can apply on its own (formatting included):
+
+```sh
+npm run lint:fix
+```
+
 ## usage
 
 ```ini

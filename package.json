@@ -14,10 +14,13 @@
     "yargs": "^17.7.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.13",
     "npm-check-updates": "^18.0.1"
   },
   "scripts": {
-    "ncu": "npm-check-updates"
+    "ncu": "npm-check-updates",
+    "lint": "biome check cli/",
+    "lint:fix": "biome check --write cli/"
   },
   "engines": {
     "node": ">=22.x"

@@ -5,10 +5,10 @@
 // commands read them: `fox publish` confirms what it is about to upload, and
 // `fox ls` compares an installed build against what sits in the export folder.
 
-import crypto from 'crypto';
-import {execFileSync} from 'child_process';
-import fs from 'fs';
-import path from 'path';
+import { execFileSync } from 'node:child_process';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // -----------------------------------------------------------------------------
 // A setting is stored as: [nameLen int32][name][valueSize int32][type int32]
@@ -69,7 +69,7 @@ const findPck = (depotPath, files) => {
   try {
     const inner = fs.readdirSync(path.join(depotPath, resources)).find((file) => file.endsWith('.pck'));
     return inner ? path.join(resources, inner) : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -90,9 +90,9 @@ const readZippedPck = (archivePath) => {
     // not a warning in the middle of the publish confirmation.
     return execFileSync('unzip', ['-p', archivePath, '*.pck'], {
       maxBuffer: MAX_PCK_BYTES,
-      stdio: ['ignore', 'pipe', 'ignore']
+      stdio: ['ignore', 'pipe', 'ignore'],
     });
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -103,17 +103,15 @@ const EMBEDDED_EXTENSIONS = ['.exe', '.x86_64'];
 const ARCHIVE_EXTENSIONS = ['.zip'];
 
 const readScanned = (depotPath, files) => {
-  const onDisk = findPck(depotPath, files) || EMBEDDED_EXTENSIONS.map((extension) =>
-    files.find((file) => file.endsWith(extension))
-  ).find(Boolean);
+  const onDisk =
+    findPck(depotPath, files) ||
+    EMBEDDED_EXTENSIONS.map((extension) => files.find((file) => file.endsWith(extension))).find(Boolean);
 
   if (onDisk) {
     return fs.readFileSync(path.join(depotPath, onDisk));
   }
 
-  const archive = ARCHIVE_EXTENSIONS.map((extension) =>
-    files.find((file) => file.endsWith(extension))
-  ).find(Boolean);
+  const archive = ARCHIVE_EXTENSIONS.map((extension) => files.find((file) => file.endsWith(extension))).find(Boolean);
 
   return archive ? readZippedPck(path.join(depotPath, archive)) : null;
 };
@@ -122,16 +120,16 @@ const readBakedBundle = (depotPath, files) => {
   try {
     const buffer = readScanned(depotPath, files);
 
-    if (!buffer || !buffer.length) {
-      return {version: null, env: null};
+    if (!buffer?.length) {
+      return { version: null, env: null };
     }
 
     return {
       version: readBakedValue(buffer, 'version'),
-      env: readBakedValue(buffer, 'env')
+      env: readBakedValue(buffer, 'env'),
     };
-  } catch (e) {
-    return {version: null, env: null};
+  } catch {
+    return { version: null, env: null };
   }
 };
 
@@ -142,7 +140,7 @@ const newestMtime = (depotPath, files) => {
     .map((file) => {
       try {
         return fs.statSync(path.join(depotPath, file)).mtime.getTime();
-      } catch (e) {
+      } catch {
         return null;
       }
     })
@@ -165,11 +163,11 @@ const formatStamp = (stamp) => {
 const sha256 = (filePath) => {
   try {
     return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
-  } catch (e) {
+  } catch {
     return null;
   }
 };
 
 // -----------------------------------------------------------------------------
 
-export {readBakedBundle, readSetting, newestMtime, formatStamp, findPck, sha256};
+export { findPck, formatStamp, newestMtime, readBakedBundle, readSetting, sha256 };

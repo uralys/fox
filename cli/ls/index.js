@@ -6,35 +6,35 @@
 // A store that is unreachable never fails the listing — each half prints what it
 // could read and says why the rest is missing.
 
-import {foxLogger} from '../logger.js';
-import {readProjectVersion} from '../bundler/tag.js';
-import {publishableTargets} from '../bundler/publish-config.js';
-import lsSteam from './steam.js';
+import { publishableTargets } from '../bundler/publish-config.js';
+import { readProjectVersion } from '../bundler/tag.js';
+import { foxLogger } from '../logger.js';
 import lsItch from './itch.js';
+import lsSteam from './steam.js';
 
 // -----------------------------------------------------------------------------
 
 const LISTERS = {
   steam: lsSteam,
-  itch: lsItch
+  itch: lsItch,
 };
 
 // -----------------------------------------------------------------------------
 
 const ls = async (settings, target) => {
-  const {core, publish} = settings;
+  const { core, publish } = settings;
 
   const projectVersion = readProjectVersion();
   foxLogger.log(`${core.title} — project.godot is ${projectVersion}`);
 
   if (target) {
-    return await LISTERS[target](settings, {projectVersion});
+    return await LISTERS[target](settings, { projectVersion });
   }
 
   // Without a store named, list the ones the project actually publishes to
   // rather than all the ones fox knows about: an empty section reads as a
   // broken configuration.
-  const targets = publishableTargets({publish}).filter((name) => LISTERS[name]);
+  const targets = publishableTargets({ publish }).filter((name) => LISTERS[name]);
 
   if (!targets.length) {
     foxLogger.error('Nothing to list: fox.config.json declares no "publish.<store>"');
@@ -42,7 +42,7 @@ const ls = async (settings, target) => {
   }
 
   for (const name of targets) {
-    await LISTERS[name](settings, {projectVersion});
+    await LISTERS[name](settings, { projectVersion });
   }
 
   return true;

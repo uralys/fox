@@ -1,11 +1,11 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import shell from 'shelljs';
-import {spawn} from 'child_process';
 
-import {foxLogger, godotLogger} from './logger.js';
+import { foxLogger, godotLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ const importAssets = (godotPath, params) =>
     godotLogger.log('Importing assets');
     godotLogger.data({
       mode: force ? 'force (full reimport)' : 'incremental (outdated files only)',
-      project: process.cwd()
+      project: process.cwd(),
     });
 
     if (force) {
@@ -38,11 +38,9 @@ const importAssets = (godotPath, params) =>
       }
     }
 
-    const importProcess = spawn(
-      godotPath,
-      ['--headless', '--path', '.', '--import', ...extraParams],
-      {stdio: 'inherit'}
-    );
+    const importProcess = spawn(godotPath, ['--headless', '--path', '.', '--import', ...extraParams], {
+      stdio: 'inherit',
+    });
 
     importProcess.on('close', (code) => {
       if (code !== 0) {

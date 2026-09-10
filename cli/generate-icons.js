@@ -15,11 +15,11 @@
 // 64, 128, 256 and 512 icons no build ever consumed are gone.
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
+import fs from 'node:fs';
 import shell from 'shelljs';
-import {buildIcns, buildIco} from './icon-formats.js';
-import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
-import {iconsLogger} from './logger.js';
+import { buildIcns, buildIco } from './icon-formats.js';
+import { ensureImageMagick, quote, runMagick } from './imagemagick.js';
+import { iconsLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -48,21 +48,11 @@ const generatedRoot = (output) => output.replace(/\/+$/, '').replace(/\/icons$/,
 // -----------------------------------------------------------------------------
 
 const resizeIcon = (source, size, target) =>
-  runMagick(
-    [
-      quote(source),
-      '-resize',
-      quote(`${size}x${size}`),
-      '-unsharp',
-      '1x4',
-      quote(target)
-    ],
-    iconsLogger
-  );
+  runMagick([quote(source), '-resize', quote(`${size}x${size}`), '-unsharp', '1x4', quote(target)], iconsLogger);
 
 // -----------------------------------------------------------------------------
 
-const generateBundle = ({bundleId, root, source, desktopSource, adaptive}) => {
+const generateBundle = ({ bundleId, root, source, desktopSource, adaptive }) => {
   const folders = {};
 
   for (const platform of PLATFORMS) {
@@ -70,7 +60,7 @@ const generateBundle = ({bundleId, root, source, desktopSource, adaptive}) => {
     shell.mkdir('-p', folders[platform]);
   }
 
-  const counters = {ios: 0, android: 0, desktop: 0, web: 0};
+  const counters = { ios: 0, android: 0, desktop: 0, web: 0 };
 
   iconsLogger.step(0, `${bundleId}: iOS icons`);
 
@@ -101,7 +91,7 @@ const generateBundle = ({bundleId, root, source, desktopSource, adaptive}) => {
   // Copied under the canonical name, never the source one: `update-preset.js`
   // declares these two slots by name, so a project free to call its inputs
   // `bg-432.png` would otherwise have every Android export refused.
-  for (const {source: element, name} of adaptive) {
+  for (const { source: element, name } of adaptive) {
     if (!fs.existsSync(element)) {
       iconsLogger.error(`Aborting: adaptive element does not exist: ${element}`);
       return null;
@@ -162,7 +152,7 @@ const generateBundle = ({bundleId, root, source, desktopSource, adaptive}) => {
 // -----------------------------------------------------------------------------
 
 const generateIcons = (config, bundles) => {
-  const {input, output, base, background, foreground, desktop} = config;
+  const { input, output, base, background, foreground, desktop } = config;
 
   if (!ensureImageMagick(iconsLogger)) {
     return false;
@@ -184,8 +174,8 @@ const generateIcons = (config, bundles) => {
 
   const adaptive = background
     ? [
-        {source: `${input}/${background}`, name: 'adaptive-background.png'},
-        {source: `${input}/${foreground}`, name: 'adaptive-foreground.png'}
+        { source: `${input}/${background}`, name: 'adaptive-background.png' },
+        { source: `${input}/${foreground}`, name: 'adaptive-foreground.png' },
       ]
     : [];
 
@@ -200,12 +190,12 @@ const generateIcons = (config, bundles) => {
   const root = generatedRoot(output);
 
   iconsLogger.log(`Generating from ${base}`);
-  iconsLogger.data({input: source, output: root, bundles: bundleIds.join(', ')});
+  iconsLogger.data({ input: source, output: root, bundles: bundleIds.join(', ') });
 
-  const totals = {ios: 0, android: 0, desktop: 0, web: 0};
+  const totals = { ios: 0, android: 0, desktop: 0, web: 0 };
 
   for (const bundleId of bundleIds) {
-    const counters = generateBundle({bundleId, root, source, desktopSource, adaptive});
+    const counters = generateBundle({ bundleId, root, source, desktopSource, adaptive });
 
     if (!counters) {
       return false;

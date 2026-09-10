@@ -21,7 +21,7 @@ const NOISE = [
   /iopollinghelpers/,
   /^Logging in using cached credentials/,
   /^steamcmd\.sh\[/,
-  /^OK\s*$/
+  /^OK\s*$/,
 ];
 
 // Only a credential question is written through before its newline arrives.
@@ -33,7 +33,7 @@ const PHASES = {
   'Preparing update...': 'prepared',
   'Building file mapping...': 'mapped',
   'Scanning content': 'scanned',
-  'Uploading content...': 'uploaded'
+  'Uploading content...': 'uploaded',
 };
 
 const PROGRESS = /^[.\s]*([\d.]+\s*[KMG]B)\s*\((\d+)%\)\s*$/;
@@ -168,7 +168,7 @@ const createSteamcmdLog = (logger, depots = {}) => {
     flushPhase();
   };
 
-  return {push, flush};
+  return { push, flush };
 };
 
 // -----------------------------------------------------------------------------

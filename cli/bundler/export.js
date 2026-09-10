@@ -1,23 +1,23 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
-import shell from 'shelljs';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import inquirer from 'inquirer';
-import {spawn} from 'child_process';
+import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
-import {colors, foxLogger, godotLogger} from '../logger.js';
-import updatePreset from './update-preset.js';
-import {writeOverride, resolveSteamAppId, bakesSecret, ENV_CHOICES} from './switch.js';
-import {readCurrentBundle, findPreset, targetsForEnv, DEFAULT_TARGET} from './resolve-env-preset.js';
-import {TARGET_CHOICES} from './publish-config.js';
-import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
-import ini from './ini.js';
-import {tagVersion, readProjectVersion} from './tag.js';
-import {readSetting} from './baked-bundle.js';
+import { colors, foxLogger, godotLogger } from '../logger.js';
 import resolveGodotPath from '../resolve-godot.js';
+import { readSetting } from './baked-bundle.js';
+import ini from './ini.js';
+import { TARGET_CHOICES } from './publish-config.js';
+import { PRESETS_CFG, readPresets, writePresets } from './read-presets.js';
+import { DEFAULT_TARGET, findPreset, readCurrentBundle, targetsForEnv } from './resolve-env-preset.js';
+import { bakesSecret, ENV_CHOICES, resolveSteamAppId, writeOverride } from './switch.js';
+import { readProjectVersion, tagVersion } from './tag.js';
+import updatePreset from './update-preset.js';
 
 // -----------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ const WEB = 'Web';
 
 // Envs exported with `--export-release`: shipped to players, whatever the store.
 const RELEASE_ENVS = ['release', 'demo'];
-const PLATFORM_LABELS = {Linux: 'Linux-SteamOS', Web: 'Web (HTML5)'};
+const PLATFORM_LABELS = { Linux: 'Linux-SteamOS', Web: 'Web (HTML5)' };
 
 const BOLD = '\x1b[1m';
 const RESET = '\x1b[0m';
@@ -47,29 +47,29 @@ const ENV_FOREGROUNDS = {
   debug: '\x1b[94m',
   demo: '\x1b[95m',
   staging: '\x1b[93m',
-  release: '\x1b[92m'
+  release: '\x1b[92m',
 };
 
 const TARGET_FOREGROUNDS = {
   steam: '\x1b[96m',
-  itch: '\x1b[91m'
+  itch: '\x1b[91m',
 };
 
 // -----------------------------------------------------------------------------
 
-export const androidExtension = (env) => env === 'release' ? '.aab' : '.apk'
+export const androidExtension = (env) => (env === 'release' ? '.aab' : '.apk');
 
 export const getApplicationName = (coreConfig, bundle) => {
-  const {title} = coreConfig;
-  const {subtitle} = bundle;
+  const { title } = coreConfig;
+  const { subtitle } = bundle;
   return subtitle ? `${title}: ${subtitle}` : title;
-}
+};
 
 export const getTitle = (coreConfig) => coreConfig.title;
 export const getSubtitle = (bundle) => {
-  const {subtitle} = bundle;
+  const { subtitle } = bundle;
   return subtitle;
-}
+};
 
 // -----------------------------------------------------------------------------
 
@@ -91,11 +91,10 @@ const verifyBuildFolder = () => {
 
 const PATCHED_FILES = [PROJECT_GODOT, PRESETS_CFG];
 
-const isGitRepo = () =>
-  shell.exec('git rev-parse --is-inside-work-tree', {silent: true}).code === 0;
+const isGitRepo = () => shell.exec('git rev-parse --is-inside-work-tree', { silent: true }).code === 0;
 
 const verifyCleanTree = () => {
-  const {stdout} = shell.exec('git status --porcelain --untracked-files=no', {silent: true});
+  const { stdout } = shell.exec('git status --porcelain --untracked-files=no', { silent: true });
   const pending = stdout.trim();
 
   if (!pending) {
@@ -104,14 +103,16 @@ const verifyCleanTree = () => {
 
   foxLogger.error('Working tree is not clean — commit or stash before exporting');
   foxLogger.error('fox bakes [bundle] + Steam app_id into project.godot, then restores it');
-  pending.split('\n').forEach((line) => foxLogger.log(line));
+  pending.split('\n').forEach((line) => {
+    foxLogger.log(line);
+  });
 
   return false;
 };
 
 const restorePatchedFiles = () => {
   const files = PATCHED_FILES.filter((file) => fs.existsSync(file));
-  shell.exec(`git restore -- ${files.join(' ')}`, {silent: true});
+  shell.exec(`git restore -- ${files.join(' ')}`, { silent: true });
   godotLogger.log(`Restored ${files.join(', ')} (build bake reverted)`);
 };
 
@@ -153,7 +154,7 @@ const patchProjectGodotSecrets = (env, platform) => {
 
   try {
     secrets = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
-  } catch (e) {
+  } catch {
     godotLogger.warn(`No secret.${env}.cfg — [custom] secrets stay as committed`);
     return;
   }
@@ -180,9 +181,7 @@ const patchProjectGodotSecrets = (env, platform) => {
   }
 
   if (cleared) {
-    godotLogger.warn(
-      `Web ${env} build: [custom] ${touched.join(', ')} CLEARED (a web pck is public)`
-    );
+    godotLogger.warn(`Web ${env} build: [custom] ${touched.join(', ')} CLEARED (a web pck is public)`);
     return;
   }
 
@@ -205,7 +204,7 @@ export const verifyWebSecrets = (env, exportPath) => {
 
   try {
     secrets = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
-  } catch (e) {
+  } catch {
     return true;
   }
 
@@ -222,9 +221,7 @@ export const verifyWebSecrets = (env, exportPath) => {
   const wrong = Object.keys(secrets).filter((key) => {
     const carried = readSetting(buffer, `custom/${key}`);
 
-    return expected
-      ? carried !== String(secrets[key])
-      : typeof carried === 'string' && carried.length > 0;
+    return expected ? carried !== String(secrets[key]) : typeof carried === 'string' && carried.length > 0;
   });
 
   const name = path.basename(pck);
@@ -233,7 +230,7 @@ export const verifyWebSecrets = (env, exportPath) => {
     godotLogger.success(
       expected
         ? `Web build: ${name} carries the ${env} [custom] ${Object.keys(secrets).join(', ')}`
-        : `Web build: ${name} carries no [custom] secret`
+        : `Web build: ${name} carries no [custom] secret`,
     );
     return true;
   }
@@ -249,7 +246,7 @@ export const verifyWebSecrets = (env, exportPath) => {
   return false;
 };
 
-const patchProjectGodotBundle = ({platform, env, target, steamAppId}) => {
+const patchProjectGodotBundle = ({ platform, env, target, steamAppId }) => {
   let content = fs.readFileSync(PROJECT_GODOT, 'utf8');
 
   content = content.replace(/^platform=".*"$/m, `platform="${platform}"`);
@@ -262,18 +259,13 @@ const patchProjectGodotBundle = ({platform, env, target, steamAppId}) => {
   }
 
   if (steamAppId) {
-    content = content.replace(
-      /^initialization\/app_id=.*$/m,
-      `initialization/app_id=${steamAppId}`
-    );
+    content = content.replace(/^initialization\/app_id=.*$/m, `initialization/app_id=${steamAppId}`);
   }
 
   fs.writeFileSync(PROJECT_GODOT, content);
 
   const steamLog = steamAppId ? ` [steam] app_id=${steamAppId}` : ' (no Steam app_id)';
-  godotLogger.log(
-    `project.godot [bundle] -> platform="${platform}" env="${env}" target="${target}"${steamLog}`
-  );
+  godotLogger.log(`project.godot [bundle] -> platform="${platform}" env="${env}" target="${target}"${steamLog}`);
 };
 
 // -----------------------------------------------------------------------------
@@ -281,11 +273,11 @@ const patchProjectGodotBundle = ({platform, env, target, steamAppId}) => {
 const unzipIPA = (bundleName) => {
   foxLogger.log(`Unzipping ${bundleName}.app...`);
 
-  const absolutePath = `${path.resolve(process.cwd())}/_build/iOS`
-  shell.exec(`tar -xf ${absolutePath}/${bundleName}.ipa -C _build/iOS`)
-  shell.rm('-rf', `${absolutePath}/${bundleName}.app`)
-  shell.exec(`mv ${absolutePath}/Payload/${bundleName}.app ${absolutePath}/${bundleName}.app`)
-  shell.rm('-rf', `${absolutePath}/Payload`)
+  const absolutePath = `${path.resolve(process.cwd())}/_build/iOS`;
+  shell.exec(`tar -xf ${absolutePath}/${bundleName}.ipa -C _build/iOS`);
+  shell.rm('-rf', `${absolutePath}/${bundleName}.app`);
+  shell.exec(`mv ${absolutePath}/Payload/${bundleName}.app ${absolutePath}/${bundleName}.app`);
+  shell.rm('-rf', `${absolutePath}/Payload`);
 
   foxLogger.success(`_build/iOS/${bundleName}.app is ready for your device`);
   foxLogger.log(`xcrun devicectl device install app _build/iOS/${bundleName}.app --device XXX`);
@@ -315,14 +307,16 @@ const generateCommandFor = (resPath) => {
 };
 
 export const verifyGeneratedAssets = (preset) => {
-  const declared = [...new Set(
-    Object.values(preset.options || {}).filter(
-      (value) => typeof value === 'string' && value.startsWith(GENERATED_RES_PREFIX)
-    )
-  )];
+  const declared = [
+    ...new Set(
+      Object.values(preset.options || {}).filter(
+        (value) => typeof value === 'string' && value.startsWith(GENERATED_RES_PREFIX),
+      ),
+    ),
+  ];
 
   const missing = declared.filter(
-    (resPath) => !fs.existsSync(path.resolve(process.cwd(), resPath.replace('res://', '')))
+    (resPath) => !fs.existsSync(path.resolve(process.cwd(), resPath.replace('res://', ''))),
   );
 
   if (!missing.length) {
@@ -331,11 +325,13 @@ export const verifyGeneratedAssets = (preset) => {
   }
 
   foxLogger.error(`${preset.name} declares ${missing.length} generated asset(s) that do not exist:`);
-  missing.forEach((resPath) => foxLogger.error(`  ${resPath}`));
+  missing.forEach((resPath) => {
+    foxLogger.error(`  ${resPath}`);
+  });
 
-  [...new Set(missing.map(generateCommandFor))].forEach((command) =>
-    foxLogger.log(`Run \`${command}\` then export again`)
-  );
+  [...new Set(missing.map(generateCommandFor))].forEach((command) => {
+    foxLogger.log(`Run \`${command}\` then export again`);
+  });
 
   // `fox export` is called from scripts and CI: a refused export has to be
   // visible in the exit code, not only in the terminal.
@@ -347,19 +343,12 @@ export const verifyGeneratedAssets = (preset) => {
 // -----------------------------------------------------------------------------
 
 const exportOnePreset = async (settings, presets, bundleSettings) => {
-  const {core: coreConfig, bundles} = settings;
-  const {bundleId, preset, env, newVersion} = bundleSettings;
+  const { core: coreConfig, bundles } = settings;
+  const { bundleId, preset, env, newVersion } = bundleSettings;
 
   foxLogger.step(0, `Ready to bundle ${bundleId} (${newVersion}) for ${preset.name}`);
 
-  const {bundleName} = updatePreset(
-    bundleId,
-    env,
-    coreConfig,
-    preset,
-    bundles[bundleId],
-    Object.keys(bundles)
-  );
+  const { bundleName } = updatePreset(bundleId, env, coreConfig, preset, bundles[bundleId], Object.keys(bundles));
 
   writePresets(presets);
 
@@ -382,7 +371,7 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
 
   return new Promise((resolve) => {
     const bundler = spawn(coreConfig.godot, [exportType, preset.name, '--headless'], {
-      stdio: [process.stdin, process.stdout, process.stderr]
+      stdio: [process.stdin, process.stdout, process.stderr],
     });
 
     // A spawn that never starts (bad `core.godot` path, missing binary) emits
@@ -414,7 +403,7 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
       godotLogger.success('Build complete');
 
       if (preset.platform === 'iOS') {
-        if(env === 'debug' || env === 'staging') {
+        if (env === 'debug' || env === 'staging') {
           unzipIPA(bundleName);
         }
         foxLogger.log(`_build/iOS/${bundleName}.xcodeproj is ready to be used with XCode`);
@@ -440,11 +429,9 @@ const exportOnePreset = async (settings, presets, bundleSettings) => {
 // folder impossible to miss before a single byte is written.
 
 const exportRootFor = (presets, env, target) => {
-  const preset = PLATFORMS.map((platform) => findPreset(presets, platform, env, target)).find(
-    Boolean
-  );
+  const preset = PLATFORMS.map((platform) => findPreset(presets, platform, env, target)).find(Boolean);
 
-  if (!preset || !preset.export_path) {
+  if (!preset?.export_path) {
     return null;
   }
 
@@ -454,7 +441,7 @@ const exportRootFor = (presets, env, target) => {
 // `prod` is what ENV_CHOICES calls the `release` env: the chip must speak the
 // prompt's language, not the preset's.
 const envLabel = (env) => {
-  const choice = ENV_CHOICES.find(({value}) => value === env);
+  const choice = ENV_CHOICES.find(({ value }) => value === env);
   return (choice ? choice.name : env).toUpperCase();
 };
 
@@ -464,7 +451,7 @@ export const envChip = (env) => {
 };
 
 const targetLabel = (target) => {
-  const choice = TARGET_CHOICES.find(({value}) => value === target);
+  const choice = TARGET_CHOICES.find(({ value }) => value === target);
   return (choice ? choice.name : target).toUpperCase();
 };
 
@@ -481,13 +468,13 @@ const lastExportAt = (presets, env, target) => {
   const stamps = PLATFORMS.map((platform) => {
     const preset = findPreset(presets, platform, env, target);
 
-    if (!preset || !preset.export_path) {
+    if (!preset?.export_path) {
       return null;
     }
 
     try {
       return fs.statSync(path.resolve(process.cwd(), preset.export_path)).mtime;
-    } catch (e) {
+    } catch {
       return null;
     }
   }).filter(Boolean);
@@ -512,14 +499,14 @@ const exportedLabel = (presets, env, target) => {
 
 // Two lines on purpose: the identity of the build on one, the destination it is
 // about to fill on the other, arrowed so it reads as a consequence.
-const logBundleBanner = ({presets, title, bundleId, env, target, version, exportRoot}) => {
+const logBundleBanner = ({ presets, title, bundleId, env, target, version, exportRoot }) => {
   const c = colors.cyan;
   const r = colors.reset;
   const destination = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${r}` : '';
 
   console.log(`${c}├─${r} ${c}●${r} ${BOLD}${title}${r} ${colors.gray}(${bundleId})${r} ${BOLD}v${version}${r}`);
   console.log(
-    `${c}├────>${r}  ${envChip(env)} ${colors.gray}on${r} ${targetChip(target)}${destination} ${exportedLabel(presets, env, target)}`
+    `${c}├────>${r}  ${envChip(env)} ${colors.gray}on${r} ${targetChip(target)}${destination} ${exportedLabel(presets, env, target)}`,
   );
 };
 
@@ -528,22 +515,18 @@ const logBundleBanner = ({presets, title, bundleId, env, target, version, export
 // choice, never the consequence of hitting enter through the prompts.
 
 const inquireEnv = async (presets, currentEnv, currentTarget) => {
-  const others = ENV_CHOICES.filter(
-    ({value}) => value !== currentEnv && targetsForEnv(presets, value).length > 0
-  );
+  const others = ENV_CHOICES.filter(({ value }) => value !== currentEnv && targetsForEnv(presets, value).length > 0);
 
   if (!others.length) {
     return currentEnv;
   }
 
   const describe = (env) => {
-    const target = targetsForEnv(presets, env).includes(currentTarget)
-      ? currentTarget
-      : targetsForEnv(presets, env)[0];
+    const target = targetsForEnv(presets, env).includes(currentTarget) ? currentTarget : targetsForEnv(presets, env)[0];
     return `${exportRootFor(presets, env, target)}/ ${exportedLabel(presets, env, target)}`;
   };
 
-  const {env} = await inquirer.prompt([
+  const { env } = await inquirer.prompt([
     {
       message: 'env',
       name: 'env',
@@ -551,14 +534,14 @@ const inquireEnv = async (presets, currentEnv, currentTarget) => {
       choices: [
         {
           name: `keep ${envChip(currentEnv)} (no switch) -> ${describe(currentEnv)}`,
-          value: currentEnv
+          value: currentEnv,
         },
-        ...others.map(({value}) => ({
+        ...others.map(({ value }) => ({
           name: `switch to ${envChip(value)} -> ${describe(value)}`,
-          value
-        }))
-      ]
-    }
+          value,
+        })),
+      ],
+    },
   ]);
 
   return env;
@@ -577,19 +560,19 @@ const inquireTarget = async (presets, env, currentTarget) => {
 
   const ordered = [
     ...available.filter((target) => target === currentTarget),
-    ...available.filter((target) => target !== currentTarget)
+    ...available.filter((target) => target !== currentTarget),
   ];
 
-  const {target} = await inquirer.prompt([
+  const { target } = await inquirer.prompt([
     {
       message: 'target',
       name: 'target',
       type: 'list',
       choices: ordered.map((value) => ({
         name: `${targetChip(value)} -> ${exportRootFor(presets, env, value)}/ ${exportedLabel(presets, env, value)}`,
-        value
-      }))
-    }
+        value,
+      })),
+    },
   ]);
 
   return target;
@@ -611,16 +594,16 @@ const inquirePlatforms = async (presets, env, target) => {
     return available;
   }
 
-  const {choice} = await inquirer.prompt([
+  const { choice } = await inquirer.prompt([
     {
       message: 'platform',
       name: 'choice',
       type: 'list',
       choices: [
-        {name: '✨ all', value: ALL},
-        ...available.map((platform) => ({name: PLATFORM_LABELS[platform] || platform, value: platform}))
-      ]
-    }
+        { name: '✨ all', value: ALL },
+        ...available.map((platform) => ({ name: PLATFORM_LABELS[platform] || platform, value: platform })),
+      ],
+    },
   ]);
 
   return choice === ALL ? available : [choice];
@@ -654,7 +637,7 @@ export const readExportArgs = (params = []) => {
   return {
     forcedEnv: value('env'),
     forcedTarget: value('target'),
-    forcedPlatform: value('platform')
+    forcedPlatform: value('platform'),
   };
 };
 
@@ -672,8 +655,8 @@ const matchPlatform = (available, asked) => {
   return found.length ? found : [];
 };
 
-const exportBundle = async (settings, {forcedEnv, forcedTarget, forcedPlatform} = {}) => {
-  const {core: coreConfig, bundles} = settings;
+const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform } = {}) => {
+  const { core: coreConfig, bundles } = settings;
   foxLogger.log('Exporting a bundle...');
 
   if (!bundles) {
@@ -722,9 +705,9 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget, forcedPlatform} 
   // --------- env comes from the last `fox switch`, and can be switched right here
 
   const current = readCurrentBundle();
-  const currentEnv = current && current.env;
-  const currentTarget = (current && current.target) || DEFAULT_TARGET;
-  const bundleId = (current && current.id) || Object.keys(bundles)[0];
+  const currentEnv = current?.env;
+  const currentTarget = current?.target || DEFAULT_TARGET;
+  const bundleId = current?.id || Object.keys(bundles)[0];
 
   if (!currentEnv) {
     foxLogger.error('No current env in override.cfg — run `fox switch` first');
@@ -738,7 +721,7 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget, forcedPlatform} 
     env: currentEnv,
     target: currentTarget,
     version: readProjectVersion(),
-    exportRoot: exportRootFor(presets, currentEnv, currentTarget)
+    exportRoot: exportRootFor(presets, currentEnv, currentTarget),
   });
 
   const env = forcedEnv || (await inquireEnv(presets, currentEnv, currentTarget));
@@ -805,16 +788,16 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget, forcedPlatform} 
 
       foxLogger.log(`--- ${platform} (${env} on ${target}) -> ${preset.export_path} ---`);
 
-      writeOverride(settings, {bundleId, platform, env, target});
+      writeOverride(settings, { bundleId, platform, env, target });
       patchProjectGodotBundle({
         platform,
         env,
         target,
-        steamAppId: resolveSteamAppId(settings, env, target)
+        steamAppId: resolveSteamAppId(settings, env, target),
       });
       patchProjectGodotSecrets(env, platform);
 
-      const ok = await exportOnePreset(settings, presets, {bundleId, preset, env, newVersion});
+      const ok = await exportOnePreset(settings, presets, { bundleId, preset, env, newVersion });
       if (!ok) {
         foxLogger.error(`Aborting run: ${preset.name} failed`);
         return;
@@ -833,12 +816,12 @@ const exportBundle = async (settings, {forcedEnv, forcedTarget, forcedPlatform} 
 
   if (env !== currentEnv || target !== currentTarget) {
     foxLogger.warn(
-      `override.cfg now holds env=${env} target=${target} — \`fox switch\` to go back to ${currentEnv}/${currentTarget}`
+      `override.cfg now holds env=${env} target=${target} — \`fox switch\` to go back to ${currentEnv}/${currentTarget}`,
     );
   }
 
   foxLogger.done(
-    `Exported ${platforms.length} platform(s) (${newVersion}) for "${env}" on "${target}" -> ${exportRootFor(presets, env, target)}/`
+    `Exported ${platforms.length} platform(s) (${newVersion}) for "${env}" on "${target}" -> ${exportRootFor(presets, env, target)}/`,
   );
 
   return true;

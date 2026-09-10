@@ -7,10 +7,10 @@
 // `storyboard/use_launch_screen_storyboard=true`, see docs/generate.md
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
-import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
-import {splashLogger} from './logger.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import { ensureImageMagick, quote, runMagick } from './imagemagick.js';
+import { splashLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -23,8 +23,8 @@ const DEFAULT_BACKGROUND_COLOR = '#181818';
 // The storyboard only needs the two densest images: iOS scales them down for
 // every other device, which is why the 11 legacy launch images are gone.
 const STORYBOARD_IMAGES = [
-  {name: 'splash@2x.png', size: '1170x2532'},
-  {name: 'splash@3x.png', size: '1290x2796'}
+  { name: 'splash@2x.png', size: '1170x2532' },
+  { name: 'splash@3x.png', size: '1290x2796' },
 ];
 
 // -----------------------------------------------------------------------------
@@ -48,9 +48,9 @@ const createStoryboardImage = (inputFile, backgroundColor, outputPath) => (image
       quote(backgroundColor),
       '-extent',
       quote(image.size),
-      quote(path.join(outputPath, image.name))
+      quote(path.join(outputPath, image.name)),
     ],
-    splashLogger
+    splashLogger,
   );
 
   if (!created) {
@@ -65,7 +65,7 @@ const createStoryboardImage = (inputFile, backgroundColor, outputPath) => (image
 // -----------------------------------------------------------------------------
 
 const generateSplashscreens = (config, bundles) => {
-  const {input, output, backgroundColor = DEFAULT_BACKGROUND_COLOR} = config;
+  const { input, output, backgroundColor = DEFAULT_BACKGROUND_COLOR } = config;
 
   if (!ensureImageMagick(splashLogger)) {
     return false;
@@ -79,7 +79,7 @@ const generateSplashscreens = (config, bundles) => {
   const bundleIds = resolveBundleIds(config, bundles);
 
   splashLogger.log('Generating launch screen storyboard images');
-  splashLogger.data({input, output, backgroundColor, bundles: bundleIds.join(', ')});
+  splashLogger.data({ input, output, backgroundColor, bundles: bundleIds.join(', ') });
 
   let created = 0;
 
@@ -87,7 +87,7 @@ const generateSplashscreens = (config, bundles) => {
     const outputPath = path.join(output, bundleId, IOS_PLATFORM);
     splashLogger.step(index, `${bundleId} → ${outputPath}`);
 
-    fs.mkdirSync(outputPath, {recursive: true});
+    fs.mkdirSync(outputPath, { recursive: true });
 
     const applyConversion = createStoryboardImage(input, backgroundColor, outputPath);
 

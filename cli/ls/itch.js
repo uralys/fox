@@ -13,22 +13,22 @@
 // simply means the local half is reported on its own. It is a listing, never a
 // gate.
 
-import path from 'path';
+import { execFile } from 'node:child_process';
+import path from 'node:path';
 import shell from 'shelljs';
-import {execFile} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
-import {createLogger, foxLogger} from '../logger.js';
-import {envChip, targetChip} from '../bundler/export.js';
-import {formatStamp} from '../bundler/baked-bundle.js';
-import {exportRoot, publishableEnvs, readPublishConfig} from '../bundler/publish-config.js';
-import {readLocalSlots, localLine, warnOnLocalVersions} from './local.js';
+import { formatStamp } from '../bundler/baked-bundle.js';
+import { envChip, targetChip } from '../bundler/export.js';
+import { exportRoot, publishableEnvs, readPublishConfig } from '../bundler/publish-config.js';
+import { createLogger, foxLogger } from '../logger.js';
+import { localLine, readLocalSlots, warnOnLocalVersions } from './local.js';
 
 // -----------------------------------------------------------------------------
 
-const localLogger = createLogger({name: 'Local', color: 'green'});
-const itchLogger = createLogger({name: 'itch', color: 'red'});
+const localLogger = createLogger({ name: 'Local', color: 'green' });
+const itchLogger = createLogger({ name: 'itch', color: 'red' });
 
 const COMPLETED = 'completed';
 
@@ -43,7 +43,7 @@ const parseButler = (stdout) => {
     .map((line) => {
       try {
         return JSON.parse(line);
-      } catch (e) {
+      } catch {
         return null;
       }
     })
@@ -56,13 +56,13 @@ const parseButler = (stdout) => {
 
   const channels = {};
 
-  result.value.channels.forEach(({name, head, uploadId}) => {
+  result.value.channels.forEach(({ name, head, uploadId }) => {
     channels[name] = {
       uploadId,
-      buildId: head && head.id,
-      state: head && head.state,
-      version: head && head.userVersion,
-      updatedAt: head && head.updatedAt ? new Date(head.updatedAt) : null
+      buildId: head?.id,
+      state: head?.state,
+      version: head?.userVersion,
+      updatedAt: head?.updatedAt ? new Date(head.updatedAt) : null,
     };
   });
 
@@ -72,24 +72,24 @@ const parseButler = (stdout) => {
 const readItch = (page) =>
   new Promise((resolve) => {
     if (!shell.which('butler')) {
-      resolve({reachable: false, reason: 'butler not found — https://itch.io/docs/butler/installing.html'});
+      resolve({ reachable: false, reason: 'butler not found — https://itch.io/docs/butler/installing.html' });
       return;
     }
 
-    execFile('butler', ['status', page, '--json'], {maxBuffer: 1024 * 1024}, (error, stdout) => {
+    execFile('butler', ['status', page, '--json'], { maxBuffer: 1024 * 1024 }, (error, stdout) => {
       if (error) {
-        resolve({reachable: false, reason: (error.message || '').trim().split('\n').pop()});
+        resolve({ reachable: false, reason: (error.message || '').trim().split('\n').pop() });
         return;
       }
 
       const channels = parseButler(stdout);
 
       if (!channels) {
-        resolve({reachable: false, reason: `butler returned no channel for ${page}`});
+        resolve({ reachable: false, reason: `butler returned no channel for ${page}` });
         return;
       }
 
-      resolve({reachable: true, channels});
+      resolve({ reachable: true, channels });
     });
   });
 
@@ -108,7 +108,7 @@ const remoteLine = (remote) => {
 
 // -----------------------------------------------------------------------------
 
-const reportTarget = ({label, page, contentRoot, channels, itch, projectVersion}) => {
+const reportTarget = ({ label, page, contentRoot, channels, itch, projectVersion }) => {
   const absoluteContentRoot = path.resolve(process.cwd(), contentRoot);
   const local = readLocalSlots(absoluteContentRoot, channels);
 
@@ -120,9 +120,7 @@ const reportTarget = ({label, page, contentRoot, channels, itch, projectVersion}
   local.forEach((channel) => {
     const line = `${channel.folder}/ ${localLine(channel)}`;
 
-    details[channel.slot] = itch && itch.reachable
-      ? `${line}\n  live: ${remoteLine(itch.channels[channel.slot])}`
-      : line;
+    details[channel.slot] = itch?.reachable ? `${line}\n  live: ${remoteLine(itch.channels[channel.slot])}` : line;
   });
 
   localLogger.data(details);
@@ -131,7 +129,7 @@ const reportTarget = ({label, page, contentRoot, channels, itch, projectVersion}
 
   warnOnLocalVersions(localLogger, local, projectVersion, label);
 
-  if (!itch || !itch.reachable) {
+  if (!itch?.reachable) {
     return;
   }
 
@@ -158,7 +156,7 @@ const reportTarget = ({label, page, contentRoot, channels, itch, projectVersion}
 
     if (remote.version !== channel.version) {
       itchLogger.warn(
-        `${label}: channel "${channel.slot}" is live in ${remote.version || '?'} while ${channel.folder}/ holds ${channel.version}`
+        `${label}: channel "${channel.slot}" is live in ${remote.version || '?'} while ${channel.folder}/ holds ${channel.version}`,
       );
       diverged = true;
       return;
@@ -170,7 +168,7 @@ const reportTarget = ({label, page, contentRoot, channels, itch, projectVersion}
   // A channel configured nowhere locally still lives on the page, and it is the
   // one an old push leaves behind — worth naming, never worth failing on.
   Object.keys(itch.channels)
-    .filter((name) => !local.some(({slot}) => slot === name))
+    .filter((name) => !local.some(({ slot }) => slot === name))
     .forEach((name) => {
       itchLogger.log(`${label}: channel "${name}" is live on itch but not declared in fox.config.json`);
     });
@@ -182,12 +180,12 @@ const reportTarget = ({label, page, contentRoot, channels, itch, projectVersion}
 
 // -----------------------------------------------------------------------------
 
-const lsItch = async (settings, {projectVersion}) => {
-  const {publish} = settings;
+const lsItch = async (settings, { projectVersion }) => {
+  const { publish } = settings;
 
-  const targets = publishableEnvs({publish}, 'itch')
-    .map((env) => ({label: env, itch: readPublishConfig({publish}, 'itch', env), env}))
-    .filter(({itch}) => itch && itch.user && itch.game && !String(itch.user).startsWith('<'));
+  const targets = publishableEnvs({ publish }, 'itch')
+    .map((env) => ({ label: env, itch: readPublishConfig({ publish }, 'itch', env), env }))
+    .filter(({ itch }) => itch?.user && itch.game && !String(itch.user).startsWith('<'));
 
   if (!targets.length) {
     foxLogger.error('No itch.io game configured — add "publish.itch.envs" to fox.config.json');
@@ -196,7 +194,7 @@ const lsItch = async (settings, {projectVersion}) => {
 
   // One page per (user, game) pair, so one butler call per page even when several
   // envs push their own channels to it.
-  const pages = [...new Set(targets.map(({itch}) => `${itch.user}/${itch.game}`))];
+  const pages = [...new Set(targets.map(({ itch }) => `${itch.user}/${itch.game}`))];
   const statuses = {};
 
   for (const page of pages) {
@@ -208,7 +206,7 @@ const lsItch = async (settings, {projectVersion}) => {
     }
   }
 
-  targets.forEach(({label, itch, env}) => {
+  targets.forEach(({ label, itch, env }) => {
     const page = `${itch.user}/${itch.game}`;
 
     reportTarget({
@@ -217,7 +215,7 @@ const lsItch = async (settings, {projectVersion}) => {
       contentRoot: itch.contentRoot || exportRoot(env, 'itch'),
       channels: itch.channels,
       itch: statuses[page],
-      projectVersion
+      projectVersion,
     });
   });
 

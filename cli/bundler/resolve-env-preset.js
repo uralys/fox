@@ -1,6 +1,6 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
+import fs from 'node:fs';
 
 // -----------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ export const readCurrentBundle = () => {
   try {
     const override = ini.parse(fs.readFileSync(OVERRIDE_CFG, 'utf8'));
     return override.bundle || null;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
@@ -40,13 +40,12 @@ export const readCurrentEnv = () => {
 
 export const readCurrentTarget = () => {
   const bundle = readCurrentBundle();
-  return (bundle && bundle.target) || null;
+  return bundle?.target || null;
 };
 
 // -----------------------------------------------------------------------------
 
-const featuresOf = (preset) =>
-  (preset.custom_features || '').split(',').map((feature) => feature.trim());
+const featuresOf = (preset) => (preset.custom_features || '').split(',').map((feature) => feature.trim());
 
 export const presetTarget = (preset) => {
   const declared = featuresOf(preset).find((feature) => feature.startsWith('target:'));

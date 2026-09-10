@@ -1,11 +1,11 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
 // -----------------------------------------------------------------------------
 
-import {presetsLogger} from '../logger.js';
+import { presetsLogger } from '../logger.js';
 import ini from './ini.js';
 
 // -----------------------------------------------------------------------------
@@ -20,21 +20,21 @@ const readPresets = () => {
   try {
     const presetsCFG = fs.readFileSync(path.resolve(PRESETS_CFG), 'utf8');
     presets = ini.parse(presetsCFG).preset;
-  } catch (e) {
+  } catch {
     presetsLogger.error(`Could not open ${path.resolve(PRESETS_CFG)}`);
     presetsLogger.error('Use Godot editor > Project > Export to define your export config');
     return;
   }
 
   return presets;
-}
+};
 
 // -----------------------------------------------------------------------------
 
 const writePresets = (presets) => {
-  fs.writeFileSync(PRESETS_CFG, ini.stringify({preset: presets}));
-}
+  fs.writeFileSync(PRESETS_CFG, ini.stringify({ preset: presets }));
+};
 
 // -----------------------------------------------------------------------------
 
-export {readPresets, writePresets};
+export { readPresets, writePresets };

@@ -1,11 +1,12 @@
 #!/usr/bin/env -S node --no-warnings
+
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
-import { pathToFileURL } from 'url';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import shell from 'shelljs';
-import { spawn } from 'child_process';
 import yargsFactory from 'yargs';
 
 import pkg from '../package.json' with { type: 'json' };
@@ -13,20 +14,20 @@ import { foxLogger, godotLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
-import generateIcons from './generate-icons.js';
-import generateSplashscreens from './generate-splashscreens.js';
-import generateBootSplash from './generate-boot-splash.js';
-import generateScreenshots from './generate-screenshots.js';
-import generateSteamScreenshots from './generate-steam-screenshots.js';
-import exportBundle, {readExportArgs} from './bundler/export.js';
+import exportBundle, { readExportArgs } from './bundler/export.js';
 import exportWeb from './bundler/export-web.js';
 import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
-import { tagVersion, SEMVER_LEVELS } from './bundler/tag.js';
-import runGame from './run-game.js';
-import ls from './ls/index.js';
+import { SEMVER_LEVELS, tagVersion } from './bundler/tag.js';
+import generateBootSplash from './generate-boot-splash.js';
+import generateIcons from './generate-icons.js';
+import generateScreenshots from './generate-screenshots.js';
+import generateSplashscreens from './generate-splashscreens.js';
+import generateSteamScreenshots from './generate-steam-screenshots.js';
 import importAssets from './import-assets.js';
+import ls from './ls/index.js';
 import resolveGodotPath from './resolve-godot.js';
+import runGame from './run-game.js';
 
 // -----------------------------------------------------------------------------
 
@@ -69,7 +70,7 @@ const commands = [
   UPDATE_PO_FILES,
   RUN_EDITOR,
   RUN_GAME,
-  IMPORT
+  IMPORT,
 ];
 
 const commandMessage = `choose a command above, example:\nfox ${RUN_EDITOR}`;
@@ -89,7 +90,7 @@ const getSettings = async (command, defaultConfig) => {
 
   try {
     foxLogger.log(`Reading ${CONFIG_FILE}`);
-    config = (await import(pathToFileURL(configPath), { with: { type: "json" } })).default;
+    config = (await import(pathToFileURL(configPath), { with: { type: 'json' } })).default;
 
     // Only the command block falls back: swapping the whole config in would
     // also swap `bundles`, and every generated asset would land under the
@@ -97,7 +98,7 @@ const getSettings = async (command, defaultConfig) => {
     if (!config[command] && defaultConfig[command]) {
       foxLogger.warn(`Using default config for command "${command}"`);
     }
-  } catch (e) {
+  } catch {
     foxLogger.warn(`Could not find ${CONFIG_FILE}, using default config for "${command}"`);
     config = defaultConfig;
     return;
@@ -107,7 +108,7 @@ const getSettings = async (command, defaultConfig) => {
     config: { ...defaultConfig[command], ...config[command] },
     core: { ...defaultConfig.core, ...config.core },
     bundles: config.bundles,
-    publish: { ...defaultConfig.publish, ...config.publish }
+    publish: { ...defaultConfig.publish, ...config.publish },
   };
 };
 
@@ -133,7 +134,7 @@ const verifyConfig = (config, defaultConfig) => {
     const directory = path.extname(output) ? path.dirname(output) : output;
 
     foxLogger.log(`Verifying output path`);
-    foxLogger.data({output: directory});
+    foxLogger.data({ output: directory });
 
     if (!fs.existsSync(directory)) {
       shell.mkdir('-p', directory);
@@ -177,8 +178,8 @@ const cli = async (yargs, params) => {
   let defaultConfig;
 
   try {
-    defaultConfig = (await import(pathToFileURL(defaultConfigPath), { with: { type: "json" } })).default;
-  } catch (e) {
+    defaultConfig = (await import(pathToFileURL(defaultConfigPath), { with: { type: 'json' } })).default;
+  } catch {
     foxLogger.error(`${process.cwd()} is not a project using Fox`);
     return;
   }
@@ -207,12 +208,12 @@ const cli = async (yargs, params) => {
     case RUN_EDITOR: {
       const { resolution, position } = config;
       godotLogger.log('Opening editor');
-      godotLogger.data({resolution, position});
+      godotLogger.data({ resolution, position });
 
       const editorProcess = spawn(
         core.godot,
         ['-e', '--windowed', '--resolution', resolution, '--position', position],
-        { stdio: [process.stdin, process.stdout, process.stderr] }
+        { stdio: [process.stdin, process.stdout, process.stderr] },
       );
 
       editorProcess.on('close', () => {
@@ -272,7 +273,9 @@ const cli = async (yargs, params) => {
     case UPDATE_PO_FILES: {
       const { poFiles, potTemplate } = config;
       foxLogger.log('Using msgmerge on .po files');
-      shell.exec(`for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`);
+      shell.exec(
+        `for file in ${poFiles}; do echo \${file} ; msgmerge --backup=off --update \${file} ${potTemplate}; done`,
+      );
       break;
     }
     case GENERATE_SCREENSHOTS: {
@@ -301,8 +304,14 @@ const execute = async () => {
     .command(RUN_GAME, 'start your game locally')
     .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
     .command(EXPORT, 'export a bundle for one of your presets (--env / --target / --platform to skip the prompts)')
-    .command(EXPORT_WEB, 'scriptable HTML5 export into _build/web, NOT shippable (no bundle bake): use `fox export` to ship a web build')
-    .command(PUBLISH, 'upload exported builds to a store (fox publish [store] [env] [branch], --yes to skip the confirm)')
+    .command(
+      EXPORT_WEB,
+      'scriptable HTML5 export into _build/web, NOT shippable (no bundle bake): use `fox export` to ship a web build',
+    )
+    .command(
+      PUBLISH,
+      'upload exported builds to a store (fox publish [store] [env] [branch], --yes to skip the confirm)',
+    )
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(LS, 'list local exports and confront them with every store: Steam Deck and itch.io')
     .command(LS_STEAM, 'list local Steam exports and the builds installed on the Steam Deck, and compare them')
@@ -310,28 +319,23 @@ const execute = async () => {
     .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
     .command(
       GENERATE_ICONS,
-      'generate icons from a base 1200x1200 image, per bundle and per platform, into assets/generated/<bundleId>/{ios,android,desktop,web}'
+      'generate icons from a base 1200x1200 image, per bundle and per platform, into assets/generated/<bundleId>/{ios,android,desktop,web}',
     )
     .command(
       GENERATE_SPLASHSCREENS,
-      'generate the iOS launch storyboard images (@2x, @3x) into assets/generated/<bundleId>/ios'
+      'generate the iOS launch storyboard images (@2x, @3x) into assets/generated/<bundleId>/ios',
     )
     .command(
       GENERATE_BOOT_SPLASH,
-      'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from fox/components/splash/splash-screen.gd'
+      'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from fox/components/splash/splash-screen.gd',
     )
-    .command(
-      GENERATE_SCREENSHOTS,
-      'resize all images in a folder to 2560x1600, to match store requirements'
-    )
-    .command(
-      GENERATE_STEAM_SCREENSHOTS,
-      'resize all images from <source-folder> to 1920x1080 for Steam (flat output)'
-    )
+    .command(GENERATE_SCREENSHOTS, 'resize all images in a folder to 2560x1600, to match store requirements')
+    .command(GENERATE_STEAM_SCREENSHOTS, 'resize all images from <source-folder> to 1920x1080 for Steam (flat output)')
     .demandCommand(1, 1, commandMessage, commandMessage)
     .help('h')
     .version(pkg.version)
-    .alias('version', 'v').epilog(`Fox CLI v${pkg.version}
+    .alias('version', 'v')
+    .epilog(`Fox CLI v${pkg.version}
       Documentation: https://github.com/uralys/fox
       Icons, splashscreens and screenshots commands require ImageMagick https://imagemagick.org/index.php`);
 
@@ -354,6 +358,6 @@ const execute = async () => {
     foxLogger.error(e.message || String(e));
     process.exitCode = 1;
   }
-}
+};
 
-execute()
+execute();

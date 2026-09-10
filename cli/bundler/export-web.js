@@ -18,15 +18,15 @@
 // `--export-release` for a shipping env, and restores the repo afterwards.
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import shell from 'shelljs';
-import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
-import {foxLogger, godotLogger} from '../logger.js';
-import {readPresets} from './read-presets.js';
+import { foxLogger, godotLogger } from '../logger.js';
+import { readPresets } from './read-presets.js';
 
 // -----------------------------------------------------------------------------
 
@@ -35,14 +35,12 @@ const DEFAULT_EXPORT_PATH = '_build/web/index.html';
 
 // -----------------------------------------------------------------------------
 
-const findWebPreset = (presets) =>
-  Object.values(presets).find((preset) => preset.platform === WEB_PLATFORM) ||
-  null;
+const findWebPreset = (presets) => Object.values(presets).find((preset) => preset.platform === WEB_PLATFORM) || null;
 
 // -----------------------------------------------------------------------------
 
 const exportWeb = (settings) => {
-  const {core} = settings;
+  const { core } = settings;
 
   const presets = readPresets();
   if (!presets) {
@@ -73,11 +71,9 @@ const exportWeb = (settings) => {
   foxLogger.step(0, `Exporting Web build "${preset.name}" -> ${exportPath}`);
 
   return new Promise((resolve) => {
-    const bundler = spawn(
-      core.godot,
-      ['--headless', '--export-debug', preset.name, exportPath],
-      {stdio: [process.stdin, process.stdout, process.stderr]}
-    );
+    const bundler = spawn(core.godot, ['--headless', '--export-debug', preset.name, exportPath], {
+      stdio: [process.stdin, process.stdout, process.stderr],
+    });
 
     bundler.on('close', (code) => {
       if (code !== 0) {

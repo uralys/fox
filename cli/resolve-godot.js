@@ -1,8 +1,8 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
+import fs from 'node:fs';
 
-import {foxLogger} from './logger.js';
+import { foxLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -10,7 +10,7 @@ const DEFAULT_PATHS = {
   darwin: '/Applications/Apps/Godot.app/Contents/MacOS/Godot',
   win32: 'C:\\Program Files\\Godot\\Godot.exe',
   wsl: '/mnt/c/Program Files/Godot/Godot.exe',
-  linux: 'godot'
+  linux: 'godot',
 };
 
 // -----------------------------------------------------------------------------

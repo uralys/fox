@@ -3,11 +3,11 @@
 // requires ImageMagick, see docs/install.md
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 import shell from 'shelljs';
-import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
-import {screenshotsLogger} from './logger.js';
+import { ensureImageMagick, quote, runMagick } from './imagemagick.js';
+import { screenshotsLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -41,7 +41,7 @@ const generateSteamScreenshots = (config, params) => {
   const outputPath = path.resolve(projectPath, output);
 
   screenshotsLogger.log('Generating Steam screenshots');
-  screenshotsLogger.data({input: inputPath, output: outputPath, resolution: RESOLUTION});
+  screenshotsLogger.data({ input: inputPath, output: outputPath, resolution: RESOLUTION });
 
   if (!fs.existsSync(outputPath)) {
     shell.mkdir('-p', outputPath);
@@ -72,9 +72,9 @@ const generateSteamScreenshots = (config, params) => {
         'center',
         '-extent',
         quote(RESOLUTION),
-        quote(outputFilePath)
+        quote(outputFilePath),
       ],
-      screenshotsLogger
+      screenshotsLogger,
     );
 
     if (!resized) {

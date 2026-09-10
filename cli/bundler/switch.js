@@ -1,16 +1,16 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
+import fs from 'node:fs';
 import inquirer from 'inquirer';
 
 // -----------------------------------------------------------------------------
 
-import {switchLogger} from '../logger.js';
+import { switchLogger } from '../logger.js';
 import ini from './ini.js';
-import {DEFAULT_TARGET} from './resolve-env-preset.js';
-import {readPublishConfig, SUPPORTED_TARGETS, TARGET_CHOICES} from './publish-config.js';
-import {toVersionNumber} from './versioning.js';
-import {readProjectVersion} from './tag.js';
+import { readPublishConfig, SUPPORTED_TARGETS, TARGET_CHOICES } from './publish-config.js';
+import { DEFAULT_TARGET } from './resolve-env-preset.js';
+import { readProjectVersion } from './tag.js';
+import { toVersionNumber } from './versioning.js';
 
 // Kept local rather than imported from export.js: the two modules already
 // import each other, and this is a one-word constant.
@@ -18,7 +18,8 @@ const WEB = 'Web';
 
 // The env whose secret must never become public, whatever the platform.
 const SEALED_ENV = 'release';
-import {getSubtitle, getTitle} from './export.js';
+
+import { getSubtitle, getTitle } from './export.js';
 
 // -----------------------------------------------------------------------------
 
@@ -27,7 +28,7 @@ const OVERRIDE_CFG = './override.cfg';
 const PLATFORM_BY_PROCESS = {
   darwin: 'macOS',
   win32: 'Windows Desktop',
-  linux: 'Linux'
+  linux: 'Linux',
 };
 
 // `prod` is the public label of the `release` env.
@@ -36,9 +37,9 @@ const PLATFORM_BY_PROCESS = {
 // The env says what the build CONTAINS. Where it is published is the OTHER axis,
 // `target` — see resolve-env-preset.js. A value like "itch" never belongs here.
 export const ENV_CHOICES = [
-  {name: 'debug', value: 'debug'},
-  {name: 'demo', value: 'demo'},
-  {name: 'prod', value: 'release'}
+  { name: 'debug', value: 'debug' },
+  { name: 'demo', value: 'demo' },
+  { name: 'prod', value: 'release' },
 ];
 
 const SUPPORTED_ENVS = ['debug', 'staging', 'release', 'demo'];
@@ -69,12 +70,12 @@ export const bakesSecret = (platform, env) => platform !== WEB || env !== SEALED
 // it ask for a Steam client that is not there. `override.cfg` is loaded before the
 // autoloads, overriding `project.godot [steam] initialization/app_id` — the
 // committed project keeps `app_id=0`, fox.config.json is the single source of truth.
-export const resolveSteamAppId = ({publish}, env, target = DEFAULT_TARGET) => {
+export const resolveSteamAppId = ({ publish }, env, target = DEFAULT_TARGET) => {
   if (target !== 'steam') {
     return null;
   }
 
-  const appId = readPublishConfig({publish}, 'steam', env).appId;
+  const appId = readPublishConfig({ publish }, 'steam', env).appId;
 
   if (!appId || String(appId).startsWith('<')) {
     return null;
@@ -85,8 +86,8 @@ export const resolveSteamAppId = ({publish}, env, target = DEFAULT_TARGET) => {
 
 // -----------------------------------------------------------------------------
 
-export const writeOverride = (settings, {bundleId, platform, env, target = DEFAULT_TARGET}) => {
-  const {core, bundles} = settings;
+export const writeOverride = (settings, { bundleId, platform, env, target = DEFAULT_TARGET }) => {
+  const { core, bundles } = settings;
 
   if (!SUPPORTED_ENVS.includes(env)) {
     switchLogger.error(`env:${env} is not supported, use one of [${SUPPORTED_ENVS}]`);
@@ -98,7 +99,7 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
     return null;
   }
 
-  const override = {bundle: {}, fox: {}, custom: {}};
+  const override = { bundle: {}, fox: {}, custom: {} };
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
   const appVersion = readProjectVersion();
   const subtitle = getSubtitle(bundles[bundleId]);
@@ -126,7 +127,7 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
 
   try {
     overrideByEnv = ini.parse(fs.readFileSync(`./override.${env}.cfg`, 'utf8'));
-  } catch (e) {
+  } catch {
     overrideByEnv = {};
   }
 
@@ -142,14 +143,12 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
   let secretByEnv;
 
   if (!bakesSecret(platform, env)) {
-    switchLogger.warn(
-      `Web ${env} build: [custom] secrets kept OUT of override.cfg (a web pck is public)`
-    );
+    switchLogger.warn(`Web ${env} build: [custom] secrets kept OUT of override.cfg (a web pck is public)`);
     secretByEnv = {};
   } else {
     try {
       secretByEnv = ini.parse(fs.readFileSync(`./secret.${env}.cfg`, 'utf8'));
-    } catch (e) {
+    } catch {
       secretByEnv = {};
     }
   }
@@ -159,7 +158,7 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
   override.custom = {
     ...override.custom,
     ...overrideByEnv,
-    ...secretByEnv
+    ...secretByEnv,
   };
 
   // ---------
@@ -167,7 +166,7 @@ export const writeOverride = (settings, {bundleId, platform, env, target = DEFAU
   const steamAppId = resolveSteamAppId(settings, env, target);
 
   if (steamAppId) {
-    override.steam = {'initialization/app_id': steamAppId};
+    override.steam = { 'initialization/app_id': steamAppId };
   }
 
   // ---------
@@ -202,14 +201,14 @@ const inquireParams = async (bundles) => {
       message: 'env',
       name: 'env',
       type: 'list',
-      choices: ENV_CHOICES
+      choices: ENV_CHOICES,
     },
     {
       message: 'target',
       name: 'target',
       type: 'list',
-      choices: TARGET_CHOICES
-    }
+      choices: TARGET_CHOICES,
+    },
   ];
 
   if (!singleBundleId) {
@@ -217,7 +216,7 @@ const inquireParams = async (bundles) => {
       message: 'bundle',
       name: 'bundleId',
       type: 'list',
-      choices: bundleIds
+      choices: bundleIds,
     });
   }
 
@@ -226,14 +225,14 @@ const inquireParams = async (bundles) => {
   return {
     bundleId: answers.bundleId || singleBundleId,
     env: answers.env,
-    target: answers.target
+    target: answers.target,
   };
 };
 
 // -----------------------------------------------------------------------------
 
 const switchBundle = async (settings) => {
-  const {bundles} = settings;
+  const { bundles } = settings;
   switchLogger.log('Selecting env...');
 
   if (!bundles) {
@@ -241,12 +240,12 @@ const switchBundle = async (settings) => {
     return;
   }
 
-  const {bundleId, env, target} = await inquireParams(bundles);
+  const { bundleId, env, target } = await inquireParams(bundles);
   const platform = hostPlatform();
 
   switchLogger.log(`env: ${env} — target: ${target} — platform: ${platform}`);
 
-  const override = writeOverride(settings, {bundleId, platform, env, target});
+  const override = writeOverride(settings, { bundleId, platform, env, target });
 
   if (!override) {
     switchLogger.error('Could not write override.cfg');
@@ -255,7 +254,7 @@ const switchBundle = async (settings) => {
 
   switchLogger.success('Bundle ready');
 
-  return {bundleId, env, target};
+  return { bundleId, env, target };
 };
 
 // -----------------------------------------------------------------------------

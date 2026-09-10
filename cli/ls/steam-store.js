@@ -14,10 +14,10 @@
 // network — the listing simply reports its local half, exactly as an unreachable
 // Deck does.
 
-import fs from 'fs';
-import path from 'path';
+import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import shell from 'shelljs';
-import {spawn} from 'child_process';
 
 // -----------------------------------------------------------------------------
 
@@ -93,12 +93,14 @@ const runSteamcmd = (login, appIds) =>
   new Promise((resolve) => {
     const commands = ['+login', login];
 
-    appIds.forEach((appId) => commands.push('+app_info_print', appId));
+    appIds.forEach((appId) => {
+      commands.push('+app_info_print', appId);
+    });
     commands.push('+quit');
 
     // stdin is CLOSED, unlike `fox publish`: a listing must never sit on a Steam
     // Guard prompt, so a session that needs one fails fast and reports why.
-    const steamcmd = spawn('steamcmd', commands, {stdio: ['ignore', 'pipe', 'pipe']});
+    const steamcmd = spawn('steamcmd', commands, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     let stdout = '';
     let settled = false;
@@ -114,7 +116,7 @@ const runSteamcmd = (login, appIds) =>
 
     const watchdog = setTimeout(() => {
       steamcmd.kill();
-      finish({reachable: false, reason: `steamcmd did not answer in ${APPINFO_TIMEOUT / 1000}s`});
+      finish({ reachable: false, reason: `steamcmd did not answer in ${APPINFO_TIMEOUT / 1000}s` });
     }, APPINFO_TIMEOUT);
 
     steamcmd.stdout.on('data', (chunk) => {
@@ -122,7 +124,7 @@ const runSteamcmd = (login, appIds) =>
     });
 
     steamcmd.on('error', (error) => {
-      finish({reachable: false, reason: (error.message || '').trim().split('\n').pop()});
+      finish({ reachable: false, reason: (error.message || '').trim().split('\n').pop() });
     });
 
     steamcmd.on('close', () => {
@@ -135,12 +137,12 @@ const runSteamcmd = (login, appIds) =>
       if (!Object.values(apps).some((app) => app)) {
         finish({
           reachable: false,
-          reason: `steamcmd returned no app info (session expired? run "steamcmd +login ${login}")`
+          reason: `steamcmd returned no app info (session expired? run "steamcmd +login ${login}")`,
         });
         return;
       }
 
-      finish({reachable: true, apps});
+      finish({ reachable: true, apps });
     });
   });
 
@@ -148,11 +150,11 @@ const runSteamcmd = (login, appIds) =>
 
 export const readSteamStore = async (login, appIds) => {
   if (!login) {
-    return {reachable: false, reason: 'no "publish.steam.login" in fox.config.json'};
+    return { reachable: false, reason: 'no "publish.steam.login" in fox.config.json' };
   }
 
   if (!shell.which('steamcmd')) {
-    return {reachable: false, reason: 'steamcmd not found — https://developer.valvesoftware.com/wiki/SteamCMD'};
+    return { reachable: false, reason: 'steamcmd not found — https://developer.valvesoftware.com/wiki/SteamCMD' };
   }
 
   return await runSteamcmd(login, [...new Set(appIds.map(String))]);
@@ -167,8 +169,8 @@ export const storeSlot = (app, branch, depotId) => {
   }
 
   const depots = app.depots || {};
-  const head = (depots.branches || {})[branch];
-  const manifest = ((depots[depotId] || {}).manifests || {})[branch];
+  const head = depots.branches?.[branch];
+  const manifest = depots[depotId]?.manifests?.[branch];
 
   if (!head && !manifest) {
     return null;
@@ -176,10 +178,10 @@ export const storeSlot = (app, branch, depotId) => {
 
   return {
     branch,
-    buildId: head && head.buildid,
-    updatedAt: head && head.timeupdated ? new Date(Number(head.timeupdated) * 1000) : null,
-    manifest: manifest && manifest.gid,
-    size: manifest && Number(manifest.size)
+    buildId: head?.buildid,
+    updatedAt: head?.timeupdated ? new Date(Number(head.timeupdated) * 1000) : null,
+    manifest: manifest?.gid,
+    size: manifest && Number(manifest.size),
   };
 };
 
@@ -201,8 +203,8 @@ const readAppLog = (outputDir, appId) => {
   const stamp = text.match(/^\[([^\]]+)\]/);
 
   return {
-    buildId: build && build[1],
-    uploadedAt: stamp ? new Date(stamp[1].replace(' ', 'T')) : null
+    buildId: build?.[1],
+    uploadedAt: stamp ? new Date(stamp[1].replace(' ', 'T')) : null,
   };
 };
 
@@ -215,7 +217,7 @@ const readDepotVdf = (outputDir, depotId) => {
 
   const parsed = parseVdf(fs.readFileSync(vdfPath, 'utf8')).depotbuild || {};
 
-  return {manifest: parsed.manifest, appId: parsed.appid};
+  return { manifest: parsed.manifest, appId: parsed.appid };
 };
 
 // The content path proves WHICH folder those bytes came from: the same depot ids
@@ -239,15 +241,15 @@ export const readLastUpload = (appId, depotIds) => {
   const depots = {};
 
   depotIds.forEach((depotId) => {
-    const {manifest, appId: loggedApp} = readDepotVdf(outputDir, depotId);
+    const { manifest, appId: loggedApp } = readDepotVdf(outputDir, depotId);
 
     depots[depotId] = {
       // A depot id belongs to one app, but the guard costs nothing and a wrong
       // join here would be invisible.
       manifest: !loggedApp || String(loggedApp) === String(appId) ? manifest : null,
-      contentPath: readDepotContentRoot(outputDir, depotId)
+      contentPath: readDepotContentRoot(outputDir, depotId),
     };
   });
 
-  return {...app, depots};
+  return { ...app, depots };
 };

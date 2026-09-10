@@ -52,7 +52,7 @@ const formatValue = (value, indent = 4) => {
 
 // -----------------------------------------------------------------------------
 
-const createLogger = ({name, color}) => {
+const createLogger = ({ name, color }) => {
   const c = colors[color] || colors.cyan;
   const r = colors.reset;
 
@@ -138,7 +138,7 @@ const createLogger = ({name, color}) => {
     started = false;
   };
 
-  return {log, step, success, successCompact, warn, error, done, data, reset};
+  return { log, step, success, successCompact, warn, error, done, data, reset };
 };
 
 // -----------------------------------------------------------------------------
@@ -153,29 +153,29 @@ const logHeader = (title) => {
 
 // -----------------------------------------------------------------------------
 
-const foxLogger = createLogger({name: 'Fox', color: 'cyan'});
-const godotLogger = createLogger({name: 'Godot', color: 'yellow'});
-const switchLogger = createLogger({name: 'Switch', color: 'blue'});
-const presetLogger = createLogger({name: 'Preset', color: 'magenta'});
-const iconsLogger = createLogger({name: 'Icons', color: 'green'});
-const splashLogger = createLogger({name: 'Splash', color: 'green'});
-const screenshotsLogger = createLogger({name: 'Screenshots', color: 'green'});
-const versionLogger = createLogger({name: 'Version', color: 'blue'});
-const presetsLogger = createLogger({name: 'Presets', color: 'gray'});
+const foxLogger = createLogger({ name: 'Fox', color: 'cyan' });
+const godotLogger = createLogger({ name: 'Godot', color: 'yellow' });
+const switchLogger = createLogger({ name: 'Switch', color: 'blue' });
+const presetLogger = createLogger({ name: 'Preset', color: 'magenta' });
+const iconsLogger = createLogger({ name: 'Icons', color: 'green' });
+const splashLogger = createLogger({ name: 'Splash', color: 'green' });
+const screenshotsLogger = createLogger({ name: 'Screenshots', color: 'green' });
+const versionLogger = createLogger({ name: 'Version', color: 'blue' });
+const presetsLogger = createLogger({ name: 'Presets', color: 'gray' });
 
 // -----------------------------------------------------------------------------
 
 export {
   colors,
   createLogger,
-  logHeader,
   foxLogger,
   godotLogger,
-  switchLogger,
-  presetLogger,
   iconsLogger,
-  splashLogger,
-  screenshotsLogger,
-  versionLogger,
+  logHeader,
+  presetLogger,
   presetsLogger,
+  screenshotsLogger,
+  splashLogger,
+  switchLogger,
+  versionLogger,
 };

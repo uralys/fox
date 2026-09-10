@@ -33,7 +33,7 @@ const ensureImageMagick = (logger) => {
 
 const runMagick = (args, logger) => {
   const command = [BINARY, ...args].join(' ');
-  const result = shell.exec(command, {silent: true});
+  const result = shell.exec(command, { silent: true });
 
   if (result.code !== 0) {
     logger.error(`${BINARY} failed (code ${result.code})`);
@@ -51,4 +51,4 @@ const runMagick = (args, logger) => {
 
 // -----------------------------------------------------------------------------
 
-export {ensureImageMagick, quote, runMagick};
+export { ensureImageMagick, quote, runMagick };

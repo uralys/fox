@@ -29,7 +29,7 @@ const safeGodotValue = (val) => {
   return JSON.stringify(val);
 };
 
-const isNumber = (val) => val.length > 0 && !isNaN(val);
+const isNumber = (val) => val.length > 0 && !Number.isNaN(Number(val));
 const isGodotObject = (val) =>
   ['PoolStringArray', 'Color'].reduce((acc, objectType) => acc || val.includes(objectType), false);
 
@@ -37,7 +37,7 @@ const isGodotObject = (val) =>
 // everything else is from https://github.com/npm/ini/
 // -----------------------------------------------------------------------------
 
-const {hasOwnProperty} = Object.prototype;
+const hasOwn = Object.prototype.hasOwnProperty;
 
 const eol = typeof process !== 'undefined' && process.platform === 'win32' ? '\r\n' : '\n';
 
@@ -48,7 +48,7 @@ const encode = (obj, opt) => {
   if (typeof opt === 'string') {
     opt = {
       section: opt,
-      whitespace: false
+      whitespace: false,
     };
   } else {
     opt = opt || Object.create(null);
@@ -60,20 +60,20 @@ const encode = (obj, opt) => {
   for (const k of Object.keys(obj)) {
     const val = obj[k];
     if (val && Array.isArray(val)) {
-      for (const item of val) out += safe(k + '[]') + separator + safe(item) + '\n';
+      for (const item of val) out += `${safe(`${k}[]`) + separator + safe(item)}\n`;
     } else if (val && typeof val === 'object') children.push(k);
     else out += safe(k) + separator + safeGodotValue(val) + eol;
   }
 
-  if (opt.section && out.length) out = '[' + safe(opt.section) + ']' + eol + '\n' + out;
+  if (opt.section && out.length) out = `[${safe(opt.section)}]${eol}\n${out}`;
 
   for (const k of children) {
     const nk = dotSplit(k).join('\\.');
-    const section = (opt.section ? opt.section + '.' : '') + nk;
-    const {whitespace} = opt;
+    const section = (opt.section ? `${opt.section}.` : '') + nk;
+    const { whitespace } = opt;
     const child = encode(obj[k], {
       section,
-      whitespace
+      whitespace,
     });
     if (out.length && child.length) out += eol;
 
@@ -118,14 +118,11 @@ const decode = (str) => {
     const key = isArray ? keyRaw.slice(0, -2) : keyRaw;
     if (key === '__proto__') continue;
     const valueRaw = match[3] ? unsafe(match[4]) : true;
-    const value =
-      valueRaw === 'true' || valueRaw === 'false' || valueRaw === 'null'
-        ? JSON.parse(valueRaw)
-        : valueRaw;
+    const value = valueRaw === 'true' || valueRaw === 'false' || valueRaw === 'null' ? JSON.parse(valueRaw) : valueRaw;
 
     // Convert keys with '[]' suffix to an array
     if (isArray) {
-      if (!hasOwnProperty.call(p, key)) p[key] = [];
+      if (!hasOwn.call(p, key)) p[key] = [];
       else if (!Array.isArray(p[key])) p[key] = [p[key]];
     }
 
@@ -139,8 +136,7 @@ const decode = (str) => {
   // use a filter to return the keys that have to be deleted.
   const remove = [];
   for (const k of Object.keys(out)) {
-    if (!hasOwnProperty.call(out, k) || typeof out[k] !== 'object' || Array.isArray(out[k]))
-      continue;
+    if (!hasOwn.call(out, k) || typeof out[k] !== 'object' || Array.isArray(out[k])) continue;
 
     // see if the parent section is also an object.
     // if so, add it to that, and mark this one for deletion
@@ -150,8 +146,7 @@ const decode = (str) => {
     const nl = l.replace(/\\\./g, '.');
     for (const part of parts) {
       if (part === '__proto__') continue;
-      if (!hasOwnProperty.call(p, part) || typeof p[part] !== 'object')
-        p[part] = Object.create(null);
+      if (!hasOwn.call(p, part) || typeof p[part] !== 'object') p[part] = Object.create(null);
       p = p[part];
     }
     if (p === out && nl === l) continue;
@@ -165,8 +160,7 @@ const decode = (str) => {
 };
 
 const isQuoted = (val) =>
-  (val.charAt(0) === '"' && val.slice(-1) === '"') ||
-  (val.charAt(0) === "'" && val.slice(-1) === "'");
+  (val.charAt(0) === '"' && val.slice(-1) === '"') || (val.charAt(0) === "'" && val.slice(-1) === "'");
 
 const safe = (val) =>
   typeof val !== 'string' ||
@@ -177,7 +171,7 @@ const safe = (val) =>
     ? JSON.stringify(val)
     : val.replace(/;/g, '\\;').replace(/#/g, '\\#');
 
-const unsafe = (val, doUnesc) => {
+const unsafe = (val) => {
   val = (val || '').trim();
   if (isQuoted(val)) {
     // remove the single quotes before calling JSON.parse
@@ -194,7 +188,7 @@ const unsafe = (val, doUnesc) => {
       const c = val.charAt(i);
       if (esc) {
         if ('\\;#'.indexOf(c) !== -1) unesc += c;
-        else unesc += '\\' + c;
+        else unesc += `\\${c}`;
 
         esc = false;
       } else if (';#'.indexOf(c) !== -1) break;
@@ -216,5 +210,5 @@ export default {
   stringify: encode,
   encode,
   safe,
-  unsafe
+  unsafe,
 };

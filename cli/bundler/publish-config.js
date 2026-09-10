@@ -23,8 +23,8 @@
 export const SUPPORTED_TARGETS = ['steam', 'itch'];
 
 export const TARGET_CHOICES = [
-  {name: 'steam', value: 'steam'},
-  {name: 'itch.io', value: 'itch'}
+  { name: 'steam', value: 'steam' },
+  { name: 'itch.io', value: 'itch' },
 ];
 
 // Where `fox export` puts a build, and therefore where a publisher reads it:
@@ -37,25 +37,23 @@ export const exportRoot = (env, target) => `export/${env}/${target}`;
 const LEGACY_STEAM_KEY_BY_ENV = {
   release: 'steam',
   staging: 'steam',
-  demo: 'steamDemo'
+  demo: 'steamDemo',
 };
 
-const isLegacySteam = (publish) =>
-  Boolean(publish) &&
-  SUPPORTED_TARGETS.every((target) => !(publish[target] && publish[target].envs));
+const isLegacySteam = (publish) => Boolean(publish) && SUPPORTED_TARGETS.every((target) => !publish[target]?.envs);
 
 // Returns the store settings for one (target, env) pair, always an object so a
 // caller can read a missing key without guarding. `credentials` holds what belongs
 // to the STORE (a Steam login, an itch user), `envs[env]` what belongs to this
 // particular build (an app id, depots, a branch).
-export const readPublishConfig = ({publish}, target, env) => {
+export const readPublishConfig = ({ publish }, target, env) => {
   if (!publish) {
     return {};
   }
 
   if (target === 'steam' && isLegacySteam(publish)) {
     const legacy = publish[LEGACY_STEAM_KEY_BY_ENV[env] || 'steam'];
-    return legacy ? {...legacy} : {};
+    return legacy ? { ...legacy } : {};
   }
 
   const store = publish[target];
@@ -64,10 +62,10 @@ export const readPublishConfig = ({publish}, target, env) => {
     return {};
   }
 
-  const {envs, ...credentials} = store;
-  const forEnv = (envs && envs[env]) || {};
+  const { envs, ...credentials } = store;
+  const forEnv = envs?.[env] || {};
 
-  return {...credentials, ...forEnv};
+  return { ...credentials, ...forEnv };
 };
 
 // Declaring an env under a store says "this build belongs to that app" — which is
@@ -77,20 +75,18 @@ export const readPublishConfig = ({publish}, target, env) => {
 // never offered by `fox publish`.
 const hasUploadSlots = (forEnv) => Boolean(forEnv && (forEnv.depots || forEnv.channels));
 
-export const publishableEnvs = ({publish}, target) => {
+export const publishableEnvs = ({ publish }, target) => {
   if (!publish) {
     return [];
   }
 
   if (target === 'steam' && isLegacySteam(publish)) {
-    return Object.keys(LEGACY_STEAM_KEY_BY_ENV).filter((env) =>
-      hasUploadSlots(publish[LEGACY_STEAM_KEY_BY_ENV[env]])
-    );
+    return Object.keys(LEGACY_STEAM_KEY_BY_ENV).filter((env) => hasUploadSlots(publish[LEGACY_STEAM_KEY_BY_ENV[env]]));
   }
 
   const store = publish[target];
 
-  if (!store || !store.envs) {
+  if (!store?.envs) {
     return [];
   }
 

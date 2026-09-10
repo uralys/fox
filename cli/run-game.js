@@ -1,12 +1,11 @@
 // -----------------------------------------------------------------------------
 
+import { spawn } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
 import chokidar from 'chokidar';
-import shelljs from 'shelljs';
-import {spawn} from 'child_process';
-import {writeFileSync} from 'fs';
-
 import keypress from 'keypress';
-import {godotLogger, foxLogger} from './logger.js';
+import shelljs from 'shelljs';
+import { foxLogger, godotLogger } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
@@ -28,14 +27,14 @@ const restart = (godotPath, params, config) => {
   }
 
   start(godotPath, params, config);
-}
+};
 
 // -----------------------------------------------------------------------------
 
 const start = (godotPath, params, config) => {
   godotLogger.reset();
   godotLogger.log('Starting game');
-  const {position, screen, resolution: defaultResolution, resolutions = {}} = config;
+  const { position, screen, resolution: defaultResolution, resolutions = {} } = config;
 
   // `resolution` (singular) is the default windowed size, always applied.
   // `--steamdeck` / `--desktop` override it by selecting from config.resolutions.
@@ -63,8 +62,7 @@ const start = (godotPath, params, config) => {
     parameters.push('--position', position);
   }
 
-  childProcess = spawn(godotPath, parameters, {stdio: 'inherit'});
-
+  childProcess = spawn(godotPath, parameters, { stdio: 'inherit' });
 };
 
 // -----------------------------------------------------------------------------
@@ -75,11 +73,10 @@ const runGame = (godotPath, params, config) => {
   process.stdin.setRawMode(true);
 
   const ignoredFolders = ['.worktrees', ...(config.ignored || [])].map((folder) =>
-    folder.replace(/^\.\//, '').replace(/\/+$/, '')
+    folder.replace(/^\.\//, '').replace(/\/+$/, ''),
   );
 
-  const isIgnoredFolder = (path) =>
-    ignoredFolders.some((folder) => path === folder || path.includes(`${folder}/`));
+  const isIgnoredFolder = (path) => ignoredFolders.some((folder) => path === folder || path.includes(`${folder}/`));
 
   const watcher = chokidar.watch('.', {
     ignored: (path, stats) => {
@@ -88,12 +85,12 @@ const runGame = (godotPath, params, config) => {
       if (!stats) return false;
 
       const validExtensions = ['.gd', '.tscn', '.cfg', '.json', '.yml'];
-      const isWantedFile = validExtensions.some(ext => path.endsWith(ext));
+      const isWantedFile = validExtensions.some((ext) => path.endsWith(ext));
 
       const isInGodotFolder = path.includes('.godot/');
 
       return stats.isFile() && (!isWantedFile || isInGodotFolder);
-    }
+    },
   });
 
   const resolutionKey = params.map((p) => p.replace(/^--/, '')).find((k) => config.resolutions?.[k]);
@@ -111,20 +108,20 @@ const runGame = (godotPath, params, config) => {
 
   start(godotPath, params, config);
 
-  watcher.on('change', (path, stats) => {
+  watcher.on('change', (path) => {
     hotReload(path);
   });
 
-  process.stdin.on('keypress', (ch, key) => {
-    if(!key) {
-      return
+  process.stdin.on('keypress', (_ch, key) => {
+    if (!key) {
+      return;
     }
 
-    if(key.name === 'r') {
+    if (key.name === 'r') {
       restart(godotPath, params, config);
     }
 
-    if(key.name === 'c' && key.ctrl === true) {
+    if (key.name === 'c' && key.ctrl === true) {
       foxLogger.done('bye!');
 
       if (childProcess) {

@@ -7,11 +7,11 @@
 // so the `.icns` output is skipped with a warning on every other platform.
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import shell from 'shelljs';
-import {quote, runMagick} from './imagemagick.js';
+import { quote, runMagick } from './imagemagick.js';
 
 // -----------------------------------------------------------------------------
 
@@ -19,29 +19,24 @@ const ICO_FRAMES = [256, 128, 64, 48, 32, 16];
 
 // `iconutil` reads a fixed set of file names; anything else is ignored.
 const ICONSET_SLOTS = [
-  {name: 'icon_16x16.png', size: 16},
-  {name: 'icon_16x16@2x.png', size: 32},
-  {name: 'icon_32x32.png', size: 32},
-  {name: 'icon_32x32@2x.png', size: 64},
-  {name: 'icon_128x128.png', size: 128},
-  {name: 'icon_128x128@2x.png', size: 256},
-  {name: 'icon_256x256.png', size: 256},
-  {name: 'icon_256x256@2x.png', size: 512},
-  {name: 'icon_512x512.png', size: 512},
-  {name: 'icon_512x512@2x.png', size: 1024}
+  { name: 'icon_16x16.png', size: 16 },
+  { name: 'icon_16x16@2x.png', size: 32 },
+  { name: 'icon_32x32.png', size: 32 },
+  { name: 'icon_32x32@2x.png', size: 64 },
+  { name: 'icon_128x128.png', size: 128 },
+  { name: 'icon_128x128@2x.png', size: 256 },
+  { name: 'icon_256x256.png', size: 256 },
+  { name: 'icon_256x256@2x.png', size: 512 },
+  { name: 'icon_512x512.png', size: 512 },
+  { name: 'icon_512x512@2x.png', size: 1024 },
 ];
 
 // -----------------------------------------------------------------------------
 
 const buildIco = (input, output, logger) => {
   const created = runMagick(
-    [
-      quote(input),
-      '-define',
-      `icon:auto-resize=${ICO_FRAMES.join(',')}`,
-      quote(output)
-    ],
-    logger
+    [quote(input), '-define', `icon:auto-resize=${ICO_FRAMES.join(',')}`, quote(output)],
+    logger,
   );
 
   if (!created) {
@@ -73,9 +68,9 @@ const buildIcns = (input, output, logger) => {
         quote(`${slot.size}x${slot.size}`),
         '-unsharp',
         '1x4',
-        quote(path.join(iconset, slot.name))
+        quote(path.join(iconset, slot.name)),
       ],
-      logger
+      logger,
     );
 
     if (!created) {
@@ -85,10 +80,7 @@ const buildIcns = (input, output, logger) => {
     }
   }
 
-  const result = shell.exec(
-    `iconutil -c icns ${quote(iconset)} -o ${quote(output)}`,
-    {silent: true}
-  );
+  const result = shell.exec(`iconutil -c icns ${quote(iconset)} -o ${quote(output)}`, { silent: true });
 
   shell.rm('-rf', workdir);
 
@@ -109,4 +101,4 @@ const buildIcns = (input, output, logger) => {
 
 // -----------------------------------------------------------------------------
 
-export {buildIcns, buildIco};
+export { buildIcns, buildIco };

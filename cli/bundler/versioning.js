@@ -21,7 +21,7 @@ const toVersionNumber = (semver) => {
   const splinters = semver.split('.');
 
   const code = splinters.reduce((acc, splinter) => acc + splinter.padStart(2, '0'), '');
-  const number = parseInt(code.padEnd(6, 0)) || 0;
+  const number = parseInt(code.padEnd(6, 0), 10) || 0;
 
   return number;
 };
@@ -31,16 +31,16 @@ const toVersionNumber = (semver) => {
 const getNextVersion = (currentVersion, versionLevel) => {
   const [major, minor, patch] = currentVersion.split('.');
 
-  switch(versionLevel) {
+  switch (versionLevel) {
     case 'major':
-      return `${parseInt(major) + 1}.0.0`;
+      return `${parseInt(major, 10) + 1}.0.0`;
     case 'minor':
-      return `${major}.${parseInt(minor) + 1}.0`;
+      return `${major}.${parseInt(minor, 10) + 1}.0`;
     case 'patch':
-      return `${major}.${minor}.${parseInt(patch) + 1}`;
+      return `${major}.${minor}.${parseInt(patch, 10) + 1}`;
   }
 };
 
 // -----------------------------------------------------------------------------
 
-export {getNextVersion, toVersionNumber};
+export { getNextVersion, toVersionNumber };

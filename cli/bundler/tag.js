@@ -1,15 +1,15 @@
 // -----------------------------------------------------------------------------
 
-import fs from 'fs';
-import readline from 'readline';
+import fs from 'node:fs';
+import readline from 'node:readline';
 import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
-import {createLogger} from '../logger.js';
-import {getNextVersion, toVersionNumber} from './versioning.js';
-import {readPresets, writePresets, PRESETS_CFG} from './read-presets.js';
-import {updateVersionInPreset} from './update-preset.js';
+import { createLogger } from '../logger.js';
+import { PRESETS_CFG, readPresets, writePresets } from './read-presets.js';
+import { updateVersionInPreset } from './update-preset.js';
+import { getNextVersion, toVersionNumber } from './versioning.js';
 
 // -----------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ const readProjectGodot = () => {
 
   return {
     version: versionMatch ? versionMatch[1] : null,
-    name: nameMatch ? nameMatch[1] : null
+    name: nameMatch ? nameMatch[1] : null,
   };
 };
 
@@ -64,28 +64,30 @@ const writeOverrideVersion = (newVersion) => {
 // -----------------------------------------------------------------------------
 
 const inquireVersionLevel = async (currentVersion) => {
-  const versions = SEMVER_LEVELS.map(level => getNextVersion(currentVersion, level));
+  const versions = SEMVER_LEVELS.map((level) => getNextVersion(currentVersion, level));
 
   console.log('Select next version:');
-  versions.forEach((v, i) => console.log(`  ${i + 1}) ${v}`));
+  versions.forEach((v, i) => {
+    console.log(`  ${i + 1}) ${v}`);
+  });
 
-  const rl = readline.createInterface({input: process.stdin, output: process.stdout});
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 
-  const answer = await new Promise(resolve => {
+  const answer = await new Promise((resolve) => {
     rl.question('Enter choice [1-3] (default: 1): ', resolve);
   });
 
   rl.close();
 
-  const index = parseInt(answer || '1') - 1;
+  const index = parseInt(answer || '1', 10) - 1;
   return SEMVER_LEVELS[index] || SEMVER_LEVELS[0];
 };
 
 // -----------------------------------------------------------------------------
 
 const tagVersion = async (levelArg) => {
-  const {version: currentVersion, name: projectName} = readProjectGodot();
-  const logger = createLogger({name: projectName || 'Tag', color: 'blue'});
+  const { version: currentVersion, name: projectName } = readProjectGodot();
+  const logger = createLogger({ name: projectName || 'Tag', color: 'blue' });
 
   if (!currentVersion) {
     logger.error('No version found in project.godot [bundle] section');
@@ -94,7 +96,7 @@ const tagVersion = async (levelArg) => {
 
   logger.log(`Current version: ${currentVersion}`);
 
-  const versionLevel = levelArg || await inquireVersionLevel(currentVersion);
+  const versionLevel = levelArg || (await inquireVersionLevel(currentVersion));
   const newVersion = getNextVersion(currentVersion, versionLevel);
   writeProjectVersion(newVersion);
   logger.success(`project.godot updated to ${newVersion} (code: ${toVersionNumber(newVersion)})`);
@@ -109,7 +111,7 @@ const tagVersion = async (levelArg) => {
   if (fs.existsSync(PRESETS_CFG)) {
     const presets = readPresets();
     if (presets) {
-      Object.keys(presets).forEach(num => {
+      Object.keys(presets).forEach((num) => {
         updateVersionInPreset(presets[num], newVersion);
       });
       writePresets(presets);
@@ -132,4 +134,4 @@ const tagVersion = async (levelArg) => {
 
 const readProjectVersion = () => readProjectGodot().version;
 
-export {readProjectVersion, writeProjectVersion, tagVersion, SEMVER_LEVELS};
+export { readProjectVersion, SEMVER_LEVELS, tagVersion, writeProjectVersion };
