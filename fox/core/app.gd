@@ -5,6 +5,7 @@ extends Node
 # ------------------------------------------------------------------------------
 
 var IntroAnimation = preload('res://fox/animations/intro-animation.tscn')
+var SplashScreen = preload('res://fox/components/splash/splash-screen.gd')
 
 # ------------------------------------------------------------------------------
 
@@ -18,6 +19,26 @@ func _ready():
   createScreenReference()
   prepareNotifications()
   randomize() # https://docs.godotengine.org/en/latest/tutorials/math/random_number_generation.html#the-randomize-method
+
+# ------------------------------------------------------------------------------
+
+# The boot logo and its invisible handoff from the platform's own splash — see
+# fox/components/splash/splash-screen.gd. Prefer this to startIntroAnimation():
+# the letter animation predates the boot-splash handoff and blinks on web.
+#
+#   var splash = startSplash()
+#   if splash: await splash.splashFinished
+func startSplash():
+  # Both flags are OPTIONAL: a game declares whichever it uses (and neither is
+  # defined on a fresh project), so they are probed rather than read.
+  if('SKIP_SPLASH' in DEBUG and DEBUG.SKIP_SPLASH):
+    return null
+  if('NO_INTRO_ANIMATION' in DEBUG and DEBUG.NO_INTRO_ANIMATION):
+    return null
+
+  var splash = SplashScreen.new()
+  add_child(splash)
+  return splash
 
 # ------------------------------------------------------------------------------
 

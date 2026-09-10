@@ -1,0 +1,61 @@
+<!-- Loading page of the web build. The boot splash image is shown on every
+     platform (project.godot), and the shell already draws it CONTAINED in the
+     canvas — the same rule the in-game splash obeys — so the logo needs nothing
+     here. Only the progress bar does: it exists on web and nowhere else, and
+     without this it would be the browser's default grey.
+
+     This file is the READABLE source. It lives in `html/head_include` of the web
+     export preset, where Godot stores it as one escaped line; regenerate it with:
+
+       python3 -c "import json,sys;print(json.dumps(open(sys.argv[1]).read()))" \
+         fox/components/splash/web-head-include.html
+-->
+<style>
+/* The bar wears the logo's own palette, sampled from the uralys logo:
+   #8c3964 is the wordmark, #e9cada the witch's highlight, #371627 its shadow.
+   `appearance: none` is what turns a native progress element into a drawable
+   surface; the element background then IS the track (Firefox reads it directly,
+   Chrome sees it through a transparent ::-webkit-progress-bar). */
+#status-progress {
+	bottom: 16%;
+	width: 34%;
+	height: 6px;
+	appearance: none;
+	-webkit-appearance: none;
+	border: none;
+	border-radius: 3px;
+	background: #371627;
+	overflow: hidden;
+}
+
+#status-progress::-webkit-progress-bar { background: transparent; }
+
+#status-progress::-webkit-progress-value {
+	background: linear-gradient(90deg, #8c3964, #e9cada);
+	border-radius: 3px;
+	box-shadow: 0 0 10px rgba(140, 57, 100, 0.9);
+}
+
+#status-progress::-moz-progress-bar {
+	background: linear-gradient(90deg, #8c3964, #e9cada);
+	border-radius: 3px;
+}
+
+/* Godot drops value/max while the size of the download is still unknown. Without
+   this the bar would go blank at the very moment it should say "working": the
+   track sweeps instead, and the (full-width) fill is hidden. */
+#status-progress:indeterminate {
+	background-image: linear-gradient(90deg, transparent, #8c3964 45%, #e9cada 55%, transparent);
+	background-size: 40% 100%;
+	background-repeat: no-repeat;
+	animation: splash-sweep 1.4s ease-in-out infinite;
+}
+
+#status-progress:indeterminate::-webkit-progress-value { background: transparent; }
+#status-progress:indeterminate::-moz-progress-bar { background: transparent; }
+
+@keyframes splash-sweep {
+	from { background-position: -40% 0; }
+	to { background-position: 140% 0; }
+}
+</style>
