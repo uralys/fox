@@ -28,40 +28,90 @@ extends Node
 #     result to `state`; persisting a migration is the game's responsibility
 #     (call save() from within the hook when it changed something).
 #
-# Backups extension point: this base is deliberately single-file (one .bin, no
-# rotation). Games that want backup rotation (fox Files.rotateBackups /
-# restoreVar) override save() / load_saved_data() to wrap the write and the
-# restore fallback — see faraday-corridors src/core/player.gd.
+#   _record_path() -> String
+#     Absolute path of the save file, G.RECORD_PATH by default. Override this
+#     one hook to redirect the save (a throwaway file for a test run, a
+#     per-profile path): load_saved_data() and save() both take the path from
+#     here, so no game has to re-implement either of them just to move the file.
+#
+# No-clobber contract: reads go through Files.readVarSafe(), which separates a
+# missing file (a genuine first launch) from an unreadable one (locked by
+# another process, truncated by a crash, or mid cloud sync). A first launch
+# seeds the defaults and persists them; an unreadable file NEVER does. It falls
+# back to Files.restoreLatestBackup(), and when no backup answers it runs on
+# defaults in memory WITHOUT writing, so a transient lock or an in-flight cloud
+# file stays recoverable instead of being overwritten by an empty state.
+#
+# Backups: save() rotates the live file through Files.rotateBackups() before
+# overwriting it, so a last-writer-wins cloud overwrite stays recoverable. The
+# rotation is throttled inside fox, so frequent saves never churn the backups,
+# and it is skipped entirely while the live file is known corrupt.
 # ==============================================================================
 
 var state = {}
+
+# Raised when the live save file exists but could not be read (locked, truncated,
+# mid cloud sync). While it is up, save() must NOT rotate the unreadable live file
+# into the backups: that would push corrupt bytes into backup-0 and shift the good
+# snapshots out. Lowered by the next successful write, which replaces the bad file
+# with a valid state.
+var _live_file_corrupt := false
 
 # ------------------------------------------------------------------------------
 # Persistence
 # ------------------------------------------------------------------------------
 
 func load_saved_data() -> void:
-	var path = G.RECORD_PATH
+	var path := _record_path()
+	var read := Files.readVarSafe(path)
 
-	if FileAccess.file_exists(path):
-		var file = FileAccess.open(path, FileAccess.READ)
-		if file != null:
-			var content = file.get_var()
-			file.close()
-			if content is Dictionary and not content.is_empty():
-				state = _run_migrations(content)
-				return
+	if read.status == Files.READ_OK:
+		state = _run_migrations(read.content)
+		return
 
+	# Nothing on disk: genuine first launch, seed the defaults and persist them.
+	if read.status == Files.READ_ABSENT:
+		state = _default_state()
+		state.deviceId = _generate_device_id()
+		save()
+		return
+
+	# The file is there but unusable. Treating it as a first launch would reset the
+	# progression and immediately overwrite bytes that are still recoverable.
+	G.log('[PlayerBase] live save unreadable, attempting backup restore')
+	_live_file_corrupt = true
+
+	var restored := Files.restoreLatestBackup(path)
+	if restored.status == Files.READ_OK:
+		state = _run_migrations(restored.content)
+		# Writes the recovered state over the corrupt file (without rotating it into
+		# the backups) and lowers the corrupt flag.
+		save()
+		return
+
+	# Every backup exhausted: run on defaults in memory but do NOT save(), so a
+	# transient lock or an in-flight cloud file is never clobbered. The corrupt flag
+	# stays up, so the next legitimate write overwrites the bad file without
+	# rotating it into the backups.
+	G.log('[PlayerBase] no usable backup, loading defaults without persisting')
 	state = _default_state()
 	state.deviceId = _generate_device_id()
-	save()
 
 func save() -> void:
-	var file = FileAccess.open(G.RECORD_PATH, FileAccess.WRITE)
+	var path := _record_path()
+
+	if not _live_file_corrupt:
+		Files.rotateBackups(path)
+
+	var file = FileAccess.open(path, FileAccess.WRITE)
 	if file == null:
+		G.log('[PlayerBase] cannot open the save file for writing: ', path)
 		return
+
 	file.store_var(state)
 	file.close()
+	# The file now holds a valid state: resume normal rotation on the next saves.
+	_live_file_corrupt = false
 
 # ------------------------------------------------------------------------------
 # Generic option accessors (shared audio trunk)
@@ -88,6 +138,9 @@ func _default_state() -> Dictionary:
 
 func _run_migrations(loaded: Dictionary) -> Dictionary:
 	return loaded
+
+func _record_path() -> String:
+	return G.RECORD_PATH
 
 # ------------------------------------------------------------------------------
 # Device id
