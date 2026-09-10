@@ -22,7 +22,6 @@ extends Control
 
 const _Theme := preload('res://fox/components/settings/data/settings-theme-data.gd')
 const _Responsive := preload('res://fox/core/responsive.gd')
-const _Link := preload('res://fox/components/settings/ui/settings-link.gd')
 
 var theme_data: SettingsThemeData = null
 
@@ -127,7 +126,8 @@ func fit_into(region: Rect2) -> void:
 # ------------------------------------------------------------------------------
 
 func _draw() -> void:
-	var shape: PackedVector2Array = _Link.octagon(
+	# The same chamfered-octagon chassis the sockets and the switch tracks wear.
+	var shape: PackedVector2Array = OctagonGeom.points(
 		Rect2(Vector2.ZERO, size), theme_data.board_corner
 	)
 	draw_colored_polygon(shape, theme_data.panel)

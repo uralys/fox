@@ -21,6 +21,8 @@ const _Link := preload('res://fox/components/settings/ui/settings-link.gd')
 const _Icons := preload('res://fox/components/settings/settings-icons.gd')
 
 var theme_data: SettingsThemeData = null
+# Optional `{select, focus, switch}` Callables, passed on to every socket.
+var sfx: Dictionary = {}
 
 var _links: Array = []
 
@@ -51,6 +53,7 @@ func build(block: SettingsBlockData) -> void:
 			continue
 		var link := _Link.new()
 		link.theme_data = theme_data
+		link.sfx = sfx
 		link.url = channel.url
 		link.label_key = channel.label_key
 		link.label_text = channel.label_text

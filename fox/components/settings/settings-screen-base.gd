@@ -54,7 +54,7 @@ const _DefaultSectionLabel := preload('res://fox/components/settings/ui/section-
 const _DefaultBlock := preload('res://fox/components/settings/ui/settings-block.gd')
 const _DefaultFooter := preload('res://fox/components/settings/ui/settings-footer.gd')
 const _TextLink := preload('res://fox/components/settings/ui/settings-text-link.gd')
-const _LanguageList := preload('res://fox/components/settings/ui/settings-language-list.gd')
+const _Chassis := preload('res://fox/components/settings/ui/settings-chassis.gd')
 const _SettingsText := preload('res://fox/components/settings/settings-text.gd')
 const _Icons := preload('res://fox/components/settings/settings-icons.gd')
 const _ThemeData := preload('res://fox/components/settings/data/settings-theme-data.gd')
@@ -67,11 +67,6 @@ const _DIR_RIGHT: int = 1
 const _DIR_BOTTOM: int = 2
 const _DIR_LEFT: int = 3
 
-const HEADER_HEIGHT := 78.0
-const FOOTER_HEIGHT := 56.0
-const EDGE_MARGIN := 40.0
-const TITLE_TRACKING_EM := 0.32
-
 @export var data: Resource
 
 # Bindings: `id -> {get, set, volume_get?, volume_set?}`, plus `language`.
@@ -83,12 +78,9 @@ var theme_data: SettingsThemeData = null
 # rebuilds it, so the return contract survives.
 var _open_options: Dictionary = {}
 
-var _background: ColorRect = null
-var _header: Control = null
+var _chassis = null
 var _plate = null
 var _footer: Control = null
-var _back_link: Control = null
-var _language_overlay: Control = null
 
 # Navigation — `_nav_rows` is a ragged grid: one row per toggle, per volume bar,
 # per block link row, plus the back link and the footer links.
@@ -96,6 +88,10 @@ var _nav: MenuNavigator = null
 var _nav_rows: Array = []
 var _nav_seeding: bool = false
 var _default_input: Node = null
+
+# The footer's language / privacy links, kept aside so they land LAST in the
+# navigation grid whatever order the plate was composed in.
+var _footer_links: Array = []
 
 # Latches the single exit so a repeated B or a double-click never routes twice.
 var _closing: bool = false
@@ -128,30 +124,19 @@ func _onViewportResized() -> void:
 # ------------------------------------------------------------------------------
 
 func _build() -> void:
-	var screen: Vector2 = get_viewport_rect().size
+	_chassis = _Chassis.new()
+	_chassis.build(
+		self, theme_data, _title_text(),
+		_SettingsText.resolve('settings.back', 'BACK'), _on_back
+	)
+	# The BACK door is the first navigation row; the footer links close the list.
+	_nav_rows = [[_chassis.back_link]]
 
-	_background = ColorRect.new()
-	_background.name = 'background'
-	_background.color = theme_data.background
-	_background.size = screen
-	_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_background)
+	_build_footer_content()
 
-	_build_header(screen)
-	_build_footer_bar(screen)
-
-	# The plate takes the band left between the two bars, minus its own margins.
 	_plate = _make_plate()
 	add_child(_plate)
-	var top: float = HEADER_HEIGHT + theme_data.board_margin_y
-	var bottom: float = screen.y - FOOTER_HEIGHT - theme_data.board_margin_y
-	_plate.fit_into(Rect2(
-		Vector2(theme_data.board_margin_x, top),
-		Vector2(
-			maxf(0.0, screen.x - theme_data.board_margin_x * 2.0),
-			maxf(0.0, bottom - top)
-		)
-	))
+	_plate.fit_into(_chassis.band)
 
 	_compose(_plate)
 	_setup_navigation()
@@ -161,56 +146,13 @@ func _rebuild() -> void:
 		return
 	_teardown_navigation()
 	_nav_rows = []
+	_footer_links = []
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
 	_plate = null
-	_language_overlay = null
+	_chassis = null
 	_build()
-
-# ------------------------------------------------------------------------------
-# Header — the BACK door on the left, the screen title centred.
-# ------------------------------------------------------------------------------
-
-func _build_header(screen: Vector2) -> void:
-	_header = Control.new()
-	_header.name = 'header'
-	_header.size = Vector2(screen.x, HEADER_HEIGHT)
-	_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_header)
-
-	_back_link = _TextLink.new()
-	_back_link.theme_data = theme_data
-	_back_link.text = '◀  ' + _SettingsText.resolve('settings.back', 'BACK')
-	_back_link.position = Vector2(EDGE_MARGIN, (HEADER_HEIGHT - theme_data.footer_size) * 0.5)
-	_back_link.activated.connect(_on_back)
-	_header.add_child(_back_link)
-	_nav_rows.append([_back_link])
-
-	var title := Control.new()
-	title.name = 'title'
-	title.size = Vector2(screen.x, HEADER_HEIGHT)
-	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var text: String = _title_text()
-	title.draw.connect(func() -> void:
-		var font: Font = theme_data.font_title
-		if font == null:
-			font = ThemeDB.fallback_font
-		var width: float = _SettingsText.spaced_width(
-			font, text, theme_data.title_size, TITLE_TRACKING_EM
-		)
-		_SettingsText.draw_spaced(
-			title, font,
-			Vector2((screen.x - width) * 0.5, HEADER_HEIGHT * 0.5 + theme_data.title_size * 0.36),
-			text, theme_data.title_size, theme_data.accent, TITLE_TRACKING_EM
-		)
-		# The rule under the header, spanning the viewport like the footer's.
-		title.draw_line(
-			Vector2(0, HEADER_HEIGHT - 1), Vector2(screen.x, HEADER_HEIGHT - 1),
-			theme_data.accent_at(0.20), 1.0
-		)
-	)
-	_header.add_child(title)
 
 func _title_text() -> String:
 	if data is SettingsLayoutData:
@@ -218,25 +160,16 @@ func _title_text() -> String:
 	return ''
 
 # ------------------------------------------------------------------------------
-# Footer — a full-VIEWPORT bar, like faraday's ContentFooterBar: the build stamp
-# on the left, the language switcher and privacy on the right.
+# Footer — the content of the chassis' bar: the build stamp on the left, the
+# language switcher and privacy on the right.
 # ------------------------------------------------------------------------------
 
-func _build_footer_bar(screen: Vector2) -> void:
+func _build_footer_content() -> void:
 	var layout: SettingsLayoutData = data as SettingsLayoutData
-	if layout == null:
+	if layout == null or _chassis == null:
 		return
 
-	var bar := Control.new()
-	bar.name = 'footer_bar'
-	bar.size = Vector2(screen.x, FOOTER_HEIGHT)
-	bar.position = Vector2(0, screen.y - FOOTER_HEIGHT)
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bar.draw.connect(func() -> void:
-		bar.draw_line(Vector2(0, 0), Vector2(screen.x, 0), theme_data.accent_at(0.20), 1.0)
-	)
-	add_child(bar)
-
+	var screen: Vector2 = get_viewport_rect().size
 	var version: String = _version_string()
 	var footer := _DefaultFooter.new()
 	footer.theme_data = theme_data
@@ -247,15 +180,15 @@ func _build_footer_bar(screen: Vector2) -> void:
 	footer.privacy_url = layout.privacy_url
 	footer.language_pressed.connect(_on_language_pressed)
 	footer.privacy_pressed.connect(func() -> void: OS.shell_open(layout.privacy_url))
-	footer.position = Vector2(EDGE_MARGIN, 0)
-	footer.size = Vector2(maxf(0.0, screen.x - EDGE_MARGIN * 2.0), FOOTER_HEIGHT)
-	bar.add_child(footer)
+	footer.position = Vector2(_Chassis.EDGE_MARGIN, 0)
+	footer.size = Vector2(
+		maxf(0.0, screen.x - _Chassis.EDGE_MARGIN * 2.0), _Chassis.FOOTER_HEIGHT
+	)
+	_chassis.footer_bar.add_child(footer)
 	footer.build()
 
 	_footer = footer
-	var links: Array = footer.links()
-	if not links.is_empty():
-		_nav_rows.append(links)
+	_footer_links = footer.links()
 
 # ------------------------------------------------------------------------------
 # Default composition — sections left, credit blocks right.
@@ -280,11 +213,10 @@ func _compose(plate) -> void:
 		if block != null:
 			right.add_child(_build_block(block, plate_rows))
 
-	# Back link stays first, footer links last.
-	var footer_rows: Array = _nav_rows.slice(1)
-	_nav_rows = [_nav_rows[0]] if not _nav_rows.is_empty() else []
+	# Back link first, then the plate rows, then the footer links.
 	_nav_rows.append_array(plate_rows)
-	_nav_rows.append_array(footer_rows)
+	if not _footer_links.is_empty():
+		_nav_rows.append(_footer_links)
 
 # A section = its header, then each toggle, then — when the binding declares a
 # volume pair — the slider that channel owns, wired to the toggle both ways.
@@ -313,6 +245,7 @@ func _build_section(section: SettingsSectionData, rows: Array) -> Control:
 func _build_block(block: SettingsBlockData, rows: Array) -> Control:
 	var node := _DefaultBlock.new()
 	node.theme_data = theme_data
+	node.sfx = _sound_hooks()
 	node.build(block)
 	var links: Array = node.links()
 	if not links.is_empty():
@@ -378,30 +311,21 @@ func _current_language() -> String:
 		return str(binding['get'].call())
 	return TranslationServer.get_locale()
 
+# Picking a language is its own SCREEN (settings-languages-base.gd), reached
+# through the router. Every Callable handed to it is bound to an AUTOLOAD, never
+# to this instance: routing frees us before the picker ever calls back.
 func _on_language_pressed() -> void:
-	if _language_overlay != null:
+	var router: Node = get_node_or_null('/root/Router')
+	if router == null or not router.has_method('open_languages'):
 		return
-	_language_overlay = _LanguageList.new()
-	_language_overlay.theme_data = theme_data
-	_language_overlay.size = get_viewport_rect().size
-	add_child(_language_overlay)
-	_language_overlay.build((data as SettingsLayoutData).languages, _current_language())
-	_language_overlay.selected.connect(_on_language_selected)
-	_language_overlay.dismissed.connect(_close_language_overlay)
-
-func _close_language_overlay() -> void:
-	if _language_overlay != null:
-		remove_child(_language_overlay)
-		_language_overlay.queue_free()
-		_language_overlay = null
-
-func _on_language_selected(code: String) -> void:
-	_close_language_overlay()
-	TranslationServer.set_locale(code)
+	var layout: SettingsLayoutData = data as SettingsLayoutData
 	var binding: Dictionary = _bindings.get('language', {})
-	if binding.has('set'):
-		binding['set'].call(code)
-	_rebuild()
+	router.open_languages({
+		languages = layout.languages,
+		current = _current_language(),
+		persist = binding.get('set', Callable()),
+		on_back = Callable(router, 'open_settings').bind(_open_options),
+	})
 
 # ------------------------------------------------------------------------------
 # Return contract — ONE guarded exit, whatever fires it.
@@ -478,18 +402,15 @@ func _detach_default_input() -> void:
 	_default_input = null
 
 func _on_default_direction(direction: int, _from_gamepad: bool) -> void:
-	if _nav != null and _language_overlay == null:
+	if _nav != null:
 		_nav.navigate(direction)
 
 func _on_default_button(action: String) -> void:
 	if action == 'button_a':
-		if _language_overlay == null and _nav != null:
+		if _nav != null:
 			_nav_confirm()
 	elif action == 'button_b':
-		if _language_overlay != null:
-			_close_language_overlay()
-		else:
-			_on_back()
+		_on_back()
 
 func _nav_highlight(item: Object, focused: bool) -> void:
 	if item != null and item.has_method('set_navigation_focused'):
@@ -542,6 +463,11 @@ func _build_theme() -> SettingsThemeData:
 func _prepare_bindings() -> void:
 	pass
 
+# `{select, focus, switch}` Callables the atoms tick on hover / focus / change.
+# fox cannot name a game's Sound autoload, so the game hands them over here.
+func _sound_hooks() -> Dictionary:
+	return {}
+
 func _make_plate() -> Control:
 	var plate := _DefaultPlate.new()
 	plate.theme_data = theme_data
@@ -557,12 +483,14 @@ func _make_section_label(section: SettingsSectionData) -> Control:
 func _make_toggle(toggle_data: SettingsToggleData) -> Control:
 	var toggle := _DefaultToggle.new()
 	toggle.theme_data = theme_data
+	toggle.sfx = _sound_hooks()
 	_bind_toggle(toggle, toggle_data)
 	return toggle
 
 func _make_volume_bar(getter: Callable, setter) -> Control:
 	var bar := _DefaultVolumeBar.new()
 	bar.theme_data = theme_data
+	bar.sfx = _sound_hooks()
 	bar.initial_value = float(getter.call())
 	if setter is Callable:
 		bar.value_changed.connect(setter)

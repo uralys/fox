@@ -9,19 +9,28 @@ class_name HexSocketDraw
 #
 # Geometry is delegated to `OctagonGeom.points()` so the socket shares the same
 # chassis language as BeveledCard / NeonBadge / OctagonChassisDraw. The default
-# cut ratio (SettingsTokens.HEX_CUT_RATIO ≈ 0.20) matches the Badge family.
+# cut ratio (HEX_CUT_RATIO ≈ 0.20) matches the Badge family.
 #
 # All helpers are static and size-parameterised. Colors are pass-through (no
 # hardcoded cyan), so the same primitive draws cyan/green/gold/red sockets.
 # Consumers own state (hover progress, spark time, hover flag) and pass them
 # in — these helpers only paint.
 #
-# Promoted to fox/ so both Sylvestrine and faraday-corridors resolve the same
-# HexSocketDraw by class_name. `DesignTokens.SettingsTokens` and `OctagonGeom`
-# are resolved per-project via class_name (drop-in through the fox symlink).
+# Promoted to fox/ so every game resolves the same HexSocketDraw by class_name.
+#
+# The socket ratios below used to be read from the CONSUMING game's
+# `DesignTokens.SettingsTokens`, which made this shared primitive fail to compile
+# in any project that had no such class (every generated game). They are the same
+# numbers, declared here: a primitive in fox may not depend on a game's classes.
 # ==============================================================================
 
-const SettingsTokens = DesignTokens.SettingsTokens
+const HEX_CUT_RATIO := 0.20
+const HEX_FILL_ALPHA := 0.03
+const HEX_BORDER_ALPHA_IDLE := 0.85
+const HEX_BORDER_ALPHA_HOVER := 1.00
+const HEX_ICON_SIZE := 32.0
+const HEX_SPARK_PERIOD := 1.2
+const HEX_SPARK_DOT_SIZE := 4.0
 
 # Hover glow stamp. GLOW_EXTENT is how far past the socket edge the quad reaches
 # (the halo used to inflate the silhouette to 1.22, plus room for the fade);
@@ -42,7 +51,7 @@ static var _GLOW_STAMPS: Dictionary = {}
 # `side` x `side`). Delegates to `OctagonGeom.points` with a chamfer equal to
 # `side * cut_ratio` so every consumer shares the BeveledCard / NeonBadge
 # chassis language.
-static func octagon_polygon(side: float, cut_ratio: float = SettingsTokens.HEX_CUT_RATIO) -> PackedVector2Array:
+static func octagon_polygon(side: float, cut_ratio: float = HEX_CUT_RATIO) -> PackedVector2Array:
 	return OctagonGeom.points(Rect2(0.0, 0.0, side, side), side * cut_ratio)
 
 
@@ -56,10 +65,10 @@ static func draw_socket(
 	side: float,
 	color: Color,
 	hover_progress: float = 0.0,
-	fill_alpha_idle: float = SettingsTokens.HEX_FILL_ALPHA,
+	fill_alpha_idle: float = HEX_FILL_ALPHA,
 	fill_alpha_hover: float = 0.10,
-	border_alpha_idle: float = SettingsTokens.HEX_BORDER_ALPHA_IDLE,
-	border_alpha_hover: float = SettingsTokens.HEX_BORDER_ALPHA_HOVER
+	border_alpha_idle: float = HEX_BORDER_ALPHA_IDLE,
+	border_alpha_hover: float = HEX_BORDER_ALPHA_HOVER
 ) -> void:
 	var polygon: PackedVector2Array = octagon_polygon(side)
 	var translated: PackedVector2Array = _translate_polygon(polygon, origin)
@@ -81,7 +90,7 @@ static func draw_socket(
 
 
 # Draws a centered icon texture inside a `side` x `side` socket positioned at
-# `origin`. icon_box defaults to SettingsTokens.HEX_ICON_SIZE for legacy
+# `origin`. icon_box defaults to HEX_ICON_SIZE for legacy
 # Settings sockets; callers (cards) can override.
 static func draw_centered_icon(
 	target: CanvasItem,
@@ -94,7 +103,7 @@ static func draw_centered_icon(
 ) -> void:
 	if icon_texture == null:
 		return
-	var box: float = icon_box if icon_box > 0.0 else SettingsTokens.HEX_ICON_SIZE
+	var box: float = icon_box if icon_box > 0.0 else HEX_ICON_SIZE
 	var icon_size: Vector2 = Vector2(box, box)
 	var center: Vector2 = origin + Vector2(side, side) * 0.5
 	var icon_rect: Rect2 = Rect2(center - icon_size * 0.5, icon_size)
@@ -151,8 +160,8 @@ static func draw_spark_dot(
 	side: float,
 	color: Color,
 	spark_time: float,
-	period: float = SettingsTokens.HEX_SPARK_PERIOD,
-	dot_size: float = SettingsTokens.HEX_SPARK_DOT_SIZE
+	period: float = HEX_SPARK_PERIOD,
+	dot_size: float = HEX_SPARK_DOT_SIZE
 ) -> void:
 	var center: Vector2 = origin + Vector2(side, side) * 0.5
 	var safe_period: float = period if period > 0.0 else 1.2
@@ -208,7 +217,7 @@ static func _draw_glow(target: CanvasItem, center: Vector2, side: float, color: 
 		Color(color.r, color.g, color.b, hover_progress))
 
 
-static func _glow_stamp(cut_ratio: float = SettingsTokens.HEX_CUT_RATIO) -> ImageTexture:
+static func _glow_stamp(cut_ratio: float = HEX_CUT_RATIO) -> ImageTexture:
 	if _GLOW_STAMPS.has(cut_ratio):
 		return _GLOW_STAMPS[cut_ratio]
 	var stamp: ImageTexture = _build_glow_stamp(cut_ratio)
