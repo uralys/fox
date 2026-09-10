@@ -50,7 +50,7 @@ signal splashFinished
 const _Responsive := preload('res://fox/screens/responsive.gd')
 
 const DEFAULT_LOGO_PATH := 'res://fox/assets/splash/logo-uralys.png'
-const ELECTRIC_SHADER := preload('res://fox/components/splash/splash-electric.gdshader')
+const ELECTRIC_SHADER := preload('res://fox/shaders/splash-electric.gdshader')
 
 const BASE_CANVAS := Vector2(1920.0, 1080.0)
 const LOGO_BASE_WIDTH := 920.0
