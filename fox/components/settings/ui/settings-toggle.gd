@@ -1,16 +1,15 @@
 extends Control
 
 # ==============================================================================
-# settings-toggle.gd — the DEFAULT option row of the shared settings view (fox).
+# settings-toggle.gd — the DEFAULT option row of the shared settings screen (fox).
 #
-#   [icon]  MUSIC                                    ( ●———)
+#   [♪]  MUSIC                                  ON  ( ●———)
 #
-# A drawn row rather than a CheckButton: the previous default wore the stock Godot
-# theme, which reads as an unfinished prototype next to any game's art direction.
-# Everything here comes from `theme_data` (SettingsThemeData), so a game gets a
-# console in its own palette without overriding `_make_toggle`.
+# Faraday's geometry, verbatim from its tokens: a 64px row, a 24px glyph, a
+# 70×34 switch with a 26px thumb. Everything is drawn from `theme_data`, so a
+# game gets a console in its own palette without overriding `_make_toggle`.
 #
-# FOCUS CONTRACT (duck-typed, expected by the popup base's navigation):
+# FOCUS CONTRACT (duck-typed, expected by the screen base's navigation):
 #   signal value_changed(value: bool)
 #   set_navigation_focused(value: bool, silent := false)
 #   toggle_value()
@@ -37,15 +36,11 @@ var _value: bool = false
 var _focused: bool = false
 var _hovered: bool = false
 
-const ROW_HEIGHT := 40.0
-const ICON_BOX := 22.0
-const TRACK := Vector2(46, 20)
-
 func _ready() -> void:
 	if theme_data == null:
 		theme_data = _Theme.new()
 	_value = initial_value
-	custom_minimum_size = Vector2(0, ROW_HEIGHT)
+	custom_minimum_size = Vector2(0, theme_data.toggle_height)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -80,7 +75,8 @@ func set_value(value: bool) -> void:
 	value_changed.emit(_value)
 
 # ------------------------------------------------------------------------------
-# Draw — icon, label, pill switch. Native stroke widths (the frame carries the fit).
+# Draw — glyph, label, state word, switch. Native stroke widths (the plate carries
+# the fit).
 # ------------------------------------------------------------------------------
 
 func _draw() -> void:
@@ -88,48 +84,58 @@ func _draw() -> void:
 	var lit: bool = _focused or _hovered
 	var mid: float = size.y * 0.5
 
-	# Focus caret — the same "you are here" mark the gamepad cursor leaves in
-	# faraday's console, so keyboard and mouse read the same row as active.
+	# Focus caret — the "you are here" mark faraday's cursor leaves, so keyboard
+	# and mouse read the same row as active.
 	if _focused:
-		var caret := PackedVector2Array([
-			Vector2(-14, mid - 5), Vector2(-7, mid), Vector2(-14, mid + 5)
-		])
-		draw_colored_polygon(caret, accent)
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(-16, mid - 6), Vector2(-8, mid), Vector2(-16, mid + 6)
+		]), accent)
 
 	var x: float = 0.0
 	var glyph: Texture2D = icon if (_value or icon_off == null) else icon_off
 	if glyph != null:
+		var box: float = theme_data.toggle_icon_size
 		var tint: Color = icon_tint if icon_tint.a > 0.0 else accent
 		draw_texture_rect(
-			glyph,
-			Rect2(Vector2(x, mid - ICON_BOX * 0.5), Vector2(ICON_BOX, ICON_BOX)),
-			false,
+			glyph, Rect2(Vector2(x, mid - box * 0.5), Vector2(box, box)), false,
 			Color(tint, 1.0 if _value else 0.35)
 		)
-		x += ICON_BOX + 12.0
+		x += box + theme_data.toggle_gap_icon
 
 	var font: Font = theme_data.font_body
 	if font == null:
 		font = ThemeDB.fallback_font
-	var text: String = _SettingsText.resolve(label_key, label_text).to_upper()
-	var text_color: Color = theme_data.text if _value else theme_data.text_dim
+	var label: String = _SettingsText.resolve(label_key, label_text).to_upper()
+	var color: Color = theme_data.text if _value else theme_data.text_dim
 	if lit:
-		text_color = accent
+		color = accent
 	draw_string(
-		font, Vector2(x, mid + theme_data.label_size * 0.36), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, theme_data.label_size, text_color
+		font, Vector2(x, mid + theme_data.label_size * 0.36), label,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, theme_data.label_size, color
 	)
 
-	_draw_switch(Vector2(size.x - TRACK.x, mid - TRACK.y * 0.5), accent)
+	_draw_switch(
+		Vector2(size.x - theme_data.toggle_switch_size.x, mid - theme_data.toggle_switch_size.y * 0.5),
+		accent
+	)
 
 func _draw_switch(origin: Vector2, accent: Color) -> void:
-	var track := Rect2(origin, TRACK)
-	var radius: float = TRACK.y * 0.5
-	var on_color: Color = accent
-	var off_color: Color = theme_data.text_dim
+	var track := Rect2(origin, theme_data.toggle_switch_size)
+	var radius: float = theme_data.toggle_switch_size.y * 0.5
+	var off: Color = theme_data.text_dim
 
-	draw_rect(track, Color(on_color, 0.22) if _value else Color(off_color, 0.12), true)
-	draw_rect(track, Color(on_color, 0.8) if _value else Color(off_color, 0.5), false, 1.5)
+	draw_rect(
+		track,
+		Color(accent, theme_data.toggle_track_alpha_on) if _value \
+			else Color(off, theme_data.toggle_track_alpha_off),
+		true
+	)
+	draw_rect(
+		track,
+		Color(accent, 1.0) if _value else Color(off, theme_data.toggle_border_alpha_off),
+		false, 1.5
+	)
 
-	var knob_x: float = origin.x + (TRACK.x - radius) if _value else origin.x + radius
-	draw_circle(Vector2(knob_x, origin.y + radius), radius - 3.0, on_color if _value else off_color)
+	var thumb: float = theme_data.toggle_thumb_diameter * 0.5
+	var travel: float = theme_data.toggle_switch_size.x - radius if _value else radius
+	draw_circle(Vector2(origin.x + travel, origin.y + radius), thumb, accent if _value else off)

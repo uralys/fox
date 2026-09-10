@@ -18,6 +18,7 @@ extends VBoxContainer
 const _Theme := preload('res://fox/components/settings/data/settings-theme-data.gd')
 const _SettingsText := preload('res://fox/components/settings/settings-text.gd')
 const _Link := preload('res://fox/components/settings/ui/settings-link.gd')
+const _Icons := preload('res://fox/components/settings/settings-icons.gd')
 
 var theme_data: SettingsThemeData = null
 
@@ -29,7 +30,7 @@ func build(block: SettingsBlockData) -> void:
 
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	alignment = BoxContainer.ALIGNMENT_CENTER
-	add_theme_constant_override('separation', 8)
+	add_theme_constant_override('separation', int(theme_data.block_text_gap))
 
 	var intro := Label.new()
 	intro.text = _SettingsText.resolve(block.intro_key, block.intro_text)
@@ -42,7 +43,7 @@ func build(block: SettingsBlockData) -> void:
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override('separation', 10)
+	row.add_theme_constant_override('separation', int(theme_data.hex_gap))
 	add_child(row)
 
 	for channel in block.channels:
@@ -50,11 +51,13 @@ func build(block: SettingsBlockData) -> void:
 			continue
 		var link := _Link.new()
 		link.theme_data = theme_data
-		link.icon = channel.icon
 		link.url = channel.url
 		link.label_key = channel.label_key
 		link.label_text = channel.label_text
-		link.color = channel.color if channel.color.a > 0.0 else theme_data.accent
+		# A channel that names a known destination inherits the shared logo and the
+		# shared colour, so two games linking Steam light it the same way.
+		link.icon = channel.icon if channel.icon != null else _Icons.channel(channel.id)
+		link.color = channel.color if channel.color.a > 0.0 else theme_data.channel_color(channel.id)
 		row.add_child(link)
 		_links.append(link)
 

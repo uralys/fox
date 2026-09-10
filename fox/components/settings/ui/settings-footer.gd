@@ -10,7 +10,7 @@ extends HBoxContainer
 # that belong to every shipped game rather than to any one of them.
 #
 # The footer decides nothing: it emits `language_pressed` / `privacy_pressed` and
-# lets the popup base apply the locale and rebuild. Its two links are handed back
+# lets the screen base apply the locale and rebuild. Its two links are handed back
 # through `links()` so they join the navigation grid as its last row.
 # ==============================================================================
 
@@ -75,11 +75,11 @@ func _build_version() -> Control:
 	box.add_theme_constant_override('separation', 8)
 
 	var dot := Control.new()
-	dot.custom_minimum_size = Vector2(8, 8)
+	dot.custom_minimum_size = Vector2(10, 10)
 	dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dot.draw.connect(func() -> void:
-		dot.draw_circle(Vector2(4, 4), 4.0, theme_data.accent)
+		dot.draw_circle(Vector2(5, 5), 5.0, theme_data.accent)
 	)
 	box.add_child(dot)
 
@@ -87,7 +87,7 @@ func _build_version() -> Control:
 	label.text = version_text
 	label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	theme_data.apply_font(
-		label, theme_data.font_body, theme_data.footer_size, theme_data.accent_at(0.7)
+		label, theme_data.font_body, theme_data.version_size, theme_data.accent_at(0.7)
 	)
 	box.add_child(label)
 	return box

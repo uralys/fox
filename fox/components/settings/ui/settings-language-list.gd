@@ -31,7 +31,8 @@ func build(codes: PackedStringArray, current: String) -> void:
 	if theme_data == null:
 		theme_data = _Theme.new()
 
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# The overlay is sized by its host before `build()`: its parent is the screen's
+	# Node2D, where anchors mean nothing.
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	_plate = Control.new()

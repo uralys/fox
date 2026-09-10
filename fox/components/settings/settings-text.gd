@@ -56,6 +56,30 @@ static func resolve(key: String, fallback: String = '') -> String:
 		return translated
 	return fallback if fallback != '' else key
 
+# Draw `text` with per-character tracking, in em of the font size. Godot's Label
+# has no letter-spacing, and the console's section headers and intros are set
+# wide (faraday: 0.32em on a section label) — that spacing IS the typographic
+# signature of the screen, so it is drawn rather than approximated.
+static func draw_spaced(
+	canvas: CanvasItem, font: Font, origin: Vector2, text: String,
+	size: int, color: Color, tracking_em: float = 0.0
+) -> float:
+	var tracking: float = float(size) * tracking_em
+	var pen: Vector2 = origin
+	for i in text.length():
+		var glyph: String = text[i]
+		canvas.draw_string(
+			font, pen, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color
+		)
+		pen.x += font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x + tracking
+	return pen.x - origin.x
+
+static func spaced_width(
+	font: Font, text: String, size: int, tracking_em: float = 0.0
+) -> float:
+	var width: float = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	return width + float(size) * tracking_em * float(maxi(0, text.length() - 1))
+
 static func endonym(locale: String) -> String:
 	var code: String = locale.split('_')[0].to_lower()
 	return ENDONYMS.get(code, locale.to_upper())

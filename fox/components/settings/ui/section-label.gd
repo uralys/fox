@@ -17,7 +17,10 @@ const _SettingsText := preload('res://fox/components/settings/settings-text.gd')
 
 var theme_data: SettingsThemeData = null
 
-const ROW_HEIGHT := 24.0
+const ROW_HEIGHT := 28.0
+# faraday: SECTION_LABEL_LETTER_SPACING_EM — the wide tracking IS the signature
+# of these headers, and Godot's Label cannot express it.
+const TRACKING_EM := 0.32
 
 func _ready() -> void:
 	if theme_data == null:
@@ -33,14 +36,11 @@ func _draw() -> void:
 	var text: String = _SettingsText.resolve(label_key, label_text).to_upper()
 	var font_size: int = theme_data.section_size
 	var baseline: float = size.y - 6.0
-	draw_string(
-		font, Vector2(0, baseline), text,
-		HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, theme_data.accent_at(0.85)
+	var text_width: float = _SettingsText.draw_spaced(
+		self, font, Vector2(0, baseline), text, font_size,
+		theme_data.accent_at(0.85), TRACKING_EM
 	)
 
-	var text_width: float = font.get_string_size(
-		text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size
-	).x
 	var rule_start: float = text_width + 14.0
 	if rule_start < size.x:
 		draw_line(

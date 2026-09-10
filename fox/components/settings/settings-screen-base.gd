@@ -1,104 +1,114 @@
-extends FoxPopup
+extends FoxScreen
 
 # ==============================================================================
-# settings-popup-base.gd — the shared settings view of every fox game.
+# settings-screen-base.gd — the settings SCREEN of every fox game.
 #
-# Extended BY PATH (no class_name), exactly like fox/core/player-base.gd: a game
-# points its own `SettingsPopup` at
-#   extends 'res://fox/components/settings/settings-popup-base.gd'
-# and, in the common case, overrides NOTHING but `_prepare_bindings()` and
-# `_build_layout()`.
+# A dedicated screen, routed like any other (`Router.open_settings()`), NOT a
+# popup stacked over the game: settings is a place the player goes to, with its
+# own header, its own footer and its own back door.
 #
-# ── WHAT IT RENDERS OUT OF THE BOX ──
-# The console faraday-corridors converged on, reduced to what every game shares:
+# Extended BY PATH (no class_name), like fox/core/player-base.gd: a game points
+# its own `SettingsScreen` at
+#   extends 'res://fox/components/settings/settings-screen-base.gd'
+# and, in the common case, overrides NOTHING but `_build_layout()` and
+# `_prepare_bindings()`.
+#
+# ── THE CHASSIS ──
 #
 #   ┌───────────────────────────────────────────────────────────┐
-#   │  SETTINGS                                             ✕   │
-#   │  AUDIO ──────────────────   │   A game by Uralys          │
-#   │  ♪ MUSIC          (●——)     │      ⬡ Bluesky  ⬡ Steam     │
-#   │  ▮▮▮▮▮▮▮▯▯▯  70%            │   Music by …                │
-#   │  ♫ SOUNDS         (●——)     │      ⬡ Spotify              │
-#   │  DISPLAY ────────────────   │   Built with …              │
-#   │  ● v1.2.0                       🌐 Français · Privacy     │
+#   │ ◀ BACK            S E T T I N G S                         │ header
+#   │      ╔═══════════════════════╤══════════════════════╗     │
+#   │      ║ AUDIO ─────────────   │  A game by Uralys    ║     │
+#   │      ║ ♪ MUSIC        (●—)   │    ⬡ ⬡ ⬡             ║     │ board plate
+#   │      ║ ▬▬▬▬▬●───  70%        │  Built with …        ║     │
+#   │      ╚═══════════════════════╧══════════════════════╝     │
+#   │ ● v1.2.0                        🌐 Français · Privacy     │ footer bar
 #   └───────────────────────────────────────────────────────────┘
 #
-#   * left  — one block per `SettingsSectionData`: a header, its toggles, and a
-#     volume bar under any toggle whose binding declares a `volume_get` pair;
-#   * right — one block per `SettingsBlockData`: an intro line over a row of link
-#     sockets (credits, socials, soundtrack, tech);
-#   * footer — build stamp, language switcher (endonyms), privacy link.
+# Header and footer span the VIEWPORT; only the plate is fitted, and it is sized
+# rather than scaled (see settings-plate.gd). Every metric comes from
+# `SettingsThemeData`, whose defaults are faraday's own settings tokens.
 #
 # ── WHAT A GAME SUPPLIES ──
-#   `_build_layout()`     → a SettingsLayoutData (or set `data` / `_default_data_path`)
+#   `_build_layout()`     → a SettingsLayoutData (sections + credit blocks)
 #   `_prepare_bindings()` → `id -> {get, set, volume_get?, volume_set?}` Callables,
 #                            plus the reserved `language` entry `{get, set}`
 #   `_build_theme()`      → a SettingsThemeData in the game's palette (optional)
-# Every atom is still swappable one by one (`_make_frame`, `_make_toggle`, …) for a
-# game that outgrows the defaults, and the base reaches NO game autoload: Sound,
-# Player and the input layer only enter through bindings and `_navigation_signals`.
+# Every atom stays swappable one by one (`_make_toggle`, `_make_plate`, …), and
+# the base reaches NO game autoload: Sound and Player only enter through bindings.
+#
+# ── RETURN CONTRACT ──
+# `Router.open_settings({on_back = Callable})`. `on_back` is called once; absent
+# or invalid → `Router.open_home()`.
 #
 # ── FOCUS CONTRACT (duck-typed) ──
 # A navigable item exposes `set_navigation_focused(value, silent := false)` and
 # `toggle_value()`; a slider exposes `nudge(direction)` instead of confirming.
-# One MenuNavigator walks the whole console as a ragged grid of rows.
+# One MenuNavigator walks the whole screen as a ragged grid of rows.
 # ==============================================================================
 
-const _DefaultFrame := preload('res://fox/components/settings/ui/settings-frame.gd')
+const _DefaultPlate := preload('res://fox/components/settings/ui/settings-plate.gd')
 const _DefaultToggle := preload('res://fox/components/settings/ui/settings-toggle.gd')
 const _DefaultVolumeBar := preload('res://fox/components/settings/ui/settings-volume-bar.gd')
 const _DefaultSectionLabel := preload('res://fox/components/settings/ui/section-label.gd')
 const _DefaultBlock := preload('res://fox/components/settings/ui/settings-block.gd')
 const _DefaultFooter := preload('res://fox/components/settings/ui/settings-footer.gd')
+const _TextLink := preload('res://fox/components/settings/ui/settings-text-link.gd')
 const _LanguageList := preload('res://fox/components/settings/ui/settings-language-list.gd')
 const _SettingsText := preload('res://fox/components/settings/settings-text.gd')
+const _Icons := preload('res://fox/components/settings/settings-icons.gd')
 const _ThemeData := preload('res://fox/components/settings/data/settings-theme-data.gd')
 
 # The 4-way ids of the fox input layer, mirrored rather than imported: reading
-# them off `Controls` would force every consumer to resolve that autoload at parse
-# time, and the console must stay usable in a mouse-only game.
+# them off `Controls` would force every consumer to resolve that autoload at
+# parse time, and the screen must stay usable in a mouse-only game.
 const _DIR_TOP: int = 0
 const _DIR_RIGHT: int = 1
 const _DIR_BOTTOM: int = 2
 const _DIR_LEFT: int = 3
 
+const HEADER_HEIGHT := 78.0
+const FOOTER_HEIGHT := 56.0
+const EDGE_MARGIN := 40.0
+const TITLE_TRACKING_EM := 0.32
+
 @export var data: Resource
 
-# Toggle bindings: `id -> {get, set, volume_get?, volume_set?}`, plus the reserved
-# `language` entry. Filled by the game's `_prepare_bindings`.
+# Bindings: `id -> {get, set, volume_get?, volume_set?}`, plus `language`.
 var _bindings: Dictionary = {}
 
-# The skin every atom reads (SettingsThemeData).
 var theme_data: SettingsThemeData = null
 
-# The composed chassis — untyped on purpose so any game frame skin duck-types in
-# (`close_requested`, `add_section`, `on_viewport_resized`).
-var _frame = null
-var _scrim: Control = null
+# Options the screen was opened with — replayed verbatim when a language change
+# rebuilds it, so the return contract survives.
+var _open_options: Dictionary = {}
 
-# Navigation state — `_nav_rows` is a ragged grid: one row per toggle, per volume
-# bar, per block link row, plus the footer links as the last row.
+var _background: ColorRect = null
+var _header: Control = null
+var _plate = null
+var _footer: Control = null
+var _back_link: Control = null
+var _language_overlay: Control = null
+
+# Navigation — `_nav_rows` is a ragged grid: one row per toggle, per volume bar,
+# per block link row, plus the back link and the footer links.
 var _nav: MenuNavigator = null
 var _nav_rows: Array = []
 var _nav_seeding: bool = false
-var _back_connected: Signal = Signal()
-
-var _language_overlay: Control = null
-
-# The `Controls` autoload when the console wired ITS OWN default input (see
-# `_attach_default_input`); null when the game supplied an interpreter instead.
 var _default_input: Node = null
 
+# Latches the single exit so a repeated B or a double-click never routes twice.
+var _closing: bool = false
+
 # ------------------------------------------------------------------------------
-# Lifecycle — full-rect scrim, frame, composition, navigation.
+# Lifecycle — the fox Router calls onOpen / onLeave; FoxScreen wires the resize.
 # ------------------------------------------------------------------------------
 
-func _ready() -> void:
-	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+func onOpen(options = {}) -> void:
+	_open_options = options if options is Dictionary else {}
 
 	if data == null:
 		data = _build_layout()
-
 	theme_data = _build_theme()
 	if theme_data == null:
 		theme_data = _ThemeData.new()
@@ -106,51 +116,101 @@ func _ready() -> void:
 	_prepare_bindings()
 	_build()
 
-func _exit_tree() -> void:
-	super._exit_tree()
+func onLeave(_options = {}) -> void:
 	_teardown_navigation()
 
-# FoxPopup hook — keep the frame's fit in sync on window resize.
 func _onViewportResized() -> void:
-	if _frame != null and _frame.has_method('on_viewport_resized'):
-		_frame.on_viewport_resized()
-
-func _on_close_requested() -> void:
-	queue_free()
+	_rebuild()
 
 # ------------------------------------------------------------------------------
-# Build / rebuild — a locale change re-renders every label, so the whole console
-# is torn down and recomposed rather than walked node by node.
+# Build / rebuild — a resize or a locale change re-renders everything, so the
+# screen is torn down and recomposed rather than walked node by node.
 # ------------------------------------------------------------------------------
 
 func _build() -> void:
-	_scrim = _make_scrim()
-	if _scrim != null:
-		add_child(_scrim)
+	var screen: Vector2 = get_viewport_rect().size
 
-	_frame = _make_frame()
-	if _frame != null and _frame.get_parent() == null:
-		add_child(_frame)
-	if _frame != null:
-		_frame.close_requested.connect(_on_close_requested)
-		if _frame.has_method('set_title'):
-			_frame.set_title(_title_text())
+	_background = ColorRect.new()
+	_background.name = 'background'
+	_background.color = theme_data.background
+	_background.size = screen
+	_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_background)
 
-	_compose(_frame)
+	_build_header(screen)
+	_build_footer_bar(screen)
+
+	# The plate takes the band left between the two bars, minus its own margins.
+	_plate = _make_plate()
+	add_child(_plate)
+	var top: float = HEADER_HEIGHT + theme_data.board_margin_y
+	var bottom: float = screen.y - FOOTER_HEIGHT - theme_data.board_margin_y
+	_plate.fit_into(Rect2(
+		Vector2(theme_data.board_margin_x, top),
+		Vector2(
+			maxf(0.0, screen.x - theme_data.board_margin_x * 2.0),
+			maxf(0.0, bottom - top)
+		)
+	))
+
+	_compose(_plate)
 	_setup_navigation()
 
 func _rebuild() -> void:
+	if theme_data == null:
+		return
 	_teardown_navigation()
 	_nav_rows = []
-	# Detach BEFORE freeing: the new console is built in the same frame, and a
-	# still-parented pending-free scrim would swallow its first clicks.
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
-	_frame = null
-	_scrim = null
+	_plate = null
 	_language_overlay = null
 	_build()
+
+# ------------------------------------------------------------------------------
+# Header — the BACK door on the left, the screen title centred.
+# ------------------------------------------------------------------------------
+
+func _build_header(screen: Vector2) -> void:
+	_header = Control.new()
+	_header.name = 'header'
+	_header.size = Vector2(screen.x, HEADER_HEIGHT)
+	_header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_header)
+
+	_back_link = _TextLink.new()
+	_back_link.theme_data = theme_data
+	_back_link.text = '◀  ' + _SettingsText.resolve('settings.back', 'BACK')
+	_back_link.position = Vector2(EDGE_MARGIN, (HEADER_HEIGHT - theme_data.footer_size) * 0.5)
+	_back_link.activated.connect(_on_back)
+	_header.add_child(_back_link)
+	_nav_rows.append([_back_link])
+
+	var title := Control.new()
+	title.name = 'title'
+	title.size = Vector2(screen.x, HEADER_HEIGHT)
+	title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var text: String = _title_text()
+	title.draw.connect(func() -> void:
+		var font: Font = theme_data.font_title
+		if font == null:
+			font = ThemeDB.fallback_font
+		var width: float = _SettingsText.spaced_width(
+			font, text, theme_data.title_size, TITLE_TRACKING_EM
+		)
+		_SettingsText.draw_spaced(
+			title, font,
+			Vector2((screen.x - width) * 0.5, HEADER_HEIGHT * 0.5 + theme_data.title_size * 0.36),
+			text, theme_data.title_size, theme_data.accent, TITLE_TRACKING_EM
+		)
+		# The rule under the header, spanning the viewport like the footer's.
+		title.draw_line(
+			Vector2(0, HEADER_HEIGHT - 1), Vector2(screen.x, HEADER_HEIGHT - 1),
+			theme_data.accent_at(0.20), 1.0
+		)
+	)
+	_header.add_child(title)
 
 func _title_text() -> String:
 	if data is SettingsLayoutData:
@@ -158,68 +218,28 @@ func _title_text() -> String:
 	return ''
 
 # ------------------------------------------------------------------------------
-# Default composition — sections left, credit blocks right, footer underneath.
-# A game with an exotic layout overrides `_compose` and keeps everything else.
+# Footer — a full-VIEWPORT bar, like faraday's ContentFooterBar: the build stamp
+# on the left, the language switcher and privacy on the right.
 # ------------------------------------------------------------------------------
 
-func _compose(frame) -> void:
-	if frame == null or not (data is SettingsLayoutData):
+func _build_footer_bar(screen: Vector2) -> void:
+	var layout: SettingsLayoutData = data as SettingsLayoutData
+	if layout == null:
 		return
-	var layout: SettingsLayoutData = data
 
-	if frame.has_method('left_column'):
-		var left: Control = frame.left_column()
-		for section in layout.sections:
-			if section != null:
-				left.add_child(_build_section(section))
+	var bar := Control.new()
+	bar.name = 'footer_bar'
+	bar.size = Vector2(screen.x, FOOTER_HEIGHT)
+	bar.position = Vector2(0, screen.y - FOOTER_HEIGHT)
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar.draw.connect(func() -> void:
+		bar.draw_line(Vector2(0, 0), Vector2(screen.x, 0), theme_data.accent_at(0.20), 1.0)
+	)
+	add_child(bar)
 
-	if frame.has_method('right_column'):
-		var right: Control = frame.right_column()
-		for block in layout.blocks:
-			if block != null:
-				right.add_child(_build_block(block))
-
-	if frame.has_method('set_footer'):
-		frame.set_footer(_build_footer())
-
-# A section = its header, then each toggle, then — when the binding declares a
-# volume pair — the slider that channel owns, wired to the toggle both ways.
-func _build_section(section: SettingsSectionData) -> Control:
-	var group := VBoxContainer.new()
-	group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	group.add_theme_constant_override('separation', 2)
-	group.add_child(_make_section_label(section))
-
-	for toggle_data in section.toggles:
-		if toggle_data == null:
-			continue
-		var toggle: Control = _make_toggle(toggle_data)
-		group.add_child(toggle)
-		_nav_rows.append([toggle])
-
-		var binding: Dictionary = _bindings.get(toggle_data.id, {})
-		if binding.has('volume_get'):
-			var bar: Control = _make_volume_bar(binding['volume_get'], binding.get('volume_set'))
-			group.add_child(bar)
-			_nav_rows.append([bar])
-			_wire_audio_channel(toggle, bar)
-
-	return group
-
-func _build_block(block: SettingsBlockData) -> Control:
-	var node := _DefaultBlock.new()
-	node.theme_data = theme_data
-	node.build(block)
-	var links: Array = node.links()
-	if not links.is_empty():
-		_nav_rows.append(links)
-	return node
-
-func _build_footer() -> Control:
-	var layout: SettingsLayoutData = data
+	var version: String = _version_string()
 	var footer := _DefaultFooter.new()
 	footer.theme_data = theme_data
-	var version: String = _version_string()
 	footer.version_text = (layout.version_prefix + version) if version != '' else ''
 	footer.language_code = _current_language() if layout.languages.size() > 1 else ''
 	footer.privacy_key = layout.privacy_key
@@ -227,12 +247,77 @@ func _build_footer() -> Control:
 	footer.privacy_url = layout.privacy_url
 	footer.language_pressed.connect(_on_language_pressed)
 	footer.privacy_pressed.connect(func() -> void: OS.shell_open(layout.privacy_url))
+	footer.position = Vector2(EDGE_MARGIN, 0)
+	footer.size = Vector2(maxf(0.0, screen.x - EDGE_MARGIN * 2.0), FOOTER_HEIGHT)
+	bar.add_child(footer)
 	footer.build()
 
+	_footer = footer
 	var links: Array = footer.links()
 	if not links.is_empty():
 		_nav_rows.append(links)
-	return footer
+
+# ------------------------------------------------------------------------------
+# Default composition — sections left, credit blocks right.
+# A game with an exotic layout overrides `_compose` and keeps everything else.
+# ------------------------------------------------------------------------------
+
+func _compose(plate) -> void:
+	if plate == null or not (data is SettingsLayoutData):
+		return
+	var layout: SettingsLayoutData = data
+
+	# The plate rows are inserted BEFORE the footer row registered above, so the
+	# cursor walks options → links → footer in reading order.
+	var plate_rows: Array = []
+	var left: Control = plate.left_column()
+	for section in layout.sections:
+		if section != null:
+			left.add_child(_build_section(section, plate_rows))
+
+	var right: Control = plate.right_column()
+	for block in layout.blocks:
+		if block != null:
+			right.add_child(_build_block(block, plate_rows))
+
+	# Back link stays first, footer links last.
+	var footer_rows: Array = _nav_rows.slice(1)
+	_nav_rows = [_nav_rows[0]] if not _nav_rows.is_empty() else []
+	_nav_rows.append_array(plate_rows)
+	_nav_rows.append_array(footer_rows)
+
+# A section = its header, then each toggle, then — when the binding declares a
+# volume pair — the slider that channel owns, wired to the toggle both ways.
+func _build_section(section: SettingsSectionData, rows: Array) -> Control:
+	var group := VBoxContainer.new()
+	group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	group.add_theme_constant_override('separation', 0)
+	group.add_child(_make_section_label(section))
+
+	for toggle_data in section.toggles:
+		if toggle_data == null:
+			continue
+		var toggle: Control = _make_toggle(toggle_data)
+		group.add_child(toggle)
+		rows.append([toggle])
+
+		var binding: Dictionary = _bindings.get(toggle_data.id, {})
+		if binding.has('volume_get'):
+			var bar: Control = _make_volume_bar(binding['volume_get'], binding.get('volume_set'))
+			group.add_child(bar)
+			rows.append([bar])
+			_wire_audio_channel(toggle, bar)
+
+	return group
+
+func _build_block(block: SettingsBlockData, rows: Array) -> Control:
+	var node := _DefaultBlock.new()
+	node.theme_data = theme_data
+	node.build(block)
+	var links: Array = node.links()
+	if not links.is_empty():
+		rows.append(links)
+	return node
 
 # Keep a channel's toggle and its slider consistent: switching off drops the bar
 # to zero while remembering the audible level, switching back on restores it, and
@@ -256,14 +341,14 @@ func _wire_audio_channel(toggle: Object, bar: Object) -> void:
 	)
 
 # ------------------------------------------------------------------------------
-# Toggle binding — seed from the getter, persist through the setter, and register
-# the item as focusable.
+# Toggle binding — seed from the getter, persist through the setter.
 # ------------------------------------------------------------------------------
 
 func _bind_toggle(toggle: Object, toggle_data: SettingsToggleData) -> void:
 	if toggle == null or toggle_data == null:
 		return
-	toggle.icon = toggle_data.icon
+	# A toggle that names a known option inherits the shared glyph.
+	toggle.icon = toggle_data.icon if toggle_data.icon != null else _Icons.toggle(toggle_data.id)
 	toggle.icon_off = toggle_data.icon_off
 	toggle.icon_tint = toggle_data.icon_tint
 	toggle.label_key = toggle_data.label_key
@@ -282,7 +367,7 @@ func _bind_toggle(toggle: Object, toggle_data: SettingsToggleData) -> void:
 	)
 
 # ------------------------------------------------------------------------------
-# Language — the picker overlays the console (never replaces it), applies the
+# Language — the picker overlays the screen (never replaces it), applies the
 # locale through TranslationServer + the game's binding, then rebuilds so every
 # label re-renders in the chosen language.
 # ------------------------------------------------------------------------------
@@ -298,6 +383,7 @@ func _on_language_pressed() -> void:
 		return
 	_language_overlay = _LanguageList.new()
 	_language_overlay.theme_data = theme_data
+	_language_overlay.size = get_viewport_rect().size
 	add_child(_language_overlay)
 	_language_overlay.build((data as SettingsLayoutData).languages, _current_language())
 	_language_overlay.selected.connect(_on_language_selected)
@@ -305,6 +391,7 @@ func _on_language_pressed() -> void:
 
 func _close_language_overlay() -> void:
 	if _language_overlay != null:
+		remove_child(_language_overlay)
 		_language_overlay.queue_free()
 		_language_overlay = null
 
@@ -317,9 +404,26 @@ func _on_language_selected(code: String) -> void:
 	_rebuild()
 
 # ------------------------------------------------------------------------------
-# Navigation — ONE MenuNavigator over the ragged grid of rows. Highlight flows
-# through each item's `set_navigation_focused`; confirm flips a toggle or opens a
-# link; LEFT / RIGHT on a single-item slider row nudges it by one segment.
+# Return contract — ONE guarded exit, whatever fires it.
+# ------------------------------------------------------------------------------
+
+func _on_back() -> void:
+	if _closing:
+		return
+	_closing = true
+	var on_back: Variant = _open_options.get('on_back')
+	if on_back is Callable and (on_back as Callable).is_valid():
+		(on_back as Callable).call()
+		return
+	_open_home()
+
+func _open_home() -> void:
+	var router: Node = get_node_or_null('/root/Router')
+	if router != null and router.has_method('open_home'):
+		router.open_home()
+
+# ------------------------------------------------------------------------------
+# Navigation — ONE MenuNavigator over the ragged grid of rows.
 # ------------------------------------------------------------------------------
 
 func _setup_navigation() -> void:
@@ -338,7 +442,6 @@ func _setup_navigation() -> void:
 	var signals: Array = _navigation_signals()
 	if signals.size() >= 2:
 		_nav.attach(signals[0], signals[1])
-		_connect_back()
 	else:
 		_attach_default_input()
 
@@ -350,14 +453,12 @@ func _teardown_navigation() -> void:
 	if _nav != null:
 		_nav.detach()
 		_nav = null
-	if not _back_connected.is_null() and _back_connected.is_connected(_on_close_requested):
-		_back_connected.disconnect(_on_close_requested)
 	_detach_default_input()
 
 # Keyboard / gamepad out of the box: a game that declares the fox `Controls`
-# autoload gets a navigable console without writing an input interpreter — arrows
-# and D-pad walk it, A confirms, B closes. A game that already HAS an interpreter
-# returns its own pair from `_navigation_signals()` and this never runs.
+# autoload gets a navigable screen without writing an input interpreter — arrows
+# and D-pad walk it, A confirms, B goes back. A game that already HAS an
+# interpreter returns its own pair from `_navigation_signals()` and this never runs.
 func _attach_default_input() -> void:
 	var controls: Node = get_node_or_null('/root/Controls')
 	if controls == null:
@@ -381,22 +482,14 @@ func _on_default_direction(direction: int, _from_gamepad: bool) -> void:
 		_nav.navigate(direction)
 
 func _on_default_button(action: String) -> void:
-	if _nav == null:
-		return
 	if action == 'button_a':
-		if _language_overlay == null:
+		if _language_overlay == null and _nav != null:
 			_nav_confirm()
 	elif action == 'button_b':
 		if _language_overlay != null:
 			_close_language_overlay()
 		else:
-			_on_close_requested()
-
-func _connect_back() -> void:
-	var back: Signal = _back_signal()
-	if not back.is_null() and not back.is_connected(_on_close_requested):
-		back.connect(_on_close_requested)
-		_back_connected = back
+			_on_back()
 
 func _nav_highlight(item: Object, focused: bool) -> void:
 	if item != null and item.has_method('set_navigation_focused'):
@@ -408,8 +501,6 @@ func _nav_confirm() -> void:
 		return
 	if item.has_method('toggle_value'):
 		item.toggle_value()
-	elif item.has_method('activate'):
-		item.activate()
 
 # A slider owns the horizontal axis of its row: LEFT / RIGHT change its value
 # instead of walking, which is the only way one cursor can serve both a list of
@@ -451,23 +542,10 @@ func _build_theme() -> SettingsThemeData:
 func _prepare_bindings() -> void:
 	pass
 
-# The dimmed backdrop. Return null for a console that floats over a live screen.
-func _make_scrim() -> Control:
-	var scrim := ColorRect.new()
-	scrim.name = 'scrim'
-	scrim.color = Color(0, 0, 0, 0.6)
-	scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	scrim.mouse_filter = Control.MOUSE_FILTER_STOP
-	scrim.gui_input.connect(func(event: InputEvent) -> void:
-		if event is InputEventMouseButton and event.pressed:
-			_on_close_requested()
-	)
-	return scrim
-
-func _make_frame() -> Control:
-	var frame := _DefaultFrame.new()
-	frame.theme_data = theme_data
-	return frame
+func _make_plate() -> Control:
+	var plate := _DefaultPlate.new()
+	plate.theme_data = theme_data
+	return plate
 
 func _make_section_label(section: SettingsSectionData) -> Control:
 	var label := _DefaultSectionLabel.new()
@@ -490,28 +568,20 @@ func _make_volume_bar(getter: Callable, setter) -> Control:
 		bar.value_changed.connect(setter)
 	return bar
 
-# Router for leaf resources with no dedicated factory (selectors, key bindings…).
-func _make_entry(_entry_data: Resource) -> Control:
-	return null
-
 func _navigation_rows() -> Array:
 	return _nav_rows
 
 # Return `[direction_signal, tapped_signal]` from the game's input layer. Empty
-# disables navigation (mouse-only console).
+# falls back to the fox `Controls` autoload (see `_attach_default_input`).
 func _navigation_signals() -> Array:
 	return []
-
-# Optional signal that closes the popup (gamepad B / Esc). Empty = mouse-only close.
-func _back_signal() -> Signal:
-	return Signal()
 
 # ------------------------------------------------------------------------------
 
 # The build stamp: the game's own `G.VERSION` when it exposes one, else the
 # version stamped into project.godot by fox's bundle config. Both can be absent
 # (a game scaffolded without a bundle section), and an empty string is the honest
-# answer — the footer then simply drops the stamp rather than printing `v<null>`.
+# answer — the footer then drops the stamp rather than printing `v<null>`.
 func _version_string() -> String:
 	var globals := get_node_or_null('/root/G')
 	if globals != null and 'VERSION' in globals and globals.VERSION != null:
