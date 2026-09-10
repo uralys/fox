@@ -66,6 +66,8 @@ Full documentation lives in [docs](./docs). Start with
   default, grepable `[perf]` lines
 - [Steam](./docs/gdscript/steam.md): init, Steam Deck detection, achievements,
   floating keyboard, store overlay
+- [Leaderboard](./docs/gdscript/leaderboard.md): online boards, offline-first
+  score queue, name claims
 
 ### Input
 
