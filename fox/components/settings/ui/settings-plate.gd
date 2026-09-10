@@ -21,7 +21,7 @@ extends Control
 # ==============================================================================
 
 const _Theme := preload('res://fox/components/settings/data/settings-theme-data.gd')
-const _Responsive := preload('res://fox/core/responsive.gd')
+const _Responsive := preload('res://fox/screens/responsive.gd')
 
 var theme_data: SettingsThemeData = null
 

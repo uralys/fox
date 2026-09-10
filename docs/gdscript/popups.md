@@ -5,7 +5,7 @@ Fox has two popup helpers — pick the one that matches your need:
 - **`components/popup.gd`** — the full-featured popup base: a `ReferenceRect`
   with automatic blur, a panel show/hide animation, and a close button. Use it
   for in-game dialogs (shop, confirm, review…). Documented below.
-- **`FoxPopup`** (`core/popup.gd`) — a minimal `Control` base that only adds a
+- **`FoxPopup`** (`screens/popup.gd`) — a minimal `Control` base that only adds a
   layout refresh (`_onViewportResized`) on window resize. Use it for custom
   overlays that manage their own visuals. See [screens & responsive](./screens.md#foxpopup).
   The refresh re-runs the popup's own layout; the global scale factor itself is
