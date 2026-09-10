@@ -13,6 +13,8 @@ extends Resource
 
 @export var id: String = ''
 @export var label_key: String = ''
+# Literal fallback when `label_key` is untranslated (see SettingsToggleData).
+@export var label_text: String = ''
 @export var icon: Texture2D
 @export var url: String = ''
 @export var color: Color = Color.WHITE

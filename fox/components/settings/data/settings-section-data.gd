@@ -12,4 +12,6 @@ extends Resource
 # ==============================================================================
 
 @export var label_key: String = ''
+# Literal fallback when `label_key` is untranslated (see SettingsToggleData).
+@export var label_text: String = ''
 @export var toggles: Array[SettingsToggleData] = []

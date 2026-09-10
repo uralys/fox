@@ -17,6 +17,9 @@ extends Resource
 
 @export var id: String = ''
 @export var label_key: String = ''
+# Literal fallback when the project ships no translation for `label_key`
+# (a starter game with no translations CSV would otherwise show the raw key).
+@export var label_text: String = ''
 @export var icon: Texture2D
 # Optional icon shown when the toggle is Off (e.g. muted speaker / crossed note).
 # Falls back to `icon` when unset, so single-state toggles keep one glyph.
