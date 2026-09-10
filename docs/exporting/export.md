@@ -121,4 +121,6 @@ Publishing it to itch is a `butler` channel like the others: add it under
 
 ⚠️ `fox export:web` is a different command with a different purpose: a scriptable
 `--export-debug` that bakes nothing. It is for generated projects that just need
-a playable page, never for a build handed to players.
+a playable page, never for a build handed to players. It writes into
+`_build/web/` and never into the preset's `export_path`, so it cannot drop a
+debug page in the folder `fox publish` uploads.

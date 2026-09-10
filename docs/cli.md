@@ -85,6 +85,10 @@ Commands:
 
   fox export                    export a bundle for one of your presets
 
+  fox export:web                scriptable HTML5 export into _build/web,
+                                NOT shippable (no bundle bake): use
+                                `fox export` to ship a web build
+
   fox publish [store] [env]     upload exported builds to a store
                  [branch]       (steamcmd for steam, butler for itch)
 

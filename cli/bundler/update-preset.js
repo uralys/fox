@@ -45,6 +45,9 @@ const DESKTOP_ICON_FILE = {
   [LINUX]: 'icon.png'
 };
 
+// Windows stamps both into the exe metadata; Godot refuses anything but x.y.z[.w].
+const DESKTOP_VERSION_KEYS = ['application/file_version', 'application/product_version'];
+
 const LEGACY_LAUNCH_SCREEN_PREFIXES = ['landscape_launch_screens/', 'portrait_launch_screens/'];
 
 // -----------------------------------------------------------------------------
@@ -247,13 +250,50 @@ const updateIOSPreset = (env, preset, bundle, bundleId, applicationName, bundleN
 
 // -----------------------------------------------------------------------------
 
-const updateMacOSPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
+const updateMacOSXPreset = (env, preset, bundle, bundleId, applicationName, bundleName) => {
   updateMain(preset, 'export_path', `_build/macOS/${bundleName}`);
 
   updateOptions(preset, 'application/name', applicationName);
 
   const packageUID = (bundle[IOS] && bundle[IOS]['application/bundle_identifier']) || bundle.uid;
   updateOptions(preset, 'application/bundle_identifier', packageUID);
+
+  updateDesktopIcons(preset, bundleId);
+};
+
+// -----------------------------------------------------------------------------
+// The Godot 4 desktop presets (macOS, Windows Desktop, Linux) ship through the
+// `export/<env>/<target>/` tree, which is the only place `fox publish` looks. So
+// their `export_path` and their bundle identifier belong to the project: a game
+// declares one folder per env and per store, and one identifier per build. Fox
+// fills what it owns and nothing else — the display name Godot actually reads on
+// that platform, and the generated icons.
+//
+// ⛔ Never rewrite `export_path` here. Sending a macOS build to `_build/macOS/`
+// leaves `export/<env>/<target>/macos/` holding the bytes of the previous run,
+// which publish then uploads under a fresh build number: stale content shipped,
+// invisible on the store side because the description carries the new version.
+
+const DESKTOP_NAME_KEY = {
+  [MACOS]: 'application/name',
+  [WINDOWS]: 'application/product_name',
+  [LINUX]: 'application/product_name'
+};
+
+const updateDesktopPreset = (preset, bundleId, applicationName) => {
+  const nameKey = DESKTOP_NAME_KEY[preset.platform];
+
+  if (nameKey && nameKey in preset.options) {
+    updateOptions(preset, nameKey, applicationName);
+  }
+
+  // Windows and Linux name the executable through `application/product_name`;
+  // `application/name` is a macOS key Godot never reads there, and fox is what
+  // used to write it. Dropping it keeps export_presets.cfg honest.
+  if (preset.platform !== MACOS && 'application/name' in preset.options) {
+    delete preset.options['application/name'];
+    presetLogger.log('application/name removed (not read on this platform)');
+  }
 
   updateDesktopIcons(preset, bundleId);
 };
@@ -274,6 +314,15 @@ export const updateVersionInPreset = (preset, newVersion) => {
     case MACOS:
       updateOptions(preset, 'application/short_version', newVersion);
       updateOptions(preset, 'application/version', newVersion);
+      break
+    // The Windows exe carries its version in its own metadata, read by the OS
+    // and by Steam's crash reports. Left alone it kept the number of whichever
+    // release first filled it, months behind the tag being built.
+    case WINDOWS:
+    case LINUX:
+      DESKTOP_VERSION_KEYS.filter((key) => key in preset.options).forEach((key) =>
+        updateOptions(preset, key, newVersion)
+      );
       break
   }
 };
@@ -300,8 +349,12 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, bundleIds = [bu
       updateIOSPreset(env, preset, bundle, bundleId, applicationName, bundleName);
       break;
     case MAC_OSX:
+      updateMacOSXPreset(env, preset, bundle, bundleId, applicationName, bundleName);
+      break;
     case MACOS:
-      updateMacOSPreset(env, preset, bundle, bundleId, applicationName, bundleName);
+    case WINDOWS:
+    case LINUX:
+      updateDesktopPreset(preset, bundleId, applicationName);
       break;
     case WEB:
       // A web export has no application name and no bundle identifier: the page
@@ -313,8 +366,7 @@ const updatePreset = (bundleId, env, coreConfig, preset, bundle, bundleIds = [bu
       updateWebIcons(preset, bundleId);
       break;
     default:
-      presetLogger.warn(`Platform ${platform} has no preset specificity, applying defaults`);
-      updateOptions(preset, 'application/name', applicationName);
+      presetLogger.warn(`Platform ${platform} has no preset specificity, icons only`);
       updateDesktopIcons(preset, bundleId);
   }
 

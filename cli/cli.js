@@ -301,7 +301,7 @@ const execute = async () => {
     .command(RUN_GAME, 'start your game locally')
     .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
     .command(EXPORT, 'export a bundle for one of your presets (--env / --target / --platform to skip the prompts)')
-    .command(EXPORT_WEB, 'scriptable HTML5 export, NOT shippable (no bundle bake) — use `fox export` to ship a web build')
+    .command(EXPORT_WEB, 'scriptable HTML5 export into _build/web, NOT shippable (no bundle bake): use `fox export` to ship a web build')
     .command(PUBLISH, 'upload exported builds to a store (fox publish [store] [env] [branch], --yes to skip the confirm)')
     .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
     .command(LS, 'list local exports and confront them with every store: Steam Deck and itch.io')
