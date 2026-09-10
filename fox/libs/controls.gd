@@ -428,14 +428,12 @@ func _handle_joypad_button(event: InputEventJoypadButton):
 func _emit_button_pressed(action: String) -> void:
 	if _action_down.get(action, false):
 		return
-	print('[DIAG Controls] EMITTED button_pressed action=', action)
 	_action_down[action] = true
 	button_pressed.emit(action)
 
 func _emit_button_released(action: String) -> void:
 	if not _action_down.get(action, false):
 		return
-	print('[DIAG Controls] EMITTED button_released action=', action)
 	_action_down.erase(action)
 	button_released.emit(action)
 
