@@ -8,7 +8,7 @@ An `interactiveArea2D` uses [Gesture](../../fox/libs/gesture.gd) behind the hood
 
 ## Setup
 
-- Attach the [interactiveArea2D](../../fox/behaviours/interactiveArea2D.tscn) **Scene** as child to your Node.
+- Attach the [interactiveArea2D](../../fox/behaviours/interactive-area-2d.tscn) **Scene** as child to your Node.
 
 - Add a `CollisionShape2D` to the `interactiveArea` Node and set its shape e.g(`RectangleShape2D`).
 

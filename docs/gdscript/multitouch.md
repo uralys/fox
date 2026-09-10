@@ -8,7 +8,7 @@ canvas, a fullscreen input catcher, or drawing.
 
 ## Setup
 
-Attach the [multitouchArea](../../fox/behaviours/multitouchArea.tscn) scene to a
+Attach the [multitouchArea](../../fox/behaviours/multitouch-area.tscn) scene to a
 Node and give it a `CollisionShape2D`.
 
 To make it cover the whole screen, enable `fullscreen`: the collision shape is
