@@ -129,10 +129,9 @@ else:
 
 ## Generate
 
-Generates random ids and player names. Names are drawn from
-`res://assets/name-elements.json` (a `{adjectives: [...], names: [...]}`
-file you provide), so add it as an `Autoload` (e.g. `Generate`) since it loads
-a project asset:
+Generates random ids and player names. Names are drawn from a
+`{adjectives: [...], names: [...]}` file you provide in your own project, so add
+it as an `Autoload` (e.g. `Generate`):
 
 ```ini
 [autoload]
@@ -144,6 +143,19 @@ Generate="*res://fox/autoloads/generate.gd"
   (pass `''` or `null` for no prefix)
 - `Generate.name()` → a random `AdjectiveName` (falls back to `'Player'` if the
   asset is missing)
+
+The file defaults to `res://assets/name-elements.json`. Override the path in
+your `project.godot` if you store it elsewhere:
+
+```ini
+[fox]
+
+generate/name_elements_path="res://data/names.json"
+```
+
+The file is read on the first call to `Generate.name()`, never when the autoload
+is registered, and a missing or unreadable file logs a warning and falls back to
+`'Player'` instead of failing at boot.
 
 ```gdscript
 var id = Generate.uid('player')
