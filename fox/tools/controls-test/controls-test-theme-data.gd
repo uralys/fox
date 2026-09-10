@@ -3,7 +3,7 @@ extends Resource
 
 # ==============================================================================
 # ControlsTestThemeData — the ONE knob a game turns to skin the shared controls
-# test view (fox/components/controls-test).
+# test view (fox/tools/controls-test).
 #
 # The view draws everything itself, so it needs a palette, two fonts and a small
 # type ramp. Every field below ships a neutral default: a game that injects

@@ -74,7 +74,7 @@ On completion it calls `Player.setRatingDone()` and closes. It expects a
 
 ## Controls test
 
-`components/controls-test/controls-test-view.tscn` is a training room for the
+`fox/tools/controls-test/controls-test-view.tscn` is a training room for the
 input layer: a live timeline of every action, a 4-way direction cross, and one
 telemetry gauge per analog stick. It answers the questions every game hits on a
 handheld: is this hold coming from the D-pad or from the stick, how deep does
@@ -83,7 +83,7 @@ the left trigger really go, how much does this pad drift at rest.
 Open it like any other scene:
 
 ```gdscript
-Router.openScene(preload('res://fox/components/controls-test/controls-test-view.tscn'))
+Router.openScene(preload('res://fox/tools/controls-test/controls-test-view.tscn'))
 ```
 
 The view honours `onOpen(options)` and `onLeave(options)`, so the Router drives
@@ -98,14 +98,14 @@ The view script declares no global type name, the fox convention for anything a
 game subclasses. Extend it by path:
 
 ```gdscript
-const ControlsTest = preload('res://fox/components/controls-test/controls-test-view.gd')
+const ControlsTest = preload('res://fox/tools/controls-test/controls-test-view.gd')
 extends ControlsTest
 ```
 
 ### Theming
 
 Every colour, font and type size comes from a `ControlsTestThemeData` resource
-(`components/controls-test/controls-test-theme-data.gd`), never from a game's own
+(`fox/tools/controls-test/controls-test-theme-data.gd`), never from a game's own
 token file. Each field ships a neutral default, so a game that injects nothing
 still gets a readable room. Assign `theme_data` before the view enters the tree,
 or override `_build_theme()` in a subclass and return the resource; either way

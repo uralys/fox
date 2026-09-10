@@ -18,7 +18,7 @@ extends FoxScreen
 # This script declares no global type name, on purpose: a game extends the
 # component BY PATH, the fox convention for anything a game is meant to subclass.
 #
-#   const ControlsTest := preload('res://fox/components/controls-test/controls-test-view.gd')
+#   const ControlsTest := preload('res://fox/tools/controls-test/controls-test-view.gd')
 #   extends ControlsTest
 #
 # ------------------------------------------------------------------------------
@@ -71,8 +71,8 @@ extends FoxScreen
 # and the redraw are recomputed from it. Call `set_view_size()` on resize.
 # ==============================================================================
 
-const _ThemeData := preload('res://fox/components/controls-test/controls-test-theme-data.gd')
-const _Benchmark := preload('res://fox/components/controls-test/movement-benchmark.gd')
+const _ThemeData := preload('res://fox/tools/controls-test/controls-test-theme-data.gd')
+const _Benchmark := preload('res://fox/tools/controls-test/movement-benchmark.gd')
 
 const KIND_HOLD := 'hold'
 const KIND_FOCUS := 'focus'
