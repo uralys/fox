@@ -1,4 +1,4 @@
-# In-App Purchases (Stores)
+# In-app purchases
 
 Fox ships two autoloads wrapping the platform IAP plugins:
 
@@ -20,8 +20,8 @@ Add the relevant store(s) as autoloads:
 ```ini
 [autoload]
 
-AppStore="*res://fox/stores/appstore.gd"
-PlayStore="*res://fox/stores/playstore.gd"
+AppStore="*res://fox/iap/appstore.gd"
+PlayStore="*res://fox/iap/playstore.gd"
 ```
 
 Both stores expect your game to provide:
