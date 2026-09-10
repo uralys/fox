@@ -93,7 +93,7 @@ Full documentation lives in [docs](./docs). Start with
   `ConfigStore`
 - [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
   default, grepable `[perf]` lines
-- [In-App Purchases](./docs/gdscript/stores.md) — iOS / Android stores
+- [In-app purchases](./docs/gdscript/iap.md) — iOS / Android stores
 
 ### Tooling & exporting
 
