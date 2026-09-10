@@ -47,7 +47,7 @@ extends CanvasLayer
 
 signal splashFinished
 
-const _Responsive := preload('res://fox/core/responsive.gd')
+const _Responsive := preload('res://fox/screens/responsive.gd')
 
 const DEFAULT_LOGO_PATH := 'res://fox/assets/splash/logo-uralys.png'
 const ELECTRIC_SHADER := preload('res://fox/components/splash/splash-electric.gdshader')

@@ -80,7 +80,7 @@ Use it only if you need resize refresh on a node that cannot extend a Fox base.
 
 ## Responsive helper
 
-`FoxResponsive` (`core/responsive.gd`) holds the shared responsive maths. It is
+`FoxResponsive` (`screens/responsive.gd`) holds the shared responsive maths. It is
 engine-agnostic on purpose: GDScript statics do not dispatch virtually, so the
 base can never read a game-specific token or autoload — each game passes its
 width threshold (`min_desktop_width`) and its "this is a handheld" hook
