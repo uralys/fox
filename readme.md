@@ -62,6 +62,8 @@ Full documentation lives in [docs](./docs). Start with
   global content scale factor)
 - [Sound](./docs/gdscript/sound.md) — SFX, music, ducking
 - [Files](./docs/gdscript/files.md) — bundle config + rotating save backups (cloud-safe)
+- [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
+  default, grepable `[perf]` lines
 
 ### Input
 
