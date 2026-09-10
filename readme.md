@@ -89,7 +89,8 @@ Full documentation lives in [docs](./docs). Start with
 
 - [HTTP](./docs/gdscript/http.md) — REST client
 - [Utility libs](./docs/gdscript/utils.md) — `__` (Underscore), `Wait`,
-  `TimeTools`, `Bundle`, `Generate`
+  `TimeTools`, `Bundle`, `Generate`, `HoloDrawUtils`, `MenuNavigator`,
+  `ConfigStore`
 - [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
   default, grepable `[perf]` lines
 - [In-App Purchases](./docs/gdscript/stores.md) — iOS / Android stores
