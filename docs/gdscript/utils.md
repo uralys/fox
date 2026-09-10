@@ -137,7 +137,7 @@ a project asset:
 ```ini
 [autoload]
 
-Generate="*res://fox/libs/generate.gd"
+Generate="*res://fox/autoloads/generate.gd"
 ```
 
 - `Generate.uid(prefix)` → a unique id, e.g. `player-1718000000-12345-678901`

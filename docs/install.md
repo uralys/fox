@@ -121,11 +121,11 @@ Now you need to setup Fox default paths within the `project.godot` `[autoload]` 
 
 G="*res://fox/core/globals.gd"
 DEBUG="*res://fox/core/debug.gd"
-Gesture="*res://fox/libs/gesture.gd"
+Gesture="*res://fox/autoloads/gesture.gd"
 ```
 
 Other libs are autoloads too — add the ones you use, e.g.
-`Controls="*res://fox/libs/controls.gd"` (input), `HotReload`, `Sound`,
+`Controls="*res://fox/autoloads/controls.gd"` (input), `HotReload`, `Sound`,
 `Generate`, `AppStore` / `PlayStore`. See each lib's doc.
 
 and set few default options

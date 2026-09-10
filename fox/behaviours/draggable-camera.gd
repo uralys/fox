@@ -8,7 +8,7 @@ extends Camera2D
 
 # ------------------------------------------------------------------------------
 
-const Gesture = preload("res://fox/libs/gesture.gd")
+const Gesture = preload("res://fox/autoloads/gesture.gd")
 
 @onready var camera = self
 @onready var boundaries = _resolveBoundaries()
