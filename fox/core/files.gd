@@ -56,3 +56,75 @@ func restoreVar(path, index := 0):
   var content = file.get_var()
   file.close()
   return content
+
+# ------------------------------------------------------------------------------
+# Safe reads for a `store_var` save file.
+#
+# Why three outcomes and not two: a missing file and a damaged file look
+# identical to a naive `if not content` test, yet they call for opposite
+# reactions. An absent file is a genuine first launch, so seeding defaults and
+# persisting them is correct. An unreadable file is a file that IS on disk but
+# could not be turned into a usable Variant: locked by another process,
+# truncated by a crash, or half written by a cloud sync still in flight.
+# Treating that as a first launch resets the progression AND immediately
+# overwrites bytes that were still recoverable.
+#
+# `readVarSafe` names the difference so the caller can branch on it:
+#
+#   {status: 'absent',     content: null}     nothing on disk: seed and save
+#   {status: 'unreadable', content: null}     present but unusable: restore a
+#                                             backup, never write over it blindly
+#   {status: 'ok',         content: Variant}  a non-empty Dictionary was read
+#
+# A read that yields an empty or non-Dictionary Variant is reported
+# `unreadable` on purpose: storing a save container with `store_var` always
+# yields a filled Dictionary, so anything else means the bytes are damaged.
+# ------------------------------------------------------------------------------
+
+const READ_ABSENT := 'absent'
+const READ_UNREADABLE := 'unreadable'
+const READ_OK := 'ok'
+
+func readVarSafe(path) -> Dictionary:
+  if not FileAccess.file_exists(path):
+    return {'status': READ_ABSENT, 'content': null}
+
+  var file = FileAccess.open(path, FileAccess.READ)
+  if file == null:
+    G.log('[Files] cannot open ', path, ', open error: ', FileAccess.get_open_error())
+    return {'status': READ_UNREADABLE, 'content': null}
+
+  var content = file.get_var()
+  file.close()
+
+  if not (content is Dictionary) or content.is_empty():
+    G.log('[Files] unusable content read from ', path)
+    return {'status': READ_UNREADABLE, 'content': null}
+
+  return {'status': READ_OK, 'content': content}
+
+# ------------------------------------------------------------------------------
+# Walk the rotating backups from the freshest to the oldest and return the first
+# usable one. A single backup is not enough of a net: the same lock or the same
+# in-flight cloud sync that spoiled the live file may also have caught the
+# snapshot taken right before it, so the chain keeps trying until a readable
+# Dictionary shows up.
+#
+# Returns the same shape as `readVarSafe`, plus the index that answered:
+#
+#   {status: 'ok',     content: Variant, index: 0..count-1}
+#   {status: 'absent', content: null,    index: -1}   no usable backup left
+#
+# The caller owns what happens next: adopt the content, then persist it so the
+# recovered state becomes the live file again (and re-uploads on the next sync).
+# ------------------------------------------------------------------------------
+
+func restoreLatestBackup(path, count := 3) -> Dictionary:
+  for index in range(count):
+    var content = restoreVar(path, index)
+    if content is Dictionary and not content.is_empty():
+      G.log('[Files] restored ', path, ' from backup ', index)
+      return {'status': READ_OK, 'content': content, 'index': index}
+
+  G.log('[Files] no usable backup for ', path)
+  return {'status': READ_ABSENT, 'content': null, 'index': -1}
