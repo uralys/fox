@@ -219,7 +219,8 @@ func _build_footer() -> Control:
 	var layout: SettingsLayoutData = data
 	var footer := _DefaultFooter.new()
 	footer.theme_data = theme_data
-	footer.version_text = layout.version_prefix + _version_string()
+	var version: String = _version_string()
+	footer.version_text = (layout.version_prefix + version) if version != '' else ''
 	footer.language_code = _current_language() if layout.languages.size() > 1 else ''
 	footer.privacy_key = layout.privacy_key
 	footer.privacy_text = layout.privacy_text
@@ -508,9 +509,12 @@ func _back_signal() -> Signal:
 # ------------------------------------------------------------------------------
 
 # The build stamp: the game's own `G.VERSION` when it exposes one, else the
-# version stamped into project.godot by fox's bundle config.
+# version stamped into project.godot by fox's bundle config. Both can be absent
+# (a game scaffolded without a bundle section), and an empty string is the honest
+# answer — the footer then simply drops the stamp rather than printing `v<null>`.
 func _version_string() -> String:
 	var globals := get_node_or_null('/root/G')
-	if globals != null and 'VERSION' in globals:
+	if globals != null and 'VERSION' in globals and globals.VERSION != null:
 		return str(globals.VERSION)
-	return str(ProjectSettings.get_setting('bundle/version', ''))
+	var stamped: Variant = ProjectSettings.get_setting('bundle/version', '')
+	return '' if stamped == null else str(stamped)

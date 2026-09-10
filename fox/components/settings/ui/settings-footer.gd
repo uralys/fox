@@ -39,7 +39,10 @@ func build() -> void:
 	add_theme_constant_override('separation', 0)
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	add_child(_build_version())
+	# A game with no version stamped in project.godot shows no stamp at all: an
+	# empty `v` next to a bullet reads as a bug, not as a build.
+	if version_text != '':
+		add_child(_build_version())
 
 	var right := HBoxContainer.new()
 	right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
