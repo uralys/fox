@@ -31,9 +31,9 @@ extends Node
 #
 # The signing secret is read from the ProjectSettings key
 # `custom/leaderboard-secret` and from nowhere else: it is injected at export
-# time and never committed, never passed through configure(), never logged (only
-# a fingerprint of it is, see _secret_fingerprint). A build without it ships
-# READ-ONLY boards, see is_read_only().
+# time and never committed, never passed through configure(), and never logged:
+# not the key, not its length, not a digest of it, see _secret_fingerprint. A
+# build without it ships READ-ONLY boards, see is_read_only().
 #
 # Hooks (virtual — override per game):
 #
@@ -204,9 +204,13 @@ func configure(options: Dictionary = {}) -> void:
 
   # An export that forgot to inject the signing secret ships READ-ONLY boards
   # (reads work, no score is ever posted), and a STALE one gets 403 permission
-  # denied. Both used to be silent; the fingerprint above turns a log tail into a
-  # verdict. Read-only is DELIBERATE on the web target (see submit()) and a bug
-  # anywhere else, which is why this stays a warning rather than a log.
+  # denied. The missing case is caught here, loudly. The stale one is not
+  # distinguishable from a log line, deliberately: telling two keys apart would
+  # take a fingerprint of the key, and a symmetric key has no fingerprint that is
+  # safe to print (see _secret_fingerprint). Match the `env`/`target` stamp a
+  # submission carries against the key that export baked instead. Read-only is
+  # DELIBERATE on the web target (see submit()) and a bug anywhere else, which is
+  # why this stays a warning rather than a log.
   if _secret.is_empty():
     push_warning('[leaderboard] NO SIGNING SECRET: boards are READ-ONLY, no score '
       + 'is posted. Expected on the web target; elsewhere export with `fox export` '
@@ -631,12 +635,15 @@ func _signed_body(body: Dictionary) -> Dictionary:
   ordered['epim'] = (salt + '%' + canonical).sha256_text()
   return ordered
 
-# Identifies WHICH secret a build carries without ever printing it: the length
-# and a short sha256 prefix of the key, so a log line is enough to settle a 403.
+# Says only WHETHER this build holds a signing key, never anything derived from
+# it. The key is symmetric, so ANY deterministic digest of it printed in a log
+# is an offline verification oracle: a candidate is confirmed by hashing it and
+# comparing, with no request to the service and no rate limit in the way. A
+# length is the same oracle, pre-pruned. Telling two builds apart is already
+# answered by the env, target and platform stamp _stamped_metadata carries, and
+# by the game and host printed on this very log line, so nothing is lost here.
 func _secret_fingerprint() -> String:
-  if _secret.is_empty():
-    return '<none>'
-  return '%d chars, sha256:%s' % [_secret.length(), _secret.sha256_text().substr(0, 8)]
+  return '<none>' if _secret.is_empty() else '<set>'
 
 func _sort_top_level(body: Dictionary) -> Dictionary:
   var keys := body.keys()

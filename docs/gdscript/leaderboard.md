@@ -262,9 +262,13 @@ option, and a game must never hold it in its source.
 > without the key ships read-only boards, which is exactly what
 > [`is_read_only()`](#is_read_only) reports.
 
-The key itself is never logged. What the logs carry is a fingerprint, its length
-plus a short prefix of its sha256, which is enough to tell two builds apart when
-one of them is answered `403`.
+Nothing derived from the key is ever logged, not even a digest of it. The logs
+say `<set>` or `<none>` and stop there. The key is symmetric, so any stable
+fingerprint of it would let someone holding the log confirm a guessed key
+offline, without ever calling the service; printing its length would narrow that
+search further. When a build is answered `403`, the build is identified by the
+`env`, `target` and `platform` stamp every submission carries, and by the game
+and host on the same log line.
 
 ## The epim signature
 
