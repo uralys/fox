@@ -64,6 +64,8 @@ Full documentation lives in [docs](./docs). Start with
 - [Files](./docs/gdscript/files.md) — bundle config + rotating save backups (cloud-safe)
 - [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
   default, grepable `[perf]` lines
+- [Steam](./docs/gdscript/steam.md): init, Steam Deck detection, achievements,
+  floating keyboard, store overlay
 
 ### Input
 
