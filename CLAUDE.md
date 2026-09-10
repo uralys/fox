@@ -34,6 +34,26 @@ are two different things.
 The only French that remains legitimate is the conversation with Chris in the
 terminal.
 
+## A release title is a version and a date
+
+**The title of a GitHub release carries the version and its publication date,
+nothing else:** `1.19.1 (September 10, 2026)`. No `v` prefix, the month spelled
+out in US English, the same shape React uses for its own releases.
+
+The short editorial label that used to sit in the title now opens the notes as
+their first heading:
+
+```markdown
+# Desktop export presets
+
+Desktop presets stop rewriting the folder `fox publish` uploads...
+```
+
+**Why:** the releases page then reads as a chronology, answering which version
+shipped when at a glance, while the summary of the work stays visible the moment
+the notes are opened. Every release published before 2026-09-10 was migrated to
+this format, so the list is homogeneous.
+
 ## Every release ends with a `## changelog` section
 
 **A release describes what it brings, then lists what was merged to bring it.**
