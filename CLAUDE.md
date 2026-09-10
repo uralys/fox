@@ -40,25 +40,38 @@ terminal.
 The narrative sections come first, the changelog closes the notes, and it is
 never optional.
 
-What the section holds, in this order:
+What the section holds, and nothing more:
 
-- **the merged pull requests**, one line each, number and title, as
-  `- #13 improved versioning`. A release that incorporates pull requests
-  **must** list every one of them: a reader looking for the review that carried
-  a change should not have to walk the git log to find it;
-- when no pull request was merged and the work landed straight on `main`, say
-  so in one line and list the commits instead;
+- **the merged pull requests**, one linked line each, as
+  `- [#13 improved versioning](https://github.com/uralys/fox/pull/13)`. A
+  release that incorporates pull requests **must** list every one of them: a
+  reader looking for the review that carried a change should not have to walk
+  the git log to find it;
+- when no pull request was merged and the work landed straight on `main`, one
+  line saying so;
 - the issues the release closes, linked;
-- a `**Full changelog:**` line pointing at the GitHub compare view between the
-  previous tag and this one.
+- a `**Full changelog:**` line pointing at the GitHub compare view.
+
+⛔ **Commits are never listed.** A changelog that transcribes the git log is
+noise: the compare link already holds every commit, in full, for whoever needs
+that level of detail.
+
+The compare view runs from the **previous release**, never from the previous
+tag. Fox carries four times more tags than releases, and anything landed
+between two releases would otherwise appear in no changelog at all.
 
 Gathering the list:
 
 ```sh
-git log --format='%h %s' <previous tag>..<this tag>
 GH_TOKEN=$GH_URALYS_TOKEN gh pr list --repo uralys/fox --state merged \
-  --json number,title,mergedAt --jq '.[] | "\(.number) | \(.mergedAt) | \(.title)"'
+  --json number,title,mergeCommit --jq '.[] | [.number, .mergeCommit.oid, .title] | @tsv'
 ```
+
+A pull request belongs to the first release that contains its merge commit,
+which is an **ancestry** question, not a date one: `git merge-base --is-ancestor
+<mergeCommit> <tag>`. Fox has already shipped a pull request merged months
+before the release that first carried it, because a maintenance line kept
+running beside `main`.
 
 **Why:** the notes explain the intent, the changelog gives the provenance. Six
 months later, the only way back to the discussion behind a change is the pull
