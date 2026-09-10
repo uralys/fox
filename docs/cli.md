@@ -8,7 +8,15 @@
 
 ## requirements
 
-To use the CLI you'll need NodeJS installed
+To use the CLI you'll need NodeJS installed.
+
+The `fox generate:*` commands also need **ImageMagick 7** (`magick` binary):
+
+```sh
+brew install imagemagick
+```
+
+See [install](./install.md#prerequisites) for the full prerequisites table.
 
 ### prepare the executable
 
@@ -107,6 +115,7 @@ Commands:
 
 - more details for exporting [here](./exporting/export.md)
 - the two axes a build is made of, `env` and `target`, are described [here](./exporting/envs-and-targets.md)
+- the four `fox generate:*` commands drive **ImageMagick 7** (`brew install imagemagick`): see [prerequisites](./install.md#prerequisites)
 
 ## publish
 

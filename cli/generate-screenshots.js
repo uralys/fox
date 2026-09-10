@@ -1,13 +1,12 @@
 // -----------------------------------------------------------------------------
 // resize screenshots to match store requirements
-// requires https://www.imagemagick.org/script/index.php
-// to enable "convert" command
-// OSX: brew install imagemagick
+// requires ImageMagick, see docs/install.md
 // -----------------------------------------------------------------------------
 
 import fs from 'fs';
 import path from 'path';
 import shell from 'shelljs';
+import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
 import {screenshotsLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
@@ -15,6 +14,10 @@ import {screenshotsLogger} from './logger.js';
 const generateScreenshots = (config) => {
   const {orientation, input, output, sizes} = config;
   const projectPath = path.resolve(process.cwd(), './');
+
+  if (!ensureImageMagick(screenshotsLogger)) {
+    return false;
+  }
 
   screenshotsLogger.log('Generating screenshots');
   screenshotsLogger.data({orientation, input, output});
@@ -34,27 +37,43 @@ const generateScreenshots = (config) => {
 
   const files = fs.readdirSync(input);
 
-  files.forEach((fileName) => {
+  for (const fileName of files) {
     const extension = path.extname(fileName);
     if (!['.png', '.jpg', '.jpeg', '.webp'].includes(extension)) {
-      return;
+      continue;
     }
 
-    sizes.forEach((size) => {
+    for (const size of sizes) {
       const resolution = orientation === 'landscape' ? size.resolution : size.resolution.split('x').reverse().join('x');
 
       const outputFileName = `${fileName.split(extension)[0]}-${resolution}${size.extension || extension}`;
       const outputPath = `${output}/${size.name}/${outputFileName}`;
 
-      shell.exec(
-        `convert ${input}/${fileName} -resize ${resolution}^ -gravity center -extent ${resolution} "${outputPath}"`
+      const resized = runMagick(
+        [
+          quote(`${input}/${fileName}`),
+          '-resize',
+          quote(`${resolution}^`),
+          '-gravity',
+          'center',
+          '-extent',
+          quote(resolution),
+          quote(outputPath)
+        ],
+        screenshotsLogger
       );
 
+      if (!resized) {
+        screenshotsLogger.error(`Aborting: could not resize ${fileName} to ${size.name} (${resolution})`);
+        return false;
+      }
+
       screenshotsLogger.successCompact(`${fileName} → ${size.name} (${resolution})`);
-    });
-  });
+    }
+  }
 
   screenshotsLogger.done('Screenshots generated');
+  return true;
 };
 
 // -----------------------------------------------------------------------------

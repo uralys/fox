@@ -252,12 +252,10 @@ const cli = async (yargs, params) => {
 
   switch (command) {
     case GENERATE_ICONS: {
-      generateIcons(config);
-      break;
+      return generateIcons(config);
     }
     case GENERATE_SPLASHSCREENS: {
-      generateSplashscreens(config);
-      break;
+      return generateSplashscreens(config);
     }
     case UPDATE_PO_FILES: {
       const { poFiles, potTemplate } = config;
@@ -266,12 +264,10 @@ const cli = async (yargs, params) => {
       break;
     }
     case GENERATE_SCREENSHOTS: {
-      generateScreenshots(config);
-      break;
+      return generateScreenshots(config);
     }
     case GENERATE_STEAM_SCREENSHOTS: {
-      generateSteamScreenshots(config, params);
-      break;
+      return generateSteamScreenshots(config, params);
     }
     default: {
       foxLogger.error(`${command} not handled`);
@@ -324,11 +320,20 @@ const execute = async () => {
 
   try {
     const result = await cli(yargs, params);
+
+    // A command reporting `false` failed: leaving the exit code at 0 would make
+    // a broken generation look like a success to any script calling fox.
+    if (result === false) {
+      process.exitCode = 1;
+      return;
+    }
+
     if (result) {
       foxLogger.done('done.');
     }
   } catch (e) {
     foxLogger.error(e.message || String(e));
+    process.exitCode = 1;
   }
 }
 

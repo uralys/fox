@@ -1,14 +1,13 @@
 // -----------------------------------------------------------------------------
 // generates icons from a base image
-// requires https://www.imagemagick.org/script/index.php
-// to enable "convert" command
-// OSX: brew install imagemagick
+// requires ImageMagick, see docs/install.md
 // -----------------------------------------------------------------------------
 // based on 🍒 https://github.com/chrisdugne/cherry/blob/master/prepare-icons.sh
 // -----------------------------------------------------------------------------
 
 import fs from 'fs';
 import shell from 'shelljs';
+import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
 import {iconsLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
@@ -41,20 +40,38 @@ const SIZES = [
 const generateIcons = (config) => {
   const {input, output, base, background, foreground, desktop} = config;
 
+  if (!ensureImageMagick(iconsLogger)) {
+    return false;
+  }
+
   if (!fs.existsSync(`${input}/${base}`)) {
     iconsLogger.error(`Input base does not exist: ${input}/${base}`);
-    return null;
+    return false;
   }
 
   iconsLogger.log(`Generating from ${base}`);
   iconsLogger.data({input: `${input}/${base}`, output});
 
-  SIZES.forEach((size) => {
-    shell.exec(
-      `convert ${input}/${base} -resize '${size}' -unsharp 1x4 "${output}/icon-${size}.png"`
+  for (const size of SIZES) {
+    const created = runMagick(
+      [
+        quote(`${input}/${base}`),
+        '-resize',
+        quote(size),
+        '-unsharp',
+        '1x4',
+        quote(`${output}/icon-${size}.png`)
+      ],
+      iconsLogger
     );
+
+    if (!created) {
+      iconsLogger.error(`Aborting: could not generate the ${size} icon`);
+      return false;
+    }
+
     iconsLogger.successCompact(size);
-  });
+  }
 
   iconsLogger.step(0, 'Copying base icon');
   shell.cp(`${input}/${base}`, `${output}/${base}`);
@@ -71,6 +88,7 @@ const generateIcons = (config) => {
   }
 
   iconsLogger.done(`${SIZES.length} icons created`);
+  return true;
 };
 
 // -----------------------------------------------------------------------------

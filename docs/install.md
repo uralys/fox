@@ -1,5 +1,19 @@
 # 📦 Installing Fox
 
+## prerequisites
+
+| Tool | Needed by | Install |
+|------|-----------|---------|
+| Godot 4 | everything | [godotengine.org](https://godotengine.org/download) |
+| NodeJS >= 22 | the `fox` CLI | [nodejs.org](https://nodejs.org) |
+| ImageMagick 7 | `fox generate:icons`, `generate:splashscreens`, `generate:screenshots`, `generate:steam-screenshots` | `brew install imagemagick` |
+| bundletool | inspecting Android `.aab` bundles, see [exporting/android](./exporting/android.md) | `brew install bundletool` |
+| libimobiledevice | installing iOS builds on a device, see [exporting/ios](./exporting/ios.md) | `brew install libimobiledevice` |
+
+ImageMagick 7 provides the `magick` binary. The deprecated `convert` shim is
+never used: if `magick` is missing from your `PATH`, the `generate:*` commands
+stop right away with a non-zero exit code instead of pretending to work.
+
 ## starting from scratch
 
 ### 1 - New Godot Project

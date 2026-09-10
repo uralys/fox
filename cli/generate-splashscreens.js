@@ -1,11 +1,9 @@
 // -----------------------------------------------------------------------------
 // generates splashscreens from a base image
-// requires https://www.imagemagick.org/script/index.php
-// to enable "convert" command
-// OSX: brew install imagemagick
+// requires ImageMagick, see docs/install.md
 // -----------------------------------------------------------------------------
 
-import shell from 'shelljs';
+import {ensureImageMagick, quote, runMagick} from './imagemagick.js';
 import {splashLogger} from './logger.js';
 
 // -----------------------------------------------------------------------------
@@ -24,11 +22,28 @@ const PORTRAIT_SIZES = [
 
 // -----------------------------------------------------------------------------
 
-const convert = (inputFile, backgroundColor, outputPath) => (size) => {
-  shell.exec(
-    `convert ${inputFile} -gravity center -background '${backgroundColor}' -extent ${size} "${outputPath}/splashscreen-${size}.png"`
+const resizer = (inputFile, backgroundColor, outputPath) => (size) => {
+  const created = runMagick(
+    [
+      quote(inputFile),
+      '-gravity',
+      'center',
+      '-background',
+      quote(backgroundColor),
+      '-extent',
+      quote(size),
+      quote(`${outputPath}/splashscreen-${size}.png`)
+    ],
+    splashLogger
   );
+
+  if (!created) {
+    splashLogger.error(`Aborting: could not generate the ${size} splashscreen`);
+    return false;
+  }
+
   splashLogger.successCompact(size);
+  return true;
 };
 
 // -----------------------------------------------------------------------------
@@ -36,18 +51,27 @@ const convert = (inputFile, backgroundColor, outputPath) => (size) => {
 const generateSplashscreens = (config) => {
   const {input, output, backgroundColor = '#181818'} = config;
 
+  if (!ensureImageMagick(splashLogger)) {
+    return false;
+  }
+
   splashLogger.log('Generating splashscreens');
   splashLogger.data({input, output, backgroundColor});
 
-  const applyConversion = convert(input, backgroundColor, output);
+  const applyConversion = resizer(input, backgroundColor, output);
 
   splashLogger.step(0, 'Creating landscape launch screens');
-  LANDSCAPE_SIZES.forEach(applyConversion);
+  if (!LANDSCAPE_SIZES.every(applyConversion)) {
+    return false;
+  }
 
   splashLogger.step(1, 'Creating portrait launch screens');
-  PORTRAIT_SIZES.forEach(applyConversion);
+  if (!PORTRAIT_SIZES.every(applyConversion)) {
+    return false;
+  }
 
   splashLogger.done(`${LANDSCAPE_SIZES.length + PORTRAIT_SIZES.length} splashscreens created`);
+  return true;
 };
 
 // -----------------------------------------------------------------------------
