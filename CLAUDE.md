@@ -34,14 +34,15 @@ are two different things.
 The only French that remains legitimate is the conversation with Chris in the
 terminal.
 
-## A release title is a version and a date
+## A release title is a version, nothing else
 
-**The title of a GitHub release carries the version and its publication date,
-nothing else:** `1.19.1 (September 10, 2026)`. No `v` prefix, the month spelled
-out in US English, the same shape React uses for its own releases.
+**The title of a GitHub release carries the version and nothing else:**
+`1.19.1`. No `v` prefix, no date, no label: the releases page already shows the
+tag and the publication date beside every entry, so a title that repeats them
+adds nothing.
 
-The short editorial label that used to sit in the title now opens the notes as
-their first heading:
+The short editorial label that used to sit in the title opens the notes as their
+first heading:
 
 ```markdown
 # Desktop export presets
@@ -49,10 +50,9 @@ their first heading:
 Desktop presets stop rewriting the folder `fox publish` uploads...
 ```
 
-**Why:** the releases page then reads as a chronology, answering which version
-shipped when at a glance, while the summary of the work stays visible the moment
-the notes are opened. Every release published before 2026-09-10 was migrated to
-this format, so the list is homogeneous.
+**Why:** the list of releases reads as a clean version ladder, and the summary of
+the work stays visible the moment the notes are opened. Every release published
+before 2026-09-10 was migrated to this format, so the list is homogeneous.
 
 ## Every release ends with a `## changelog` section
 
