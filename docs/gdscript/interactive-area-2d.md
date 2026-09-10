@@ -3,7 +3,7 @@
 This is an `Area2D` able to listen for mouse / touch events.
 The Node where this interactive `Area2D` is attached can be touched, dragged, used as a drop area.
 
-An `interactiveArea2D` uses [Gesture](../../fox/libs/gesture.gd) behind the hood.
+An `interactiveArea2D` uses [Gesture](../../fox/autoloads/gesture.gd) behind the hood.
 
 
 ## Setup

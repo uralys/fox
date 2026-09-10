@@ -487,7 +487,7 @@ Add `HotReload` to your project's `[autoload]` section in `project.godot`:
 ```ini
 [autoload]
 
-HotReload="*res://fox/libs/hot-reload.gd"
+HotReload="*res://fox/autoloads/hot-reload.gd"
 ```
 
 Add `.hot-reload` and `.nav-state` to your `.gitignore`.
