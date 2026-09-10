@@ -62,8 +62,6 @@ Full documentation lives in [docs](./docs). Start with
   global content scale factor)
 - [Sound](./docs/gdscript/sound.md) — SFX, music, ducking
 - [Files](./docs/gdscript/files.md) — bundle config + rotating save backups (cloud-safe)
-- [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
-  default, grepable `[perf]` lines
 - [Steam](./docs/gdscript/steam.md): init, Steam Deck detection, achievements,
   floating keyboard, store overlay
 - [Leaderboard](./docs/gdscript/leaderboard.md): online boards, offline-first
@@ -92,6 +90,8 @@ Full documentation lives in [docs](./docs). Start with
 - [HTTP](./docs/gdscript/http.md) — REST client
 - [Utility libs](./docs/gdscript/utils.md) — `__` (Underscore), `Wait`,
   `TimeTools`, `Bundle`, `Generate`
+- [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
+  default, grepable `[perf]` lines
 - [In-App Purchases](./docs/gdscript/stores.md) — iOS / Android stores
 
 ### Tooling & exporting

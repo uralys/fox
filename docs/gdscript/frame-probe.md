@@ -1,6 +1,6 @@
 # Frame probe
 
-`FrameProbe` is an autoload (`fox/core/frame-probe.gd`) that measures frame time
+`FrameProbe` is an autoload (`fox/libs/frame-probe.gd`) that measures frame time
 and prints it as grepable `key=value` lines.
 
 "It stutters" is not a measurement, and on the web there is nowhere to take one:
@@ -14,7 +14,7 @@ Register it in your project's `[autoload]` section:
 ```ini
 [autoload]
 
-FrameProbe="*res://fox/core/frame-probe.gd"
+FrameProbe="*res://fox/libs/frame-probe.gd"
 ```
 
 The probe scopes every measurement to the screen that was up, reading
