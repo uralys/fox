@@ -118,6 +118,12 @@ Commands:
   fox tag [patch|minor|major]   bump version in project.godot and create a
                                 git tag
 
+  fox upgrade [version]         pin addons/fox to a released version
+                                (latest by default)
+
+  fox link [path-to-fox]        mount your local fox checkout in
+                                addons/fox, to follow it live
+
   fox export                    export a bundle for one of your presets
 
   fox export:web                scriptable HTML5 export into _build/web,
@@ -467,6 +473,34 @@ itch is optional the same way. No `butler`, or a `butler` that cannot reach the 
 ```txt
 ●  itch uralys/faraday-corridors not read — local builds only (butler not found — …)
 ```
+
+## upgrade and link
+
+A game mounts the Fox runtime at `res://addons/fox` in one of two ways, and
+these two commands switch between them. Both leave the mount ready to reimport:
+run `fox import` afterwards.
+
+```sh
+fox upgrade          # pin addons/fox to the latest release
+fox upgrade 2.1.0    # or to a given one (the `v` prefix is optional)
+fox link             # follow ../fox instead, live
+fox link ../../fox   # or a checkout somewhere else
+```
+
+`fox upgrade` **deletes** `addons/fox` before laying the new version down, so a
+file dropped between two versions leaves with it. Reinstalling by hand, or
+through the Godot Asset Library, only writes over what the new version happens
+to contain, and the leftovers pile up.
+
+It refuses to run on a linked mount, because replacing a link with a pinned copy
+is rarely what someone typing `upgrade` expects: pass `--yes` to mean it.
+
+`fox link` is the mount to develop Fox itself against a game. It records the
+link relative to the game when given a relative path, so it survives being
+committed and cloned elsewhere, and absolute when given an absolute one. A
+linked game rides your working tree, so the version in `plugin.cfg` is no longer
+a released one: the boot line says `[🦊 Fox] 2.0.0 (symlinked)` to keep a build
+log honest.
 
 ## import
 

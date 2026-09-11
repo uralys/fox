@@ -44,14 +44,37 @@ func _ready():
   self.RECORD_PATH = 'user://saved-data.' + self.BUNDLE_ID + _recordSuffix(self.ENV) + '.bin'
 
   self.log('========================================')
-  var foxVersion = ProjectSettings.get_setting('fox/version')
-  foxVersion = foxVersion if foxVersion else ''
-  self.log('[🦊 Fox]', foxVersion)
+  self.log('[🦊 Fox]', _foxVersion())
   self.log('-------------------------------')
   self.log('bundle/id: ' + self.BUNDLE_ID)
   self.log('bundle/env: ' + self.ENV)
   self.log('bundle/target: ' + self.TARGET)
   self.log('bundle/platform: ' + self.PLATFORM)
+
+# The addon declares its own version in `plugin.cfg`, which follows the mounted
+# tree; the `fox/version` project setting is the legacy mount's answer and goes
+# stale the moment the addon moves without it.
+#
+# A linked mount rides the fox checkout, so that version is whatever the working
+# tree holds right now and NOT a released one: the boot line says so, otherwise
+# a build log would claim a version nobody can go back to.
+func _foxVersion() -> String:
+  var version = ''
+
+  var config = ConfigFile.new()
+  if config.load('res://addons/fox/plugin.cfg') == OK:
+    version = config.get_value('plugin', 'version', '')
+
+  if version == '':
+    version = ProjectSettings.get_setting('fox/version', '')
+
+  var addons = DirAccess.open('res://addons')
+  if addons and addons.is_link('fox'):
+    version += ' (symlinked)'
+
+  return version
+
+# ------------------------------------------------------------------------------
 
 # A demo ships as a separate Steam app (own app id, own Cloud) but shares the bundle
 # id with the full game. Key the save file on the demo env so the two variants never

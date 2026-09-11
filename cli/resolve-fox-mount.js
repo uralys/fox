@@ -39,5 +39,60 @@ const resolveFoxResPath = (relativePath, projectRoot = process.cwd()) =>
   `res://${resolveFoxMount(relativePath, projectRoot)}/${relativePath}`;
 
 // -----------------------------------------------------------------------------
+// how the addon is mounted, for the commands that change the mount itself
+// -----------------------------------------------------------------------------
 
-export { ADDON_MOUNT, LEGACY_MOUNT, resolveFoxMount, resolveFoxPath, resolveFoxResPath };
+const LINKED = 'linked';
+const PINNED = 'pinned';
+const MISSING = 'missing';
+
+// `lstat` and not `stat`: a symlink to the fox checkout resolves to a real
+// directory, so following it would report every dev mount as a pinned copy.
+const describeMount = (projectRoot = process.cwd()) => {
+  const mountPath = path.resolve(projectRoot, ADDON_MOUNT);
+
+  let stats;
+
+  try {
+    stats = fs.lstatSync(mountPath);
+  } catch {
+    return { kind: MISSING, mountPath };
+  }
+
+  if (stats.isSymbolicLink()) {
+    return { kind: LINKED, mountPath, target: fs.readlinkSync(mountPath) };
+  }
+
+  return { kind: PINNED, mountPath };
+};
+
+// -----------------------------------------------------------------------------
+
+// The version the mounted addon declares. A linked mount reports whatever the
+// fox checkout currently holds, which is NOT a released version: callers say so
+// rather than presenting it as one.
+const readMountedVersion = (projectRoot = process.cwd()) => {
+  const configPath = path.resolve(projectRoot, ADDON_MOUNT, 'plugin.cfg');
+
+  try {
+    const match = fs.readFileSync(configPath, 'utf8').match(/^version="(.*)"$/m);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+};
+
+// -----------------------------------------------------------------------------
+
+export {
+  ADDON_MOUNT,
+  describeMount,
+  LEGACY_MOUNT,
+  LINKED,
+  MISSING,
+  PINNED,
+  readMountedVersion,
+  resolveFoxMount,
+  resolveFoxPath,
+  resolveFoxResPath,
+};

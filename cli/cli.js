@@ -25,14 +25,20 @@ import generateScreenshots from './generate-screenshots.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import importAssets from './import-assets.js';
+import link from './link.js';
 import ls from './ls/index.js';
 import { ADDON_MOUNT, resolveFoxPath } from './resolve-fox-mount.js';
 import resolveGodotPath from './resolve-godot.js';
 import runGame from './run-game.js';
+import upgrade from './upgrade.js';
 
 // -----------------------------------------------------------------------------
 
 const TAG = 'tag';
+const UPGRADE = 'upgrade';
+// `update` says the same thing to fingers that learned it elsewhere.
+const UPGRADE_ALIAS = 'update';
+const LINK = 'link';
 const EXPORT = 'export';
 const EXPORT_WEB = 'export:web';
 const PUBLISH = 'publish';
@@ -56,6 +62,9 @@ const IMPORT = 'import';
 
 const commands = [
   TAG,
+  UPGRADE,
+  UPGRADE_ALIAS,
+  LINK,
   EXPORT,
   EXPORT_WEB,
   PUBLISH,
@@ -170,6 +179,19 @@ const cli = async (yargs, params) => {
     const levelArg = SEMVER_LEVELS.includes(params[0]) ? params[0] : null;
     await tagVersion(levelArg);
     return true;
+  }
+
+  // --------
+
+  // These two change the mount itself, so they run before the default config
+  // is read: that file lives inside the very folder they are about to replace,
+  // and a game being mounted for the first time has none yet.
+  if (command === UPGRADE || command === UPGRADE_ALIAS) {
+    return await upgrade(params);
+  }
+
+  if (command === LINK) {
+    return await link(params);
   }
 
   // --------
@@ -303,6 +325,8 @@ const execute = async () => {
   const yargs = yargsFactory(process.argv.splice(2))
     .usage('Usage: fox <command> [options]')
     .command(TAG, 'bump version in project.godot and create git tag (fox tag [patch|minor|major])')
+    .command(UPGRADE, `pin ${ADDON_MOUNT} to a released version (fox upgrade [version], latest by default)`)
+    .command(LINK, `mount your local fox checkout in ${ADDON_MOUNT}, to follow it live (fox link [path-to-fox])`)
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
