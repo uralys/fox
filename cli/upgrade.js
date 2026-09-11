@@ -16,8 +16,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import pkg from '../package.json' with { type: 'json' };
 import { reimportProject } from './import-assets.js';
-import { pinCli } from './install-cli.js';
+import { isLinkedCli, pinCli } from './install-cli.js';
 import { fetchLatestTag } from './latest-release.js';
 import { upgradeLogger } from './logger.js';
 import { ADDON_MOUNT, describeMount, LINKED, MISSING, PINNED, readMountedVersion } from './resolve-fox-mount.js';
@@ -103,14 +104,33 @@ const upgrade = async (params = []) => {
     const tag = await resolveTargetTag(requested);
     const version = asVersion(tag);
 
+    // Fox ships in two halves and both are upgraded: the runtime under
+    // `addons/fox`, and the global `fox` executable. A symlinked CLI runs the
+    // checkout whatever the mount says, so it is reported beside the mount and
+    // it is upgraded even when the addon has nothing to do.
+    const skipCli = params.includes('--no-cli');
+    const cliPinned = skipCli || (!isLinkedCli() && pkg.version === version);
+
     upgradeLogger.data({
       mount: kind,
       installed: kind === LINKED ? `${installed ?? 'unknown'} (linked, not a release)` : (installed ?? 'none'),
+      cli: isLinkedCli() ? `${pkg.version} (symlinked, not a release)` : pkg.version,
       target: version,
     });
 
-    if (kind === PINNED && installed === version) {
+    const addonPinned = kind === PINNED && installed === version;
+
+    if (addonPinned && cliPinned) {
       upgradeLogger.done(`already on ${version}`);
+      return true;
+    }
+
+    // Nothing to download and nothing to reimport: the game already holds the
+    // tree of that tag, only the executable was left behind.
+    if (addonPinned) {
+      upgradeLogger.log(`${ADDON_MOUNT} is already ${version}, upgrading the CLI alone`);
+      pinCli(tag, upgradeLogger);
+      upgradeLogger.done(`fox is now ${version}`);
       return true;
     }
 
@@ -131,7 +151,7 @@ const upgrade = async (params = []) => {
 
     // The executable follows the runtime it was pinned with, so a game is not
     // frozen against a runtime regression while still riding a live CLI.
-    if (!params.includes('--no-cli')) {
+    if (!skipCli) {
       pinCli(tag, upgradeLogger);
     }
 

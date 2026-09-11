@@ -95,10 +95,13 @@ const COMMAND_GROUPS = [
   {
     title: 'fox itself',
     commands: [
-      [UPGRADE, `pin ${ADDON_MOUNT} to a released version and reimport (fox upgrade [version] [--no-import])`],
+      [
+        UPGRADE,
+        `pin ${ADDON_MOUNT} and the \`fox\` executable to a released version, and reimport (fox upgrade [version] [--no-cli] [--no-import])`,
+      ],
       [
         LINK,
-        `mount your local fox checkout in ${ADDON_MOUNT} to follow it live, and reimport (fox link [path-to-fox])`,
+        `mount your local fox checkout in ${ADDON_MOUNT} and run its CLI, to follow it live (fox link [path-to-fox] [--no-cli] [--no-import])`,
       ],
     ],
   },

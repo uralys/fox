@@ -499,6 +499,20 @@ git tag the addon comes from, and `fox link` runs `npm link` on the checkout.
 `--no-cli` skips it, and a failed install is reported without failing the
 command.
 
+An addon already on the target version does **not** end the command: the two
+halves are checked separately, and a symlinked or outdated executable is pinned
+on its own, without downloading or reimporting anything.
+
+```txt
+│  ┌───────────────────────────────────────┐
+│  │ mount: pinned                         │
+│  │ installed: 2.2.0                      │
+│  │ cli: 2.2.0 (symlinked, not a release) │
+│  │ target: 2.2.0                         │
+│  └───────────────────────────────────────┘
+└─ addons/fox is already 2.2.0, upgrading the CLI alone
+```
+
 ⚠️ The executable is **global, one per machine**, while a mount is per project:
 the last command run owns it. Two projects on different versions cannot each
 keep their own `fox`, so the header warns when the running CLI and the mounted
