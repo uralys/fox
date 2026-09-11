@@ -166,6 +166,53 @@ const storeLine = (remote) => {
 };
 
 // -----------------------------------------------------------------------------
+// What the PUBLIC branch serves, when the project publishes to another one.
+//
+// A build set live on "staging" is invisible to players: the branch that ships
+// the demo is always the default one. The listing would otherwise report a green
+// "is live" that only a developer with the beta key can see, so the public
+// branch is read on its own and compared to the branch just reported — depot by
+// depot on the MANIFEST, the only identifier that proves identical bytes.
+
+const publicVerdict = ({ label, depots, branch, app, local }) => {
+  if (branch === DEFAULT_BRANCH) {
+    return;
+  }
+
+  const depotIds = Object.keys(depots);
+  const slots = depotIds.map((depotId) => storeSlot(app, DEFAULT_BRANCH, depotId));
+  const head = slots.find((slot) => slot);
+
+  if (!head) {
+    steamLogger.warn(`${label}: branch "${DEFAULT_BRANCH}" has never been set live — no player can see this app yet`);
+    return;
+  }
+
+  const sameBytes = depotIds.every((depotId, index) => {
+    const live = storeSlot(app, branch, depotId);
+
+    return live?.manifest && slots[index]?.manifest === live.manifest;
+  });
+
+  const versions = localVersions(local);
+  const version = versions.length === 1 ? versions[0] : null;
+  const build = head.buildId ? ` (build ${head.buildId})` : '';
+
+  if (sameBytes) {
+    steamLogger.success(
+      `${label}: branch "${DEFAULT_BRANCH}" serves the same bytes${build} — players have${version ? ` ${version}` : ' it'}`,
+    );
+    return;
+  }
+
+  const updated = head.updatedAt ? `, set live ${formatStamp(head.updatedAt)}` : '';
+
+  steamLogger.warn(
+    `${label}: players are still on branch "${DEFAULT_BRANCH}"${build}${updated} — "${branch}" is NOT what the store hands out`,
+  );
+};
+
+// -----------------------------------------------------------------------------
 // The store verdict: does the branch serve the manifests this machine last
 // uploaded? Anything that breaks the join is named rather than guessed at — a
 // silent "not live" would be indistinguishable from a listing that simply cannot
@@ -253,7 +300,18 @@ const reportTarget = ({ label, appId, contentRoot, depots, branch, store, deck, 
   local.forEach((depot) => {
     const line = localLine(depot);
 
-    details[depot.folder] = app ? `${line}\n  live: ${storeLine(storeSlot(app, branch, depot.slot))}` : line;
+    if (!app) {
+      details[depot.folder] = line;
+      return;
+    }
+
+    const live = `\n  live: ${storeLine(storeSlot(app, branch, depot.slot))}`;
+    const shared =
+      branch === DEFAULT_BRANCH
+        ? ''
+        : `\n  ${DEFAULT_BRANCH}: ${storeLine(storeSlot(app, DEFAULT_BRANCH, depot.slot))}`;
+
+    details[depot.folder] = `${line}${live}${shared}`;
   });
 
   if (deck?.reachable) {
@@ -270,6 +328,7 @@ const reportTarget = ({ label, appId, contentRoot, depots, branch, store, deck, 
   if (app) {
     steamLogger.reset();
     reportStore({ label, appId, contentRoot, depots, branch, app, local });
+    publicVerdict({ label, depots, branch, app, local });
   }
 
   if (!deck?.reachable) {
