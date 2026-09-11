@@ -213,7 +213,7 @@ const confirmPayload = async ({
     {
       message: `payload is ${version}, what now?`,
       name: 'choice',
-      type: 'list',
+      type: 'select',
       choices: [
         {
           name: `fox export ${envChip(env)} on ${targetChip(target)} now, then publish ${projectVersion}`,
@@ -298,7 +298,7 @@ const inquireTarget = async (settings, lastTarget) => {
     {
       message: 'store',
       name: 'target',
-      type: 'list',
+      type: 'select',
       choices: ordered.map((value) => ({
         name: `${targetChip(value)} ${colorless(publishableEnvs(settings, value).join(', '))}`,
         value,
@@ -324,7 +324,7 @@ const inquireEnv = async (settings, target, lastEnv) => {
     {
       message: 'env',
       name: 'env',
-      type: 'list',
+      type: 'select',
       choices: ordered.map((value) => {
         const { appId } = readPublishConfig(settings, target, value);
         return { name: `${envChip(value)}${appId ? ` (appId ${appId})` : ''}`, value };
@@ -342,7 +342,7 @@ const inquireBranch = async (steam, lastBranch) => {
     {
       message: 'branch',
       name: 'branch',
-      type: 'list',
+      type: 'select',
       choices: [
         ...known.map((value) => ({ name: value, value })),
         { name: '(none — build stays unassigned)', value: NO_BRANCH },

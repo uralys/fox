@@ -530,7 +530,7 @@ const inquireEnv = async (presets, currentEnv, currentTarget) => {
     {
       message: 'env',
       name: 'env',
-      type: 'list',
+      type: 'select',
       choices: [
         {
           name: `keep ${envChip(currentEnv)} (no switch) -> ${describe(currentEnv)}`,
@@ -567,7 +567,7 @@ const inquireTarget = async (presets, env, currentTarget) => {
     {
       message: 'target',
       name: 'target',
-      type: 'list',
+      type: 'select',
       choices: ordered.map((value) => ({
         name: `${targetChip(value)} -> ${exportRootFor(presets, env, value)}/ ${exportedLabel(presets, env, value)}`,
         value,
@@ -598,7 +598,7 @@ const inquirePlatforms = async (presets, env, target) => {
     {
       message: 'platform',
       name: 'choice',
-      type: 'list',
+      type: 'select',
       choices: [
         { name: '✨ all', value: ALL },
         ...available.map((platform) => ({ name: PLATFORM_LABELS[platform] || platform, value: platform })),

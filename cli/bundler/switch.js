@@ -206,13 +206,13 @@ const inquireParams = async (bundles) => {
     {
       message: 'env',
       name: 'env',
-      type: 'list',
+      type: 'select',
       choices: ENV_CHOICES,
     },
     {
       message: 'target',
       name: 'target',
-      type: 'list',
+      type: 'select',
       choices: TARGET_CHOICES,
     },
   ];
@@ -221,7 +221,7 @@ const inquireParams = async (bundles) => {
     questions.push({
       message: 'bundle',
       name: 'bundleId',
-      type: 'list',
+      type: 'select',
       choices: bundleIds,
     });
   }
