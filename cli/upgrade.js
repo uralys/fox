@@ -17,6 +17,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { reimportProject } from './import-assets.js';
+import { pinCli } from './install-cli.js';
 import { fetchLatestTag } from './latest-release.js';
 import { upgradeLogger } from './logger.js';
 import { ADDON_MOUNT, describeMount, LINKED, MISSING, PINNED, readMountedVersion } from './resolve-fox-mount.js';
@@ -127,6 +128,12 @@ const upgrade = async (params = []) => {
     fs.cpSync(addon, mountPath, { recursive: true });
 
     upgradeLogger.success(`${ADDON_MOUNT} is now ${version}`);
+
+    // The executable follows the runtime it was pinned with, so a game is not
+    // frozen against a runtime regression while still riding a live CLI.
+    if (!params.includes('--no-cli')) {
+      pinCli(tag, upgradeLogger);
+    }
 
     if (params.includes('--no-import')) {
       upgradeLogger.done('run `fox import` to reimport the addon');

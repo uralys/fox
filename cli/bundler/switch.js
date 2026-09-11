@@ -6,6 +6,7 @@ import inquirer from 'inquirer';
 // -----------------------------------------------------------------------------
 
 import { switchLogger } from '../logger.js';
+import { readMountedVersion } from '../resolve-fox-mount.js';
 import ini from './ini.js';
 import { readPublishConfig, SUPPORTED_TARGETS, TARGET_CHOICES } from './publish-config.js';
 import { DEFAULT_TARGET } from './resolve-env-preset.js';
@@ -100,14 +101,16 @@ export const writeOverride = (settings, { bundleId, platform, env, target = DEFA
   }
 
   const override = { bundle: {}, fox: {}, custom: {} };
-  // Sibling checkout of the Fox repository, NOT the runtime tree mounted inside
-  // the game: the version lives in the repository root, which the move of the
-  // runtime to `addons/fox` left untouched.
-  const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
+  // The version of the runtime this bundle is built against, read from the
+  // addon mounted in the game. It used to be read from `../fox/package.json`,
+  // which assumed a fox checkout sitting next to the game: that holds while
+  // developing Fox and nowhere else, and it broke outright once the CLI could
+  // be installed globally.
+  const foxVersion = readMountedVersion();
   const appVersion = readProjectVersion();
   const subtitle = getSubtitle(bundles[bundleId]);
 
-  override.fox.version = foxPackageJSON.version;
+  override.fox.version = foxVersion;
   override.bundle.id = bundleId;
   override.bundle.title = getTitle(core);
   override.bundle.version = appVersion;

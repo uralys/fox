@@ -5,6 +5,14 @@
   "description": "🦊 Tools and Components for Godot 4",
   "author": "chrisdugne",
   "license": "MIT",
+  "bin": {
+    "fox": "cli/cli.js"
+  },
+  "files": [
+    "cli",
+    "license",
+    "readme.md"
+  ],
   "homepage": "https://github.com/uralys/fox#readme",
   "dependencies": {
     "chokidar": "^4.0.3",

@@ -11,6 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { reimportProject } from './import-assets.js';
+import { linkCli } from './install-cli.js';
 import { linkLogger } from './logger.js';
 import { ADDON_MOUNT, describeMount, LINKED, MISSING, readMountedVersion } from './resolve-fox-mount.js';
 
@@ -23,7 +24,10 @@ const DEFAULT_CHECKOUT = '../fox';
 
 const link = async (params = []) => {
   const projectRoot = process.cwd();
-  const requested = params[0] ?? DEFAULT_CHECKOUT;
+  // Flags are skipped rather than read as the checkout path: `fox link
+  // --no-import` used to look for a fox addon inside a folder named after the
+  // flag.
+  const requested = params.find((param) => !param.startsWith('-')) ?? DEFAULT_CHECKOUT;
   const checkout = path.resolve(projectRoot, requested);
   const source = path.join(checkout, ADDON_MOUNT);
 
@@ -57,6 +61,12 @@ const link = async (params = []) => {
 
   linkLogger.success(`${ADDON_MOUNT} -> ${fs.readlinkSync(mountPath)}`);
   linkLogger.warn('Linked: the game now follows your checkout, not a released version');
+
+  // Same checkout for the executable: linking the runtime and leaving the CLI
+  // pinned would have the two halves of Fox come from two different trees.
+  if (!params.includes('--no-cli')) {
+    linkCli(checkout, linkLogger);
+  }
 
   if (params.includes('--no-import')) {
     linkLogger.done('run `fox import` to reimport the addon');

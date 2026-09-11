@@ -28,7 +28,7 @@ import importAssets from './import-assets.js';
 import { notifyLatestRelease } from './latest-release.js';
 import link from './link.js';
 import ls from './ls/index.js';
-import { ADDON_MOUNT, describeMountLabel, resolveFoxPath } from './resolve-fox-mount.js';
+import { ADDON_MOUNT, describeMountLabel, readMountedVersion, resolveFoxPath } from './resolve-fox-mount.js';
 import resolveGodotPath from './resolve-godot.js';
 import runGame from './run-game.js';
 import upgrade from './upgrade.js';
@@ -207,6 +207,16 @@ const cli = async (yargs, params) => {
   }
 
   foxLogger.log(command);
+
+  // The executable is global, one per machine, while a mount is per project:
+  // `fox upgrade` and `fox link` both repoint it, so the last one run owns it.
+  // Saying nothing when they agree keeps the header to one number; saying it
+  // when they do not is the only warning a mismatched pair ever gets.
+  const mountedVersion = readMountedVersion();
+
+  if (mountedVersion && mountedVersion !== pkg.version) {
+    foxLogger.warn(`this CLI is v${pkg.version}: run \`fox upgrade\` to match the addon`);
+  }
 
   const defaultConfigPath = path.resolve(process.cwd(), resolveFoxPath(DEFAULT_CONFIG_FILE));
 
