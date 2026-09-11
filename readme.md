@@ -4,80 +4,105 @@
 
 🦊 Fox provides tooling while developing with Godot Engine.
 
-**From the first scene to the store page**: hot reload while you code, GDScript libs that spare you the boilerplate, then one command to export and publish your game on Steam and itch.io.
+**From the first scene to the store page**: a skeleton to hang your game on,
+GDScript libs that spare you the boilerplate, and one CLI to run, export and
+publish on Steam and itch.io.
 
 <p align="center"><img title="fox" alt="Fox" width="420" src="./assets/logo.png"></p>
 
-## Scenes and scripts
+## The skeleton
 
-With Fox, you can use `Scenes`, `Resources`, scripts and static functions to build your app.
+A Fox game is a Godot project with one root scene, one router, and screens. Fox
+brings the three of them, then gets out of the way.
 
-As an example, this code will move 3 nodes to the same position, with a delay of 1 second between each animation. Finally it fill print 'DONE' in the console.
+```sh
+your-game/
+├── addons/fox/          # the runtime, pinned at the version you chose
+├── fox.config.json      # bundles, exports, stores
+├── project.godot
+└── src/
+    ├── app.tscn         # app > scene + hud
+    ├── app.gd
+    ├── router.gd
+    └── screens/
+        ├── home.tscn
+        └── home.gd
+```
+
+`app.gd` boots the tree Fox expects, and opens your first screen:
 
 ```gdscript
-  Animate.to([potion, car, book], {
-    propertyPath = "position",
-    toValue = Vector2(0, 0),
-    delayBetweenElements = 1,
-    onFinished = func():
-      G.log('DONE');
-  })
+extends 'res://addons/fox/core/app.gd'
+
+func _ready():
+  super._ready()
+  Router.openHome()
 ```
 
-This other one sends a body to a REST API, handles and logs the result while showing a loader:
+`router.gd` names your screens once. From anywhere in the game, navigation is
+then a single call, `Router.openHome({level = 3})`, with transitions, a loader
+and the restored navigation state included:
 
-```gd
-  Router.showLoader()
+```gdscript
+extends 'res://addons/fox/core/router.gd'
 
-  HTTP.Post(self, {
-    endpoint = "/score",
-    body = {playerId = "FieryFox", score = 100},
-    onError = func(_result, _response_code, _headers, _body):
-      handleScoreFailure()
-      Router.hideLoader()
-    ,
-    onComplete = func(_result, _response_code, _headers, body):
-      var _body = body.get_string_from_utf8()
-      var newRecord = __.GetOr(false, 'newRecord', _body)
-      G.debug(
-        '✅ [b][color=green]successfully posted score[/color][/b]',
-        {newRecord = newRecord}
-      )
-      Router.hideLoader()
-  })
+var home = preload('res://src/screens/home.tscn')
+
+func openHome(options = {}):
+  openScene(home, options)
 ```
+
+A screen extends `FoxScreen`: the router instantiates it, hands it what the
+navigation passed, and it relays out on its own when the window is resized: the
+Steam Deck ↔ desktop split costs nothing per screen.
+
+```gdscript
+extends FoxScreen
+
+func onOpen(options):
+  _layout()
+
+func _onViewportResized():
+  _layout()
+```
+
+Everything else is autoloads you call directly: `Animate` and `Motion` for
+tweens and idle motion, `Sound`, `HTTP`, `Controls`, `Steam`, `Leaderboard`,
+`Gesture`, and the `__` utility belt.
+
+## The CLI
+
+One command per step of a game's life, the same on macOS, Linux and Windows:
+
+```sh
+fox run:game                # run your game, hot reloading as you code
+fox export                  # export a bundle for one of your presets
+fox publish steam release   # upload it to the store
+```
+
+Version bumps, asset imports, icons, splashscreens and store screenshots have
+their command too: see the [CLI reference](./docs/cli.md).
 
 ## Installation
 
 Fox is a standard Godot addon: its runtime tree lives in
-[addons/fox](./addons/fox), and a game mounts it at `res://addons/fox`.
-
-Copy the addon folder at the version you want, and commit it with your game:
+[addons/fox](./addons/fox), and a game mounts it at `res://addons/fox`. Copy it
+at the version you want, and commit it with your game:
 
 ```sh
-git clone --depth 1 --branch v2.0.0 https://github.com/uralys/fox /tmp/fox-2.0.0
+git clone --depth 1 --branch v2.0.1 https://github.com/uralys/fox /tmp/fox-2.0.1
 mkdir -p your-game/addons
-cp -R /tmp/fox-2.0.0/addons/fox your-game/addons/fox
+cp -R /tmp/fox-2.0.1/addons/fox your-game/addons/fox
 ```
 
-Your game is now pinned: it moves to the next Fox when you decide to, by
-deleting `addons/fox` and copying the next version in. Nothing outside that
-folder belongs to Fox.
-
-While working on Fox itself, symlink your checkout instead, so
-`res://addons/fox` always reflects it:
-
-```sh
-cd your-game
-mkdir -p addons
-ln -s ../../fox/addons/fox addons/fox
-```
-
-Either way, enable the plugin from `Project > Project Settings > Plugins > Fox`:
-it registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
+Then enable it once from `Project > Project Settings > Plugins > Fox`: it
+registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
 autoload your game already declares.
 
-The full walkthrough, the Windows junction and the optional autoloads are in
+Your game is now pinned, and moves to the next Fox when you decide to:
+`fox upgrade` swaps `addons/fox` for a released version, whole.
+
+The full walkthrough (prerequisites, main scene, optional autoloads) is in
 [Installing Fox](./docs/install.md).
 
 > Coming from Fox 1.x? The runtime moved from `res://fox/` to
@@ -86,59 +111,18 @@ The full walkthrough, the Windows junction and the optional autoloads are in
 
 ## Documentation
 
-Full documentation lives in [docs](./docs).
+The full index lives in [docs](./docs/readme.md):
 
-### Core
-
-- [Globals & Debug](./docs/gdscript/globals.md) — `G` (globals + logging) and
-  `DEBUG` (flags)
-- [Router](./docs/gdscript/router.md) — scenes, transitions, nav state, overlays
-- [Screens & responsive](./docs/gdscript/screens.md) — `FoxScreen`, `FoxPopup`,
-  `ViewportResize`, `FoxResponsive` (the desktop / handheld split and the single
-  global content scale factor)
-- [Sound](./docs/gdscript/sound.md) — SFX, music, ducking
-- [Files](./docs/gdscript/files.md) — bundle config + rotating save backups (cloud-safe)
-- [Steam](./docs/gdscript/steam.md): init, Steam Deck detection, achievements,
-  floating keyboard, store overlay
-- [Leaderboard](./docs/gdscript/leaderboard.md): online boards, offline-first
-  score queue, name claims
-
-### Input
-
-- [Controls](./docs/gdscript/controls.md) — unified keyboard / gamepad / stick
-  input
-- [interactiveArea2D](./docs/gdscript/interactive-area-2d.md) — touch, drag &
-  drop on any Node
-- [Multitouch Area](./docs/gdscript/multitouch.md) — press / drag listener
-- [Draggable Camera](./docs/gdscript/draggable-camera.md)
-
-### Animation & UI
-
-- [Animations](./docs/gdscript/animations.md) — `Animate` Tween helpers +
-  `Framer`
-- [Motion](./docs/gdscript/motion.md) — procedural idle motion (float, wobble,
-  breathe)
-- [Popups](./docs/gdscript/popups.md)
-- [Components](./docs/gdscript/components.md) — loader, screen fader, ask-for-review
-
-### Libs & utilities
-
-- [HTTP](./docs/gdscript/http.md) — REST client
-- [Utility libs](./docs/gdscript/utils.md) — `__` (Underscore), `Wait`,
-  `TimeTools`, `Bundle`, `Generate`, `HoloDrawUtils`, `MenuNavigator`,
-  `ConfigStore`
-- [Frame probe](./docs/gdscript/frame-probe.md): frame-time instrument, off by
-  default, grepable `[perf]` lines
-- [In-app purchases](./docs/gdscript/iap.md) — iOS / Android stores
-
-### Tooling & exporting
-
-- [CLI](./docs/cli.md) — run, hot reload, export, publish
-- [Building](./docs/exporting/build.md) and [Exporting](./docs/exporting/export.md)
-- [Images generation](./docs/exporting/images.md) — icons, splashscreens,
-  screenshots
-- [Android](./docs/exporting/android.md) and [iOS](./docs/exporting/ios.md)
-  settings
+- [Core](./docs/readme.md#core): globals, router, screens & responsive, sound,
+  files, Steam, leaderboard
+- [Input](./docs/readme.md#input): controls, touch & drag, multitouch,
+  draggable camera
+- [Animation & UI](./docs/readme.md#animation--ui): `Animate`, `Motion`,
+  popups, components
+- [Libs & utilities](./docs/readme.md#libs--utilities): HTTP, `__`, frame
+  probe, in-app purchases
+- [Tooling & exporting](./docs/readme.md#tooling--exporting): CLI, building,
+  exporting, images, Android & iOS
 
 ## Games created with Fox
 

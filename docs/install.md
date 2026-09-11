@@ -37,9 +37,30 @@ Edit your project settings and `Create & Edit`
 Fox is a standard Godot addon: its runtime tree lives in `addons/fox` of this
 repository, and your game mounts it at `res://addons/fox`.
 
-Pick one of the two mounts below.
+Copy the addon folder at the version you want, and commit it with your game:
 
-#### dev mount: symlink, follows the fox repo
+```sh
+git clone --depth 1 --branch v2.0.1 https://github.com/uralys/fox /tmp/fox-2.0.1
+mkdir -p your-game/addons
+cp -R /tmp/fox-2.0.1/addons/fox your-game/addons/fox
+```
+
+Your game is now pinned: nothing outside `addons/fox` belongs to Fox, so moving
+to the next version is a matter of deleting that folder and copying the next one
+in. Once the [CLI](./cli.md) is installed, one command does it for you:
+
+```sh
+fox upgrade          # pin the latest release
+fox upgrade 2.0.0    # or the version you want
+```
+
+#### 🦊 working on Fox itself: the linked mount
+
+> This section is for contributors who develop **Fox**, and open pull requests
+> on this repository. A game consuming a released Fox never needs it: a linked
+> game rides the working tree of the fox checkout, so the version its
+> `plugin.cfg` declares is whatever that checkout happens to hold rather than a
+> released one. It is deliberately unsuited to shipping.
 
 Clone this repo next to `your-game`:
 
@@ -47,18 +68,18 @@ Clone this repo next to `your-game`:
 git clone https://github.com/uralys/fox
 ```
 
-Then link the addon folder into your game, so `res://addons/fox` always
-reflects your local fox checkout:
+Then link the addon folder into your game, so `res://addons/fox` always reflects
+your local fox checkout:
 
 **macOS / Linux:**
 
 ```sh
 cd your-game
-mkdir -p addons
+fox link ../fox     # or, without the CLI:
 ln -s ../../fox/addons/fox addons/fox
 ```
 
-The link target is relative to the `addons` folder holding it, hence the two
+The `ln -s` target is relative to the `addons` folder holding it, hence the two
 `..` levels.
 
 **Windows / WSL:**
@@ -76,19 +97,8 @@ cmd.exe /c "mklink /J C:\path\to\your-game\addons\fox C:\path\to\fox\addons\fox"
 > ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/your-game ~/Projects/uralys/gamedev/your-game
 > ```
 
-#### pinned install: a copy of the addon at a given version
-
-When the game must not move with the fox repo, copy the addon folder at the
-version you want and commit it with your game:
-
-```sh
-git clone --depth 1 --branch v2.0.0 https://github.com/uralys/fox /tmp/fox-2.0.0
-mkdir -p your-game/addons
-cp -R /tmp/fox-2.0.0/addons/fox your-game/addons/fox
-```
-
-Upgrading is then a matter of deleting `addons/fox` and copying the next
-version in: nothing outside that folder belongs to Fox.
+Going back to a released version is `fox upgrade`, which replaces the link with
+a real folder.
 
 ### 3 - Declare your main Scene
 
@@ -108,7 +118,7 @@ func _ready():
   print(G.BUNDLE_ID + ' is running!')
 ```
 
-Note: `super._ready()` is mandatory — it sets up the Fox core nodes and settings
+Note: `super._ready()` is mandatory: it sets up the Fox core nodes and settings
 (screen reference, debug flags, notifications).
 
 #### set as main scene
@@ -199,18 +209,16 @@ env="debug"
 At this point, you should have something like this:
 
 ```sh
-.
-├── fox
-└── your-game
-  ├──.godot
-  ├── addons
-  │   └── fox -> ../../fox/addons/fox
-  ├── fox.config.json
-  ├── icon.svg
-  ├── project.godot
-  └── src
-      ├── app.gd
-      └── app.tscn
+your-game
+├──.godot
+├── addons
+│   └── fox
+├── fox.config.json
+├── icon.svg
+├── project.godot
+└── src
+    ├── app.gd
+    └── app.tscn
 ```
 
 You can have a look at your startup app:
