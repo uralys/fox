@@ -54,6 +54,28 @@ Desktop presets stop rewriting the folder `fox publish` uploads...
 the work stays visible the moment the notes are opened. Every release published
 before 2026-09-10 was migrated to this format, so the list is homogeneous.
 
+## Release notes are short by default
+
+**A release is a heading and a handful of bullets: one per command touched,
+naming the symptom or the benefit and nothing else.** Two to four lines, then
+the `## changelog` section. No chapter per fix, no story of the diagnosis, no
+walkthrough of the internals.
+
+```markdown
+# Steam publishing fixes
+
+- macOS depots now ship the `.app`, not the zip
+- `fox publish`: the repair export settles a mismatch instead of looping
+- `fox ls steam`: reports what players actually get, not what `staging` holds
+```
+
+The exception is a **real feature** worth introducing: a new command, a new
+workflow, something a reader has to understand before using it. That one gets
+its developed section. A release made of fixes never does.
+
+**Why:** 2.3.3 first shipped 4,300 characters of narrative for three fixes and
+had to be rewritten down to 450. Fix notes are scanned, not read.
+
 ## Every release ends with a `## changelog` section
 
 **A release describes what it brings, then lists what was merged to bring it.**
