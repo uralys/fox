@@ -13,10 +13,12 @@ import { colors } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
-// One colour per group, in the order the groups are declared. The palette only
-// has to be long enough for the table in cli.js; it cycles rather than running
-// out, so adding a group never prints an undefined escape.
-const GROUP_COLORS = [colors.green, colors.yellow, colors.magenta, colors.blue];
+// One colour per group, in the order the groups are declared. Blue is left out:
+// it belongs to the command names, and a title wearing it would blend into the
+// column below it. The palette only has to be long enough for the table in
+// cli.js; it cycles rather than running out, so adding a group never prints an
+// undefined escape.
+const GROUP_COLORS = [colors.green, colors.yellow, colors.magenta, colors.cyan];
 
 const groupColor = (index) => GROUP_COLORS[index % GROUP_COLORS.length];
 
