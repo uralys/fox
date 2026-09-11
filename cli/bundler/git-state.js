@@ -115,5 +115,11 @@ export const printTagState = (state, projectVersion) => {
     }
   }
 
+  // A box that only states the gap leaves the reader looking for the command:
+  // the way out of it is a single one.
+  if (!line.clean) {
+    lines.push('', 'run `fox tag [patch|minor|major]` to bump the version and tag these commits');
+  }
+
   boxed(lines, line.clean ? colors.green : colors.red);
 };
