@@ -5,7 +5,7 @@
 | Tool | Needed by | Install |
 |------|-----------|---------|
 | Godot 4 | everything | [godotengine.org](https://godotengine.org/download) |
-| NodeJS >= 22 | the `fox` CLI | [nodejs.org](https://nodejs.org) |
+| NodeJS >= 26 | the `fox` CLI | [nodejs.org](https://nodejs.org) |
 | ImageMagick 7 | every `fox generate:*` command | `brew install imagemagick` |
 | iconutil | the macOS `.icns` desktop icon written by `fox generate:icons` | shipped with macOS, nothing to install |
 | bundletool | inspecting Android `.aab` bundles, see [exporting/android](./exporting/android.md) | `brew install bundletool` |

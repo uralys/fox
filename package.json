@@ -32,6 +32,6 @@
     "lint:fix": "biome check --write cli/"
   },
   "engines": {
-    "node": ">=22.x"
+    "node": ">=26.x"
   }
 }
