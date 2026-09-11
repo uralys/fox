@@ -15,6 +15,12 @@
 // A failed check is cached too, under the tag it last knew. Without that, a
 // machine offline for an afternoon would pay the timeout again on every single
 // command.
+//
+// `fox` alone and `fox --help` are the exception: those two print the command
+// table and nothing else, so they are what someone types when they wonder what
+// fox can do right now. They skip the cache and ask GitHub on the spot, and
+// pay a longer timeout for it, because a stale answer there is the one place
+// where it actually costs something.
 // -----------------------------------------------------------------------------
 
 import fs from 'node:fs';
@@ -36,6 +42,10 @@ const CHECK_INTERVAL = 6 * 60 * 60 * 1000;
 // The check is a courtesy, never a reason for a command to hang: a GitHub that
 // does not answer in two seconds is simply not answering today.
 const FETCH_TIMEOUT = 2000;
+
+// A forced check was implicitly asked for and has no command output to delay,
+// so it gets room to answer rather than the courtesy budget above.
+const FORCED_FETCH_TIMEOUT = 5000;
 
 // Set it to opt out entirely: CI runs pin their version on purpose and have no
 // use for a line telling them to move.
@@ -87,15 +97,15 @@ const fetchLatestTag = async ({ timeout } = {}) => {
 
 // -----------------------------------------------------------------------------
 
-const resolveLatestTag = async () => {
+const resolveLatestTag = async ({ force = false } = {}) => {
   const cache = readCache();
 
-  if (cache && Date.now() - cache.checkedAt < CHECK_INTERVAL) {
+  if (!force && cache && Date.now() - cache.checkedAt < CHECK_INTERVAL) {
     return cache.tag;
   }
 
   try {
-    return await fetchLatestTag({ timeout: FETCH_TIMEOUT });
+    return await fetchLatestTag({ timeout: force ? FORCED_FETCH_TIMEOUT : FETCH_TIMEOUT });
   } catch {
     writeCache(cache?.tag ?? null);
     return cache?.tag ?? null;
@@ -130,7 +140,7 @@ const isNewer = (candidate, current) => {
 // Silent in every case but one: a pinned mount strictly behind a release. A
 // linked mount follows a checkout and is SUPPOSED to differ from any release,
 // and a missing one has nothing to compare.
-const notifyLatestRelease = async (projectRoot = process.cwd()) => {
+const notifyLatestRelease = async (projectRoot = process.cwd(), { force = false } = {}) => {
   if (process.env[OPT_OUT]) {
     return;
   }
@@ -145,7 +155,7 @@ const notifyLatestRelease = async (projectRoot = process.cwd()) => {
     return;
   }
 
-  const tag = await resolveLatestTag();
+  const tag = await resolveLatestTag({ force });
   const latest = tag?.replace(/^v/, '');
 
   if (!latest || !isNewer(latest, installed)) {

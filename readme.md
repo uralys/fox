@@ -102,7 +102,8 @@ autoload your game already declares.
 Your game is now pinned, and moves to the next Fox when you decide to:
 `fox upgrade` swaps `addons/fox` for a released version, whole. Every other
 command tells you when there is one to take, reading the latest release at most
-once every six hours.
+once every six hours: `fox` and `fox --help` check on the spot, and print the
+notice under the command table.
 
 The full walkthrough (prerequisites, main scene, optional autoloads) is in
 [Installing Fox](./docs/install.md).

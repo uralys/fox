@@ -585,6 +585,11 @@ inside your home directory: GitHub is asked at most once every six hours, so
 the commands in between touch nothing but the disk. That cache is shared by
 every game on the machine, and `fox upgrade` refreshes it as it runs.
 
+`fox` alone and `fox --help` are the exception: they print the command table and
+nothing else, so they skip the cache and ask GitHub on the spot, then print the
+box under the table. Those two get five seconds instead of two, since there is
+no command output waiting behind them.
+
 The check never delays a command and never fails one: it gives GitHub two
 seconds, and a call that does not answer is cached as an attempt, so a machine
 offline for an afternoon does not pay that timeout on every command. A failed

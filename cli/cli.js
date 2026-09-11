@@ -395,12 +395,21 @@ const cli = async (yargs, params) => {
 // release.
 const MOUNT_COMMANDS = [UPGRADE, UPGRADE_ALIAS, LINK];
 
-const notifyNewRelease = async (command) => {
-  if (!commands.includes(command) || MOUNT_COMMANDS.includes(command)) {
+// `fox` and `fox --help` print the command table and stop, which is what gets
+// typed when someone is taking stock of the tool. Those two check GitHub on the
+// spot instead of trusting the six hour cache, and the notice lands under the
+// table like it lands under any other command.
+const isHelpInvocation = (command, params) =>
+  !command || HELP_FLAGS.includes(command) || params.some((param) => HELP_FLAGS.includes(param));
+
+const notifyNewRelease = async (command, params) => {
+  const force = isHelpInvocation(command, params);
+
+  if (!force && (!commands.includes(command) || MOUNT_COMMANDS.includes(command))) {
     return;
   }
 
-  await notifyLatestRelease();
+  await notifyLatestRelease(process.cwd(), { force });
 };
 
 // -----------------------------------------------------------------------------
@@ -444,7 +453,7 @@ const execute = async () => {
     process.exitCode = 1;
   }
 
-  await notifyNewRelease(command);
+  await notifyNewRelease(command, params);
 };
 
 execute();
