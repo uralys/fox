@@ -71,7 +71,7 @@ Lifecycle hooks you can override:
 
 The Router persists a typed `NavState` (scene path + a `path` array of sub-view
 segments) so the app can restore exactly where it was after a hot reload or
-restart. See the [CLI / hot reload doc](../cli.md#navigation-state-navstate) for
+restart. See the [hot reload doc](../cli/hot-reload.md#navigation-state-navstate) for
 the full pattern.
 
 - `Router.getNavPath() -> Array`

@@ -43,16 +43,31 @@ Start with [Installing Fox](./install.md), then pick what you need below.
   default, grepable `[perf]` lines
 - [In-app purchases](./gdscript/iap.md): iOS / Android stores
 
-## Tooling & exporting
+## CLI
 
-- [CLI](./cli.md): run, hot reload, export, publish
+- [CLI reference](./cli.md): install, project detection, the command table
+- [Running your game](./cli/hot-reload.md): `run:game`, hot reload, nav state
+- [Importing assets](./cli/import.md): headless `fox import`
+- [Pinning a version](./cli/versioning.md): `fox upgrade`, `fox link`, the
+  release notice
+
+## Exporting & shipping
+
 - [Building](./exporting/build.md) and [Exporting](./exporting/export.md)
 - [Envs and targets](./exporting/envs-and-targets.md): the two axes a build is
   made of
-- [Images generation](./exporting/images.md): icons, splashscreens, screenshots
+- [Images generation](./exporting/images.md): icons, splashscreens, screenshots,
+  and what each export excludes
+- [Publishing](./exporting/publish.md): Steam with steamcmd, itch.io with butler
+- [Listing builds](./exporting/ls.md): confront the local exports with the stores
 - [Android](./exporting/android.md) and [iOS](./exporting/ios.md) settings
 
 ## Tips
 
 - [Gamedev](./tips/gamedev.md)
 - [Branding](./tips/branding.md)
+
+## Contributing
+
+- [Working on Fox itself](./contributing.md): the checkout, the linked mount,
+  lint

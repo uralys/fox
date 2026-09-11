@@ -56,49 +56,17 @@ fox upgrade 2.0.0    # or the version you want
 
 #### 🦊 working on Fox itself: the linked mount
 
-> This section is for contributors who develop **Fox**, and open pull requests
-> on this repository. A game consuming a released Fox never needs it: a linked
-> game rides the working tree of the fox checkout, so the version its
-> `plugin.cfg` declares is whatever that checkout happens to hold rather than a
-> released one. It is deliberately unsuited to shipping.
-
-Clone this repo next to `your-game`:
-
-```sh
-git clone https://github.com/uralys/fox
-```
-
-Then link the addon folder into your game, so `res://addons/fox` always reflects
-your local fox checkout:
-
-**macOS / Linux:**
+Contributors who develop **Fox** mount their checkout at `res://addons/fox`
+instead of pinning a copy, so the game rides their working tree:
 
 ```sh
 cd your-game
-fox link ../fox     # or, without the CLI:
-ln -s ../../fox/addons/fox addons/fox
+fox link ../fox
 ```
 
-The `ln -s` target is relative to the `addons` folder holding it, hence the two
-`..` levels.
-
-**Windows / WSL:**
-
-On WSL, `ln -s` creates a Linux symlink that Godot (running as a native Windows app) cannot resolve. You must use a Windows NTFS junction instead:
-
-```sh
-cmd.exe /c "mklink /J C:\path\to\your-game\addons\fox C:\path\to\fox\addons\fox"
-```
-
-> **Note:** To use [check-projects](https://github.com/uralys/check-projects) on WSL, symlink your `/mnt/c/` repos into your Linux home:
->
-> ```sh
-> ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/fox ~/Projects/uralys/gamedev/fox
-> ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/your-game ~/Projects/uralys/gamedev/your-game
-> ```
-
-Going back to a released version is `fox upgrade`, which replaces the link with
-a real folder.
+The whole contributor setup (checkout, running the CLI from it, the WSL
+junction, lint) lives in [contributing](./contributing.md). A game consuming a
+released Fox never needs it.
 
 ### 3 - Declare your main Scene
 
@@ -279,4 +247,4 @@ To better use Fox core, screens and components, you can organise your project li
           └── home.gd
 ```
 
-🚀 You can continue by extending the [Router](./router.md) to add your first screens.
+🚀 You can continue by extending the [Router](./gdscript/router.md) to add your first screens.

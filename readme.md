@@ -124,8 +124,9 @@ The full index lives in [docs](./docs/readme.md):
   popups, components
 - [Libs & utilities](./docs/readme.md#libs--utilities): HTTP, `__`, frame
   probe, in-app purchases
-- [Tooling & exporting](./docs/readme.md#tooling--exporting): CLI, building,
-  exporting, images, Android & iOS
+- [CLI](./docs/readme.md#cli): install, commands, hot reload, versions
+- [Exporting & shipping](./docs/readme.md#exporting--shipping): building,
+  exporting, images, publishing, Android & iOS
 
 ## Games created with Fox
 
