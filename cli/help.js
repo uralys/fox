@@ -45,10 +45,10 @@ const printCommand = (name, description, column, available) => {
   const [first, ...rest] = wrap(description, available);
   const pad = ' '.repeat(column - name.length);
 
-  console.log(`  ${colors.green}${colors.bold}${name}${colors.reset}${pad}${colors.gray}${first}${colors.reset}`);
+  console.log(`  ${colors.green}${colors.bold}${name}${colors.reset}${pad}${colors.white}${first}${colors.reset}`);
 
   for (const line of rest) {
-    console.log(`  ${' '.repeat(column)}${colors.gray}${line}${colors.reset}`);
+    console.log(`  ${' '.repeat(column)}${colors.white}${line}${colors.reset}`);
   }
 };
 
