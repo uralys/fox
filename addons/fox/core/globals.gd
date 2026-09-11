@@ -34,24 +34,24 @@ var SCREEN_CENTER
 # ------------------------------------------------------------------------------
 
 func _ready():
-  G.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
-  G.ENV = ProjectSettings.get_setting('bundle/env')
+  self.BUNDLE_ID = ProjectSettings.get_setting('bundle/id')
+  self.ENV = ProjectSettings.get_setting('bundle/env')
   # A project that predates the target axis has no setting: it ships to Steam.
-  G.TARGET = ProjectSettings.get_setting('bundle/target', STEAM)
-  G.PLATFORM = ProjectSettings.get_setting('bundle/platform')
-  G.VERSION = ProjectSettings.get_setting('bundle/version')
-  G.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
-  G.RECORD_PATH = 'user://saved-data.' + G.BUNDLE_ID + _recordSuffix(G.ENV) + '.bin'
+  self.TARGET = ProjectSettings.get_setting('bundle/target', STEAM)
+  self.PLATFORM = ProjectSettings.get_setting('bundle/platform')
+  self.VERSION = ProjectSettings.get_setting('bundle/version')
+  self.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
+  self.RECORD_PATH = 'user://saved-data.' + self.BUNDLE_ID + _recordSuffix(self.ENV) + '.bin'
 
-  G.log('========================================')
+  self.log('========================================')
   var foxVersion = ProjectSettings.get_setting('fox/version')
   foxVersion = foxVersion if foxVersion else ''
-  G.log('[🦊 Fox]', foxVersion)
-  G.log('-------------------------------')
-  G.log('bundle/id: ' + G.BUNDLE_ID)
-  G.log('bundle/env: ' + G.ENV)
-  G.log('bundle/target: ' + G.TARGET)
-  G.log('bundle/platform: ' + G.PLATFORM)
+  self.log('[🦊 Fox]', foxVersion)
+  self.log('-------------------------------')
+  self.log('bundle/id: ' + self.BUNDLE_ID)
+  self.log('bundle/env: ' + self.ENV)
+  self.log('bundle/target: ' + self.TARGET)
+  self.log('bundle/platform: ' + self.PLATFORM)
 
 # A demo ships as a separate Steam app (own app id, own Cloud) but shares the bundle
 # id with the full game. Key the save file on the demo env so the two variants never
@@ -84,8 +84,8 @@ func __ansi(o):
   return __.bbcodeToANSI(o) if o is String else o
 
 func debug(a, b=null,c=null,d=null,e=null,f=null,g=null):
-  if(G.ENV == 'release'): return
-  G.log('🫧  [color=magenta](debug)[/color]', a, b, c, d, e, f, g)
+  if(self.ENV == 'release'): return
+  self.log('🫧  [color=magenta](debug)[/color]', a, b, c, d, e, f, g)
 
 func log(a, b=null,c=null,d=null,e=null,f=null,g=null,h=null):
   prints(__ansi(a),

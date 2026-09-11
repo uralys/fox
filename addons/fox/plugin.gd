@@ -34,24 +34,70 @@ const DEFAULT_AUTOLOADS = {
 #
 # ------------------------------------------------------------------------------
 
-var _registered: Array[String] = []
-
+# ------------------------------------------------------------------------------
+# `add_autoload_singleton()` loads and COMPILES the script before it registers
+# the global name. Both `globals.gd` and `debug.gd` reference `G` at parse time,
+# so on a project that does not declare the autoloads yet the compilation fails
+# with `Identifier not found: G`, and no autoload is ever created.
+#
+# `globals.gd` therefore addresses itself through `self`, so it compiles before
+# any name is registered, and `debug.gd` and `gesture.gd` compile in turn once
+# `G` exists. Writing the setting first also registers the name the way a
+# hand-written `[autoload]` block does, before the editor call.
+#
+# Removal lives in `_disable_plugin()`, never in `_exit_tree()`: the editor
+# calls `_exit_tree()` on shutdown too, and removing the entries there wiped
+# them from `project.godot` on every quit.
 # ------------------------------------------------------------------------------
 
 func _enter_tree():
-	_registered.clear()
+	var changed = false
 
 	for autoload_name in DEFAULT_AUTOLOADS:
-		if ProjectSettings.has_setting('autoload/' + autoload_name):
+		var key = 'autoload/' + autoload_name
+
+		if ProjectSettings.has_setting(key):
 			continue
 
+		ProjectSettings.set_setting(key, '*' + DEFAULT_AUTOLOADS[autoload_name])
 		add_autoload_singleton(autoload_name, DEFAULT_AUTOLOADS[autoload_name])
-		_registered.append(autoload_name)
+		changed = true
+
+	if changed:
+		ProjectSettings.save()
 
 # ------------------------------------------------------------------------------
 
-func _exit_tree():
-	for autoload_name in _registered:
-		remove_autoload_singleton(autoload_name)
+func _disable_plugin():
+	var changed = false
 
-	_registered.clear()
+	for autoload_name in DEFAULT_AUTOLOADS:
+		var key = 'autoload/' + autoload_name
+
+		if not ProjectSettings.has_setting(key):
+			continue
+
+		# An entry pointing anywhere else was declared by the game: leave it alone.
+		if _autoload_path(ProjectSettings.get_setting(key)) != DEFAULT_AUTOLOADS[autoload_name]:
+			continue
+
+		remove_autoload_singleton(autoload_name)
+		ProjectSettings.set_setting(key, null)
+		changed = true
+
+	if changed:
+		ProjectSettings.save()
+
+# ------------------------------------------------------------------------------
+# The editor stores an autoload as a uid, so a raw string comparison against the
+# `res://` path above would never match what it wrote back.
+
+func _autoload_path(setting_value: String) -> String:
+	var path = setting_value.trim_prefix('*')
+
+	if path.begins_with('uid://'):
+		var uid = ResourceUID.text_to_id(path)
+		if ResourceUID.has_id(uid):
+			return ResourceUID.get_id_path(uid)
+
+	return path
