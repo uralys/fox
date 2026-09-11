@@ -46,9 +46,10 @@ half. The runtime under `addons/fox` is copied into the game and frozen; the
 game at once.
 
 `fox upgrade` therefore installs the CLI of the version it pins, from the same
-git tag the addon comes from, and `fox link` runs `npm link` on the checkout.
-`--no-cli` skips it, and a failed install is reported without failing the
-command.
+git tag the addon comes from: the very install the one line `install.sh`
+performs, run again against the version being pinned. `fox link` runs `npm link`
+on the checkout instead. `--no-cli` skips it, and a failed install is reported
+without failing the command.
 
 An addon already on the target version does **not** end the command: the two
 halves are checked separately, and a symlinked or outdated executable is pinned

@@ -32,27 +32,54 @@ Then > `Select Current Folder`
 
 Edit your project settings and `Create & Edit`
 
-### 2 - Mount Fox as an addon
+### 2 - Install Fox
 
-Fox is a standard Godot addon: its runtime tree lives in `addons/fox` of this
-repository, and your game mounts it at `res://addons/fox`.
-
-Copy the addon folder at the version you want, and commit it with your game:
+One command, run **from your project folder**, on macOS, Linux and Windows (Git
+Bash or WSL):
 
 ```sh
-git clone --depth 1 --branch v2.0.1 https://github.com/uralys/fox /tmp/fox-2.0.1
-mkdir -p your-game/addons
-cp -R /tmp/fox-2.0.1/addons/fox your-game/addons/fox
+cd your-game
+curl -fsSL https://raw.githubusercontent.com/uralys/fox/main/install.sh | sh
 ```
 
-Your game is now pinned: nothing outside `addons/fox` belongs to Fox, so moving
-to the next version is a matter of deleting that folder and copying the next one
-in. Once the [CLI](./cli.md) is installed, one command does it for you:
+That is the whole install. It reads the latest release and installs both halves
+of Fox from its git tag, so they can never come from two different versions:
+
+- the **runtime**, mounted at `addons/fox` in the project you ran it from. It is
+  a plain Godot addon, and it is what your game actually runs on: commit it with
+  your game;
+- the **`fox` executable**, installed globally with npm.
+
+A version can be forced, and a project named rather than entered:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/uralys/fox/main/install.sh | sh -s -- 2.2.0
+curl -fsSL https://raw.githubusercontent.com/uralys/fox/main/install.sh | sh -s -- your-game
+```
+
+Run outside a Godot project, it installs the CLI alone and says so: `fox upgrade`
+mounts the runtime later, from inside the game.
+
+#### NodeJS is a prerequisite of the CLI, not of Fox
+
+The runtime needs nothing but Godot. A machine without NodeJS is therefore not a
+failed install: the addon is mounted all the same, and the CLI is skipped with a
+warning. Everything in this page still applies, minus the `fox` commands.
+
+#### upgrading afterwards
+
+The installer is for the first time. From then on, one command moves both halves
+at once:
 
 ```sh
 fox upgrade          # pin the latest release
 fox upgrade 2.0.0    # or the version you want
 ```
+
+Both it and the installer **delete** `addons/fox` before laying the next version
+down, so a file dropped between two versions leaves with it. Writing over the
+folder instead, by hand or through the Godot Asset Library, piles up the
+leftovers forever. See [pinning a version](./cli/versioning.md).
 
 #### 🦊 working on Fox itself: the linked mount
 
@@ -64,9 +91,11 @@ cd your-game
 fox link ../fox
 ```
 
-The whole contributor setup (checkout, running the CLI from it, the WSL
-junction, lint) lives in [contributing](./contributing.md). A game consuming a
-released Fox never needs it.
+A mount that is already such a symlink is left alone by the installer: it never
+replaces a checkout with a pinned copy. The whole contributor setup (checkout,
+running the CLI from it, the WSL junction, lint) lives in
+[contributing](./contributing.md). A game consuming a released Fox never needs
+it.
 
 ### 3 - Declare your main Scene
 

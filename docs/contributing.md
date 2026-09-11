@@ -2,8 +2,8 @@
 
 > This page is for contributors who develop **Fox** and open pull requests on
 > this repository. A game consuming a released Fox never needs any of it:
-> installing the CLI is one `npm install -g`, described in
-> [the CLI reference](./cli.md#installing-the-executable).
+> installing the CLI is one `curl`, described in
+> [getting started with the CLI](./cli/getting-started.md#installing-the-executable).
 
 ## the checkout
 
@@ -15,9 +15,9 @@ npm install
 
 ## running your checkout as the `fox` executable
 
-The published way to install the CLI takes it from a git tag, which is exactly
-what you do not want while editing `cli/`. Link the checkout instead, so the
-global `fox` runs your working tree:
+The published way to install the CLI takes it from a git tag (that is all
+`install.sh` does), which is exactly what you do not want while editing `cli/`.
+Link the checkout instead, so the global `fox` runs your working tree:
 
 ```sh
 npm link          # from the fox checkout

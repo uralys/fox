@@ -81,29 +81,32 @@ fox publish steam release   # upload it to the store
 ```
 
 Version bumps, asset imports, icons, splashscreens and store screenshots have
-their command too: see the [CLI reference](./docs/cli.md).
+their command too: see the [CLI reference](./docs/cli/getting-started.md).
 
 ## Installation
 
-Fox is a standard Godot addon: its runtime tree lives in
-[addons/fox](./addons/fox), and a game mounts it at `res://addons/fox`. Copy it
-at the version you want, and commit it with your game:
+One command, run from your Godot project, on macOS, Linux and Windows (Git Bash
+or WSL):
 
 ```sh
-git clone --depth 1 --branch v2.0.1 https://github.com/uralys/fox /tmp/fox-2.0.1
-mkdir -p your-game/addons
-cp -R /tmp/fox-2.0.1/addons/fox your-game/addons/fox
+cd your-game
+curl -fsSL https://raw.githubusercontent.com/uralys/fox/main/install.sh | sh
 ```
 
-Then enable it once from `Project > Project Settings > Plugins > Fox`: it
-registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
+It installs both halves of Fox from the same release: the runtime, mounted at
+`res://addons/fox` and committed with your game, and the global `fox`
+executable. The CLI is optional, and needs NodeJS >= 26: without it the addon is
+mounted all the same, since it needs nothing but Godot.
+
+Then enable the plugin once from `Project > Project Settings > Plugins > Fox`:
+it registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
 autoload your game already declares.
 
 Your game is now pinned, and moves to the next Fox when you decide to:
-`fox upgrade` swaps `addons/fox` for a released version, whole. Every other
-command tells you when there is one to take, reading the latest release at most
-once every six hours: `fox` and `fox --help` check on the spot, and print the
-notice under the command table.
+`fox upgrade` swaps `addons/fox` for a released version, whole, and pins the
+executable with it. Every other command tells you when there is one to take,
+reading the latest release at most once every six hours: `fox` and `fox --help`
+check on the spot, and print the notice under the command table.
 
 The full walkthrough (prerequisites, main scene, optional autoloads) is in
 [Installing Fox](./docs/install.md).

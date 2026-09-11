@@ -45,7 +45,8 @@ Start with [Installing Fox](./install.md), then pick what you need below.
 
 ## CLI
 
-- [CLI reference](./cli.md): install, project detection, the command table
+- [Getting started](./cli/getting-started.md): install the executable, mount
+  the runtime, project detection, the command table
 - [Running your game](./cli/hot-reload.md): `run:game`, hot reload, nav state
 - [Importing assets](./cli/import.md): headless `fox import`
 - [Pinning a version](./cli/versioning.md): `fox upgrade`, `fox link`, the
