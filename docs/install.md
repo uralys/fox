@@ -46,8 +46,9 @@ That is the whole install. It reads the latest release and installs both halves
 of Fox from its git tag, so they can never come from two different versions:
 
 - the **runtime**, mounted at `addons/fox` in the project you ran it from. It is
-  a plain Godot addon, and it is what your game actually runs on: commit it with
-  your game;
+  a plain Godot addon, and it is what your game actually runs on. It is a
+  **dependency, not game code**: the installer adds it to your `.gitignore` and
+  writes the version it installed into `fox.config.json`, as `core.fox`;
 - the **`fox` executable**, installed globally with npm.
 
 A version can be forced, and a project named rather than entered:
@@ -59,6 +60,40 @@ curl -fsSL https://raw.githubusercontent.com/uralys/fox/main/install.sh | sh -s 
 
 Run outside a Godot project, it installs the CLI alone and says so: `fox upgrade`
 mounts the runtime later, from inside the game.
+
+#### the mount is ignored, and `core.fox` remembers the version
+
+`addons/fox` is replaced whole on every upgrade, and swapped for a symlink by
+`fox link`: a game tracking it reads the first as a wall of changes nobody wrote,
+and the second as its entire runtime deleted. So the installer ignores it, and
+records the version in the config your game already commits:
+
+```json
+{
+  "core": {
+    "fox": "2.3.0"
+  }
+}
+```
+
+That pin is what makes a clone reproducible: run from a project holding **no**
+mount, the installer restores the version `core.fox` names rather than the
+latest release. A clone of your game is therefore two commands, like any project
+with dependencies:
+
+```sh
+git clone your-game && cd your-game
+curl -fsSL https://raw.githubusercontent.com/uralys/fox/main/install.sh | sh
+```
+
+A game that used to commit its mount has one step to take, once, since git
+ignores nothing it already follows:
+
+```sh
+git rm -r --cached addons/fox
+```
+
+See [pinning a version](./cli/versioning.md) for the whole of it.
 
 #### NodeJS is a prerequisite of the CLI, not of Fox
 
@@ -76,8 +111,10 @@ fox upgrade          # pin the latest release
 fox upgrade 2.0.0    # or the version you want
 ```
 
-Both it and the installer **delete** `addons/fox` before laying the next version
-down, so a file dropped between two versions leaves with it. Writing over the
+Both rewrite `core.fox` with the version they pin, so the commit that moves Fox
+carries one readable line rather than a few hundred. Both also **delete**
+`addons/fox` before laying the next version down, so a file dropped between two
+versions leaves with it. Writing over the
 folder instead, by hand or through the Godot Asset Library, piles up the
 leftovers forever. See [pinning a version](./cli/versioning.md).
 

@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { ignoreMount } from './ignore-mount.js';
 import { reimportProject } from './import-assets.js';
 import { linkCli } from './install-cli.js';
 import { linkLogger } from './logger.js';
@@ -61,6 +62,14 @@ const link = async (params = []) => {
 
   linkLogger.success(`${ADDON_MOUNT} -> ${fs.readlinkSync(mountPath)}`);
   linkLogger.warn('Linked: the game now follows your checkout, not a released version');
+
+  // `core.fox` is deliberately left as it was: it records the RELEASE a game
+  // ships against, and a checkout is not one. The ignore, on the other hand, is
+  // never more useful than here: a tracked mount turns this symlink into every
+  // file under it reported as deleted.
+  if (!params.includes('--no-gitignore')) {
+    ignoreMount(projectRoot, linkLogger);
+  }
 
   // Same checkout for the executable: linking the runtime and leaving the CLI
   // pinned would have the two halves of Fox come from two different trees.

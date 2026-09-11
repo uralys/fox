@@ -17,6 +17,8 @@ import os from 'node:os';
 import path from 'node:path';
 
 import pkg from '../package.json' with { type: 'json' };
+import { CONFIG_FILE, readPinnedVersion, writePinnedVersion } from './fox-config.js';
+import { ignoreMount } from './ignore-mount.js';
 import { reimportProject } from './import-assets.js';
 import { isLinkedCli, pinCli } from './install-cli.js';
 import { fetchLatestTag } from './latest-release.js';
@@ -35,9 +37,22 @@ const asVersion = (tag) => tag.replace(/^v/, '');
 
 // -----------------------------------------------------------------------------
 
-const resolveTargetTag = async (requested) => {
+// A missing mount is a RESTORE, not an upgrade: a fresh clone of a game whose
+// runtime is ignored holds no addon, and the version it is owed is the one it
+// declares, not whatever came out last week. Anywhere else `upgrade` keeps
+// meaning upgrade, so the release notice telling a game to run it stays true.
+const resolveTargetTag = async (requested, kind, projectRoot) => {
   if (requested) {
     return asTag(requested);
+  }
+
+  if (kind === MISSING) {
+    const pinned = readPinnedVersion(projectRoot);
+
+    if (pinned) {
+      upgradeLogger.log(`Restoring the ${pinned} pinned in ${CONFIG_FILE}`);
+      return asTag(pinned);
+    }
   }
 
   upgradeLogger.log('Reading the latest release');
@@ -83,6 +98,20 @@ const downloadAddon = async (tag, workDir) => {
 
 // -----------------------------------------------------------------------------
 
+// What a game keeps of an upgrade once the mount itself is ignored: the version
+// in `core.fox`, and the ignore line that lets it be ignored at all. Both are
+// idempotent, so they are run on every successful pinning rather than guessed
+// at, and `--no-gitignore` leaves a game that tracks its mount on purpose alone.
+const recordPin = (version, projectRoot, params) => {
+  writePinnedVersion(version, projectRoot, upgradeLogger);
+
+  if (!params.includes('--no-gitignore')) {
+    ignoreMount(projectRoot, upgradeLogger);
+  }
+};
+
+// -----------------------------------------------------------------------------
+
 const upgrade = async (params = []) => {
   const projectRoot = process.cwd();
   const requested = params.find((param) => !param.startsWith('-'));
@@ -101,7 +130,7 @@ const upgrade = async (params = []) => {
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fox-upgrade-'));
 
   try {
-    const tag = await resolveTargetTag(requested);
+    const tag = await resolveTargetTag(requested, kind, projectRoot);
     const version = asVersion(tag);
 
     // Fox ships in two halves and both are upgraded: the runtime under
@@ -114,6 +143,7 @@ const upgrade = async (params = []) => {
     upgradeLogger.data({
       mount: kind,
       installed: kind === LINKED ? `${installed ?? 'unknown'} (linked, not a release)` : (installed ?? 'none'),
+      pinned: readPinnedVersion(projectRoot) ?? 'none',
       cli: isLinkedCli() ? `${pkg.version} (symlinked, not a release)` : pkg.version,
       target: version,
     });
@@ -121,6 +151,7 @@ const upgrade = async (params = []) => {
     const addonPinned = kind === PINNED && installed === version;
 
     if (addonPinned && cliPinned) {
+      recordPin(version, projectRoot, params);
       upgradeLogger.done(`already on ${version}`);
       return true;
     }
@@ -129,6 +160,7 @@ const upgrade = async (params = []) => {
     // tree of that tag, only the executable was left behind.
     if (addonPinned) {
       upgradeLogger.log(`${ADDON_MOUNT} is already ${version}, upgrading the CLI alone`);
+      recordPin(version, projectRoot, params);
       pinCli(tag, upgradeLogger);
       upgradeLogger.done(`fox is now ${version}`);
       return true;
@@ -148,6 +180,8 @@ const upgrade = async (params = []) => {
     fs.cpSync(addon, mountPath, { recursive: true });
 
     upgradeLogger.success(`${ADDON_MOUNT} is now ${version}`);
+
+    recordPin(version, projectRoot, params);
 
     // The executable follows the runtime it was pinned with, so a game is not
     // frozen against a runtime regression while still riding a live CLI.

@@ -7,17 +7,94 @@ generated per project and never travel with a release, so Godot could not load
 it until the import ran. Pass `--no-import` to skip that step.
 
 ```sh
-fox upgrade             # pin addons/fox to the latest release
-fox upgrade 2.1.0       # or to a given one (the `v` prefix is optional)
-fox upgrade --no-import # leave the reimport to you
-fox upgrade --no-cli    # leave the `fox` executable alone
-fox link                # follow ../fox instead, live
-fox link ../../fox      # or a checkout somewhere else
+fox upgrade                # pin addons/fox to the latest release
+fox upgrade 2.1.0          # or to a given one (the `v` prefix is optional)
+fox upgrade --no-import    # leave the reimport to you
+fox upgrade --no-cli       # leave the `fox` executable alone
+fox upgrade --no-gitignore # leave the game's .gitignore alone
+fox link                   # follow ../fox instead, live
+fox link ../../fox         # or a checkout somewhere else
 ```
 
 The reimport is also skipped, with a warning and without failing the command,
 when Godot cannot be resolved: mounting the addon on a machine that only builds
 is a legitimate thing to do.
+
+## the mount is a dependency, and `core.fox` is its lockfile
+
+`addons/fox` is not game code. It is replaced whole on every upgrade, and turned
+into a symlink by `fox link`: a game that **tracks** it reads the first as a wall
+of changes nobody wrote, and the second as every file under the mount deleted at
+once, one distracted `git add -A` away from losing the runtime for everyone.
+
+So the mount is ignored, and both `fox upgrade` and `fox link` write the line
+once, in the game's `.gitignore`:
+
+```txt
+# The Fox runtime is a dependency, mounted by `fox upgrade` and `fox link`.
+# The version this game runs is pinned in fox.config.json, as core.fox.
+addons/fox
+```
+
+No trailing slash on that pattern, and it is not a detail: a directory pattern
+matches a directory, and `fox link` makes the mount a **symlink**, which is
+precisely the case worth silencing.
+
+The check goes through `git check-ignore --no-index`, so a game already ignoring
+the mount from a parent `.gitignore`, from `.git/info/exclude` or from the global
+one gets nothing added. `--no-gitignore` skips it altogether, for a game that
+vendors its runtime on purpose.
+
+⚠️ **git ignores nothing it already follows.** A game that used to commit its
+mount has to drop those files from the index once, and that step is named rather
+than taken: staging hundreds of deletions in somebody else's working tree is not
+a side effect an install may have.
+
+```sh
+git rm -r --cached addons/fox
+```
+
+### core.fox
+
+Ignoring the mount would cost a game the only record of the version it runs,
+since that record is `addons/fox/plugin.cfg`, **inside** what is being ignored.
+`core.fox` is that record, kept in the config the game already commits:
+
+```json
+{
+  "core": {
+    "fox": "2.3.0",
+    "title": "your game"
+  }
+}
+```
+
+It is **written by `fox upgrade`**, on every version it pins, so a game never
+maintains it by hand and the commit that moves Fox carries one readable line.
+`fox link` deliberately leaves it alone: it records the release a game ships
+against, and a checkout is not one.
+
+### restoring, rather than upgrading
+
+A **missing** mount is a restore: a fresh clone of a game whose runtime is
+ignored holds no addon at all, and the version it is owed is the one it declares,
+not whatever came out last week.
+
+```sh
+git clone your-game && cd your-game
+fox upgrade            # mounts the 2.3.0 of core.fox, not the latest
+```
+
+Everywhere else `upgrade` keeps meaning upgrade, so the release notice telling a
+game to run it stays true. Naming a version always wins, and rewrites the pin:
+
+```sh
+fox upgrade 2.4.0      # mounts 2.4.0 and pins it in fox.config.json
+```
+
+The installer follows the same rule, which is what makes a `curl | sh` in CI
+reproducible: it restores `core.fox` when the project holds no mount, and reads
+the latest release otherwise.
 
 ## upgrade
 
@@ -59,6 +136,7 @@ on its own, without downloading or reimporting anything.
 │  ┌───────────────────────────────────────┐
 │  │ mount: pinned                         │
 │  │ installed: 2.2.0                      │
+│  │ pinned: 2.2.0                         │
 │  │ cli: 2.2.0 (symlinked, not a release) │
 │  │ target: 2.2.0                         │
 │  └───────────────────────────────────────┘
