@@ -487,6 +487,34 @@ The reimport is also skipped, with a warning and without failing the command,
 when Godot cannot be resolved: mounting the addon on a machine that only builds
 is a legitimate thing to do.
 
+### the executable follows the mount
+
+Fox ships through two channels, and pinning only one of them protects a game by
+half. The runtime under `addons/fox` is copied into the game and frozen; the
+`fox` executable is installed once per machine, so an unpinned CLI reaches every
+game at once.
+
+`fox upgrade` therefore installs the CLI of the version it pins, from the same
+git tag the addon comes from, and `fox link` runs `npm link` on the checkout.
+`--no-cli` skips it, and a failed install is reported without failing the
+command.
+
+⚠️ The executable is **global, one per machine**, while a mount is per project:
+the last command run owns it. Two projects on different versions cannot each
+keep their own `fox`, so the header warns when the running CLI and the mounted
+addon disagree:
+
+```txt
+🦊 addons/fox 1.9.0
+● fox ls
+├─ ⚠  this CLI is v2.0.2: run `fox upgrade` to match the addon
+```
+
+A `fox` earlier in your `PATH` than the one npm writes would shadow it, and the
+upgrade would look like it did nothing: the hand written symlink the install
+guide used to recommend is exactly that case, and `fox upgrade` names it when it
+finds it.
+
 Every command opens on the mount it is about to work with. The version on that
 line is the one the GAME runs; the CLI's own is a `fox --version` away, and
 printing both put the same number twice whenever they agreed.
@@ -518,6 +546,7 @@ line at all: the error that follows already names what is missing.
 fox upgrade             # pin addons/fox to the latest release
 fox upgrade 2.1.0       # or to a given one (the `v` prefix is optional)
 fox upgrade --no-import # leave the reimport to you
+fox upgrade --no-cli    # leave the `fox` executable alone
 fox link                # follow ../fox instead, live
 fox link ../../fox      # or a checkout somewhere else
 ```

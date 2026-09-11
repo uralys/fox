@@ -33,15 +33,28 @@ const npm = (args, cwd) => {
 
 // -----------------------------------------------------------------------------
 
+const globalBin = () => {
+  try {
+    return path.join(execFileSync('npm', ['prefix', '-g'], { encoding: 'utf8' }).trim(), 'bin');
+  } catch {
+    return null;
+  }
+};
+
+const installedExecutable = () => {
+  const bin = globalBin();
+  return bin ? fs.existsSync(path.join(bin, EXECUTABLE)) : false;
+};
+
+// -----------------------------------------------------------------------------
+
 // A `fox` sitting earlier in the PATH than the one npm just wrote would shadow
 // it, and the upgrade would look like it did nothing. The hand written symlink
 // documented before the CLI was packaged is exactly that case.
 const warnAboutShadowing = (logger) => {
-  let npmBin;
+  const npmBin = globalBin();
 
-  try {
-    npmBin = path.join(execFileSync('npm', ['prefix', '-g'], { encoding: 'utf8' }).trim(), 'bin');
-  } catch {
+  if (!npmBin) {
     return;
   }
 
@@ -75,6 +88,17 @@ const pinCli = (tag, logger) => {
     npm(['install', '-g', `github:${REPOSITORY}#${tag}`]);
   } catch {
     logger.warn(`Could not install the ${tag} CLI: your \`fox\` executable is unchanged`);
+    return true;
+  }
+
+  // npm reports success for a package it installed without an executable, and
+  // every tag up to 2.0.2 is such a package: `bin` was only declared when the
+  // CLI became pinnable. Claiming the executable moved would be a lie the user
+  // only discovers when an old command misbehaves, so the outcome is checked
+  // rather than assumed.
+  if (!installedExecutable()) {
+    logger.warn(`The ${tag} package declares no executable: your \`fox\` is unchanged`);
+    logger.log('Versions up to 2.0.2 cannot be pinned this way, only the addon was.');
     return true;
   }
 
