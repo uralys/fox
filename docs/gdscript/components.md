@@ -6,7 +6,6 @@ Ready-made scene components. Most are driven through the
 - [Fullscreen loader](#fullscreen-loader)
 - [Screen fader](#screen-fader)
 - [Blur](#blur)
-- [Ask for review](#ask-for-review)
 - [Controls test](#controls-test)
 
 ## Fullscreen loader
@@ -48,29 +47,6 @@ Add it directly to a scene if you want to await the signal yourself.
 (`blur_amount` parameter). [Popups](./popups.md) and the fullscreen loader use it
 to blur their background; name an instance `blur` inside a popup to have it
 shown/hidden automatically.
-
-## Ask for review
-
-`components/review/ask-for-review.tscn` is a popup that prompts the player to
-rate the game. It extends the [popup](./popups.md) base and adapts to the
-platform:
-
-- **Android**: uses the `GodotAndroidRateme` in-app review flow if present;
-- **iOS**: uses the `InappReviewPlugin` review flow if present;
-- **fallback**: shows a "Rate now" button that opens the store URL
-  (via [`Bundle`](./utils.md#bundle)).
-
-```gdscript
-var AskForReview = preload('res://addons/fox/components/review/ask-for-review.tscn')
-
-func askReview():
-  var popup = AskForReview.instantiate()
-  # popup.useForLandscape()   # optional landscape placement
-  $/root/app/popups.add_child(popup)
-```
-
-On completion it calls `Player.setRatingDone()` and closes. It expects a
-`Player` autoload and a `please rate this app` translation key.
 
 ## Controls test
 

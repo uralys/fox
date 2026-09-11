@@ -32,7 +32,7 @@ Start with [Installing Fox](./install.md), then pick what you need below.
 - [Motion](./gdscript/motion.md): procedural idle motion (float, wobble,
   breathe)
 - [Popups](./gdscript/popups.md)
-- [Components](./gdscript/components.md): loader, screen fader, ask-for-review
+- [Components](./gdscript/components.md): loader, screen fader, blur
 
 ## Libs & utilities
 
