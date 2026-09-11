@@ -97,7 +97,7 @@ export const printHelp = (groups, { version, docs }) => {
 
   console.log('');
   console.log(
-    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.cyan}${docs}${colors.reset}`,
+    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.green}${colors.bold}${docs}${colors.reset}`,
   );
   console.log('');
 };
