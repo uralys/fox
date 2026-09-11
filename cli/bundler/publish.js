@@ -388,8 +388,70 @@ const inquireEnv = async (settings, target, lastEnv) => {
   return env;
 };
 
+// -----------------------------------------------------------------------------
+// The branches offered are the ones that EXIST on Steamworks, read from the app
+// itself: a name typed from memory, or remembered from a run that never
+// committed, is accepted by steamcmd and then fails at the very end with
+// "Failed to commit build", long after the bytes went up. `GetAppBetas` needs a
+// PUBLISHER Web API key (Steamworks › Users & Permissions › Manage Groups ›
+// Create Web API Key), in `STEAM_WEB_API_KEY`. Without it the list simply falls
+// back to what is remembered and configured: reading branches is a convenience,
+// never a requirement to publish.
+
+const BETAS_URL = 'https://partner.steam-api.com/ISteamApps/GetAppBetas/v1/';
+
+// `public` IS the default branch, and setting a build live on it from a CLI is
+// the one irreversible move here: it ships to every player at once. It is left
+// out on purpose — the "(none)" answer plus Steamworks is how that is done.
+const DEFAULT_BRANCHES = new Set(['public', 'default']);
+
+const fetchBranches = async (appId) => {
+  const key = process.env.STEAM_WEB_API_KEY?.trim();
+
+  if (!key || !appId || isPlaceholder(appId)) {
+    return null;
+  }
+
+  try {
+    const url = `${BETAS_URL}?key=${encodeURIComponent(key)}&appid=${encodeURIComponent(appId)}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const betas = (await response.json())?.response?.betas;
+
+    if (!betas) {
+      return null;
+    }
+
+    return Object.entries(betas)
+      .filter(([name]) => !DEFAULT_BRANCHES.has(name))
+      .map(([name, { Description }]) => ({ name, description: Description }));
+  } catch {
+    return null;
+  }
+};
+
 const inquireBranch = async (steam, lastBranch) => {
-  const known = [...new Set([lastBranch, steam.branch].filter((branch) => branch))];
+  const live = await fetchBranches(steam.appId);
+
+  if (!live) {
+    steamLogger.warn('could not read the branches of this app (STEAM_WEB_API_KEY?): listing what is remembered');
+  }
+
+  // A remembered or configured branch that Steamworks does not know is dropped
+  // rather than offered: proposing it again is how the same failed publish is
+  // repeated.
+  const names = live ? live.map(({ name }) => name) : [lastBranch, steam.branch].filter(Boolean);
+
+  const ordered = [...new Set([...names.filter((name) => name === lastBranch), ...names])];
+
+  const describe = (name) => {
+    const description = live?.find((beta) => beta.name === name)?.description;
+    return description ? `${name} (${description})` : name;
+  };
 
   const { branch } = await inquirer.prompt([
     {
@@ -397,8 +459,11 @@ const inquireBranch = async (steam, lastBranch) => {
       name: 'branch',
       type: 'select',
       choices: [
-        ...known.map((value) => ({ name: value, value })),
-        { name: '(none — build stays unassigned)', value: NO_BRANCH },
+        ...ordered.map((value) => ({ name: describe(value), value })),
+        {
+          name: '(none: build stays unassigned, you must apply on default branch on steamworks)',
+          value: NO_BRANCH,
+        },
         { name: 'other...', value: OTHER_BRANCH },
       ],
     },
@@ -665,7 +730,7 @@ const publishToSteam = async (settings, { env, store, argBranch, state, assumeYe
     details: {
       app: `${core.title} (appId ${appId})`,
       login,
-      branch: branch || '(none — build stays unassigned)',
+      branch: branch || '(none: build stays unassigned, you must apply on default branch on steamworks)',
       env: envChip(env),
     },
     prepare: () => unfoldBundles(absoluteContentRoot, depots, steamLogger),
