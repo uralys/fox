@@ -537,6 +537,35 @@ linked game rides your working tree, so the version in `plugin.cfg` is no longer
 a released one: the boot line says `[🦊 Fox] 2.0.0 (symlinked)` to keep a build
 log honest.
 
+### the release notice
+
+Nothing in a healthy command says a newer Fox is out, so every command ends by
+comparing the mounted version with the latest release, and prints one box when
+the game is behind:
+
+```txt
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ addons/fox is 1.9.0, and 2.0.2 is out                                       │
+│                                                                             │
+│ run `fox upgrade` to pin it, or `fox upgrade --no-import` to reimport later │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+The answer is **cached**, once for the machine, in `.fox/latest-release.json`
+inside your home directory: GitHub is asked at most once every six hours, so
+the commands in between touch nothing but the disk. That cache is shared by
+every game on the machine, and `fox upgrade` refreshes it as it runs.
+
+The check never delays a command and never fails one: it gives GitHub two
+seconds, and a call that does not answer is cached as an attempt, so a machine
+offline for an afternoon does not pay that timeout on every command. A failed
+check keeps reporting the last release it knew about.
+
+It stays quiet in every case but a pinned mount strictly behind a release: a
+linked mount follows your checkout and is supposed to differ from any release.
+Set `FOX_NO_UPGRADE_CHECK=1` to silence it altogether: a CI job pins its version
+on purpose and has no use for a line telling it to move.
+
 ## import
 
 ```sh

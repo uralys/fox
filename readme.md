@@ -100,7 +100,9 @@ registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
 autoload your game already declares.
 
 Your game is now pinned, and moves to the next Fox when you decide to:
-`fox upgrade` swaps `addons/fox` for a released version, whole.
+`fox upgrade` swaps `addons/fox` for a released version, whole. Every other
+command tells you when there is one to take, reading the latest release at most
+once every six hours.
 
 The full walkthrough (prerequisites, main scene, optional autoloads) is in
 [Installing Fox](./docs/install.md).

@@ -142,6 +142,27 @@ const createLogger = ({ name, color }) => {
 };
 
 // -----------------------------------------------------------------------------
+// A standalone box, outside any logger tree: used by the lines that comment on
+// the whole command rather than on one of its steps (the tag gap closing a
+// listing, a new release waiting to be pinned). Colour carries the verdict.
+
+const logBox = (lines, color = colors.white) => {
+  const width = lines.reduce((max, line) => Math.max(max, visibleLength(line)), 0) + 2;
+  const edge = (left, right) => `${color}${left}${'─'.repeat(width)}${right}${colors.reset}`;
+  const bar = `${color}${SYMBOLS.pipe}${colors.reset}`;
+
+  console.log('');
+  console.log(edge('┌', '┐'));
+
+  for (const line of lines) {
+    const padding = width - visibleLength(line) - 1;
+    console.log(`${bar} ${line}${' '.repeat(Math.max(0, padding))}${bar}`);
+  }
+
+  console.log(edge('└', '┘'));
+};
+
+// -----------------------------------------------------------------------------
 
 const logHeader = (title) => {
   console.log('');
@@ -177,6 +198,7 @@ export {
   godotLogger,
   iconsLogger,
   linkLogger,
+  logBox,
   logHeader,
   presetLogger,
   presetsLogger,

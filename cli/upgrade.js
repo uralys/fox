@@ -17,13 +17,13 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { reimportProject } from './import-assets.js';
+import { fetchLatestTag } from './latest-release.js';
 import { upgradeLogger } from './logger.js';
 import { ADDON_MOUNT, describeMount, LINKED, MISSING, PINNED, readMountedVersion } from './resolve-fox-mount.js';
 
 // -----------------------------------------------------------------------------
 
 const REPOSITORY = 'uralys/fox';
-const LATEST_RELEASE = `https://api.github.com/repos/${REPOSITORY}/releases/latest`;
 const TARBALL = (tag) => `https://github.com/${REPOSITORY}/archive/refs/tags/${tag}.tar.gz`;
 
 // Tags carry the `v`, the release title and `plugin.cfg` do not: both spellings
@@ -40,15 +40,10 @@ const resolveTargetTag = async (requested) => {
 
   upgradeLogger.log('Reading the latest release');
 
-  const response = await fetch(LATEST_RELEASE, {
-    headers: { accept: 'application/vnd.github+json' },
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub answered ${response.status} for the latest release`);
-  }
-
-  return (await response.json()).tag_name;
+  // No timeout here, unlike the end of command notice: this one was asked for,
+  // and it caches what it reads, so the next commands stay quiet about a
+  // release that was just pinned.
+  return await fetchLatestTag();
 };
 
 // -----------------------------------------------------------------------------

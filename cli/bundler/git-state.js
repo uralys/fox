@@ -11,7 +11,7 @@ import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
-import { colors } from '../logger.js';
+import { colors, logBox } from '../logger.js';
 
 // -----------------------------------------------------------------------------
 // Enough commits to recognize what the tag is missing, not the whole branch.
@@ -81,23 +81,6 @@ export const tagStateLine = (state) => {
 // tree those bytes were supposed to come from. Red, because a tree ahead of its
 // tag makes every version printed above ambiguous.
 
-const boxed = (lines, color) => {
-  const width = lines.reduce((max, line) => Math.max(max, line.length), 0) + 2;
-  const edge = (left, right) => `${color}${left}${'─'.repeat(width)}${right}${colors.reset}`;
-  const bar = `${color}│${colors.reset}`;
-
-  console.log('');
-  console.log(edge('┌', '┐'));
-
-  for (const line of lines) {
-    console.log(`${bar} ${line}${' '.repeat(width - line.length - 1)}${bar}`);
-  }
-
-  console.log(edge('└', '┘'));
-};
-
-// -----------------------------------------------------------------------------
-
 export const printTagState = (state, projectVersion) => {
   const line = tagStateLine(state);
 
@@ -121,5 +104,5 @@ export const printTagState = (state, projectVersion) => {
     lines.push('', 'run `fox tag [patch|minor|major]` to bump the version and tag these commits');
   }
 
-  boxed(lines, line.clean ? colors.green : colors.red);
+  logBox(lines, line.clean ? colors.green : colors.red);
 };

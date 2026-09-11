@@ -25,6 +25,7 @@ import generateScreenshots from './generate-screenshots.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import importAssets from './import-assets.js';
+import { notifyLatestRelease } from './latest-release.js';
 import link from './link.js';
 import ls from './ls/index.js';
 import { ADDON_MOUNT, describeMountLabel, resolveFoxPath } from './resolve-fox-mount.js';
@@ -328,8 +329,32 @@ const cli = async (yargs, params) => {
 
 // -----------------------------------------------------------------------------
 
+// The last thing every command prints, success or failure: the mounted addon is
+// compared with the latest release, and a newer one gets a line. Asking GitHub
+// is rate limited to once every six hours for the whole machine, so this costs
+// nothing on the commands in between (see latest-release.js).
+//
+// The two commands that move the mount are left out: `upgrade` has just pinned
+// what it was told to, and `link` deliberately leaves the project off any
+// release.
+const MOUNT_COMMANDS = [UPGRADE, UPGRADE_ALIAS, LINK];
+
+const notifyNewRelease = async (command) => {
+  if (!commands.includes(command) || MOUNT_COMMANDS.includes(command)) {
+    return;
+  }
+
+  await notifyLatestRelease();
+};
+
+// -----------------------------------------------------------------------------
+
 const execute = async () => {
   const params = process.argv.slice(3);
+
+  // Read before yargs is built: the factory below SPLICES `process.argv`, so
+  // the command name is gone from it by the time the command has run.
+  const command = process.argv[2];
 
   const yargs = yargsFactory(process.argv.splice(2))
     .usage('Usage: fox <command> [options]')
@@ -397,6 +422,8 @@ const execute = async () => {
     foxLogger.error(e.message || String(e));
     process.exitCode = 1;
   }
+
+  await notifyNewRelease(command);
 };
 
 execute();
