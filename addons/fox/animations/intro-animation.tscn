@@ -1,14 +1,14 @@
 [gd_scene load_steps=12 format=3 uid="uid://cdceudy16q3st"]
 
 [ext_resource type="Script" uid="uid://djnatkhpe7v5s" path="res://addons/fox/animations/intro-animation.gd" id="1_ubxrs"]
-[ext_resource type="Texture2D" uid="uid://cbim7dv1kofo4" path="res://addons/fox/assets/splash/uralys-banner.webp" id="2_01e2g"]
-[ext_resource type="Texture2D" uid="uid://cg7fbtk88iqkf" path="res://addons/fox/assets/splash/u.png" id="3_w0kbj"]
-[ext_resource type="Texture2D" uid="uid://dsbll0xbc4qu8" path="res://addons/fox/assets/splash/r.png" id="4_4qfkm"]
-[ext_resource type="Texture2D" uid="uid://dv47yowudwflp" path="res://addons/fox/assets/splash/a.png" id="5_pmoyp"]
-[ext_resource type="Texture2D" uid="uid://m57u8kqidkga" path="res://addons/fox/assets/splash/l.png" id="6_pyk4c"]
-[ext_resource type="Texture2D" uid="uid://daj0n7uiyq5fj" path="res://addons/fox/assets/splash/y.png" id="7_jsixp"]
-[ext_resource type="Texture2D" uid="uid://c6u3p83wmrca4" path="res://addons/fox/assets/splash/s.png" id="8_x6n67"]
-[ext_resource type="Texture2D" uid="uid://cbcdpk2whiio" path="res://addons/fox/assets/splash/dot.png" id="9_logd5"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/uralys-banner.webp" id="2_01e2g"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/u.png" id="3_w0kbj"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/r.png" id="4_4qfkm"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/a.png" id="5_pmoyp"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/l.png" id="6_pyk4c"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/y.png" id="7_jsixp"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/s.png" id="8_x6n67"]
+[ext_resource type="Texture2D" path="res://addons/fox/assets/splash/dot.png" id="9_logd5"]
 
 [sub_resource type="Gradient" id="Gradient_xy75g"]
 offsets = PackedFloat32Array(0)
