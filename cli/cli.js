@@ -24,6 +24,7 @@ import generateIcons from './generate-icons.js';
 import generateScreenshots from './generate-screenshots.js';
 import generateSplashscreens from './generate-splashscreens.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
+import { printHelp } from './help.js';
 import importAssets from './import-assets.js';
 import { notifyLatestRelease } from './latest-release.js';
 import link from './link.js';
@@ -61,30 +62,75 @@ const IMPORT = 'import';
 
 // -----------------------------------------------------------------------------
 
-const commands = [
-  TAG,
-  UPGRADE,
-  UPGRADE_ALIAS,
-  LINK,
-  EXPORT,
-  EXPORT_WEB,
-  PUBLISH,
-  SWITCH,
-  LS,
-  LS_STEAM,
-  LS_ITCH,
-  GENERATE_ICONS,
-  GENERATE_SCREENSHOTS,
-  GENERATE_STEAM_SCREENSHOTS,
-  GENERATE_SPLASHSCREENS,
-  GENERATE_BOOT_SPLASH,
-  UPDATE_PO_FILES,
-  RUN_EDITOR,
-  RUN_GAME,
-  IMPORT,
+// -----------------------------------------------------------------------------
+// THE command table: what fox can do, in the order a reader discovers it. yargs
+// registers itself from this list and `fox --help` renders it (help.js), so a
+// new command is declared once, here.
+
+const COMMAND_GROUPS = [
+  {
+    title: 'play',
+    commands: [
+      [RUN_EDITOR, 'open Godot Editor with your main scene'],
+      [RUN_GAME, 'start your game locally'],
+      [IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])'],
+    ],
+  },
+  {
+    title: 'ship',
+    commands: [
+      [TAG, 'bump version in project.godot and create git tag (fox tag [patch|minor|major])'],
+      [SWITCH, 'switch from a bundle to another (write in override.cfg)'],
+      [EXPORT, 'export a bundle for one of your presets (--env / --target / --platform to skip the prompts)'],
+      [
+        EXPORT_WEB,
+        'scriptable HTML5 export into _build/web, NOT shippable (no bundle bake): use `fox export` to ship a web build',
+      ],
+      [PUBLISH, 'upload exported builds to a store (fox publish [store] [env] [branch], --yes to skip the confirm)'],
+      [LS, 'list local exports and confront them with every store: Steam Deck and itch.io'],
+      [LS_STEAM, 'list local Steam exports and the builds installed on the Steam Deck, and compare them'],
+      [LS_ITCH, 'list local itch exports and the builds live on the itch.io page, and compare them'],
+    ],
+  },
+  {
+    title: 'fox itself',
+    commands: [
+      [UPGRADE, `pin ${ADDON_MOUNT} to a released version and reimport (fox upgrade [version] [--no-import])`],
+      [
+        LINK,
+        `mount your local fox checkout in ${ADDON_MOUNT} to follow it live, and reimport (fox link [path-to-fox])`,
+      ],
+    ],
+  },
+  {
+    title: 'generate',
+    commands: [
+      [
+        GENERATE_ICONS,
+        'generate icons from a base 1200x1200 image, per bundle and per platform, into assets/generated/<bundleId>/{ios,android,desktop,web}',
+      ],
+      [
+        GENERATE_SPLASHSCREENS,
+        'generate the iOS launch storyboard images (@2x, @3x) into assets/generated/<bundleId>/ios',
+      ],
+      [
+        GENERATE_BOOT_SPLASH,
+        'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from addons/fox/components/splash/splash-screen.gd',
+      ],
+      [GENERATE_SCREENSHOTS, 'resize all images in a folder to 2560x1600, to match store requirements'],
+      [GENERATE_STEAM_SCREENSHOTS, 'resize all images from <source-folder> to 1920x1080 for Steam (flat output)'],
+      [UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi'],
+    ],
+  },
 ];
 
-const commandMessage = `choose a command above, example:\nfox ${RUN_EDITOR}`;
+// `upgrade` answers to `update` too, and that alias stays out of the help: it
+// is the same command, not a second one to read.
+const commands = [UPGRADE_ALIAS, ...COMMAND_GROUPS.flatMap(({ commands: group }) => group.map(([name]) => name))];
+
+const DOCS = 'https://github.com/uralys/fox';
+
+const showHelp = () => printHelp(COMMAND_GROUPS, { version: pkg.version, docs: DOCS });
 
 const HELP_FLAGS = ['-h', '--help'];
 
@@ -162,7 +208,7 @@ const cli = async (yargs, params) => {
   const command = yargs.argv._[0];
 
   if (!commands.includes(command)) {
-    yargs.showHelp();
+    showHelp();
     return;
   }
 
@@ -170,7 +216,7 @@ const cli = async (yargs, params) => {
   // argument: `fox publish --help` would otherwise read `--help` as a branch
   // name and trigger a real publish.
   if (params.some((param) => HELP_FLAGS.includes(param))) {
-    yargs.showHelp();
+    showHelp();
     return;
   }
 
@@ -366,52 +412,17 @@ const execute = async () => {
   // the command name is gone from it by the time the command has run.
   const command = process.argv[2];
 
-  const yargs = yargsFactory(process.argv.splice(2))
-    .usage('Usage: fox <command> [options]')
-    .command(TAG, 'bump version in project.godot and create git tag (fox tag [patch|minor|major])')
-    .command(UPGRADE, `pin ${ADDON_MOUNT} to a released version and reimport (fox upgrade [version] [--no-import])`)
-    .command(
-      LINK,
-      `mount your local fox checkout in ${ADDON_MOUNT} to follow it live, and reimport (fox link [path-to-fox])`,
+  const yargs = COMMAND_GROUPS.flatMap(({ commands: group }) => group)
+    .reduce(
+      (parser, [name, description]) => parser.command(name, description),
+      yargsFactory(process.argv.splice(2)).scriptName('fox').usage('Usage: fox <command> [options]'),
     )
-    .command(RUN_EDITOR, 'open Godot Editor with your main scene')
-    .command(RUN_GAME, 'start your game locally')
-    .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
-    .command(EXPORT, 'export a bundle for one of your presets (--env / --target / --platform to skip the prompts)')
-    .command(
-      EXPORT_WEB,
-      'scriptable HTML5 export into _build/web, NOT shippable (no bundle bake): use `fox export` to ship a web build',
-    )
-    .command(
-      PUBLISH,
-      'upload exported builds to a store (fox publish [store] [env] [branch], --yes to skip the confirm)',
-    )
-    .command(SWITCH, 'switch from a bundle to another (write in override.cfg)')
-    .command(LS, 'list local exports and confront them with every store: Steam Deck and itch.io')
-    .command(LS_STEAM, 'list local Steam exports and the builds installed on the Steam Deck, and compare them')
-    .command(LS_ITCH, 'list local itch exports and the builds live on the itch.io page, and compare them')
-    .command(UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi')
-    .command(
-      GENERATE_ICONS,
-      'generate icons from a base 1200x1200 image, per bundle and per platform, into assets/generated/<bundleId>/{ios,android,desktop,web}',
-    )
-    .command(
-      GENERATE_SPLASHSCREENS,
-      'generate the iOS launch storyboard images (@2x, @3x) into assets/generated/<bundleId>/ios',
-    )
-    .command(
-      GENERATE_BOOT_SPLASH,
-      'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from addons/fox/components/splash/splash-screen.gd',
-    )
-    .command(GENERATE_SCREENSHOTS, 'resize all images in a folder to 2560x1600, to match store requirements')
-    .command(GENERATE_STEAM_SCREENSHOTS, 'resize all images from <source-folder> to 1920x1080 for Steam (flat output)')
-    .demandCommand(1, 1, commandMessage, commandMessage)
-    .help('h')
+    // fox prints its own help (help.js): yargs would render the same table
+    // without colours, wrapped inside words, under headings translated to the
+    // system locale.
+    .help(false)
     .version(pkg.version)
-    .alias('version', 'v')
-    .epilog(`Fox CLI v${pkg.version}
-      Documentation: https://github.com/uralys/fox
-      Icons, splashscreens and screenshots commands require ImageMagick https://imagemagick.org/index.php`);
+    .alias('version', 'v');
 
   // -----------------------------------------------------------------------------
 
