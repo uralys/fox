@@ -208,7 +208,7 @@ const cli = async (yargs, params) => {
   const command = yargs.argv._[0];
 
   if (!commands.includes(command)) {
-    showHelp();
+    await showHelp();
     return;
   }
 
@@ -216,7 +216,7 @@ const cli = async (yargs, params) => {
   // argument: `fox publish --help` would otherwise read `--help` as a branch
   // name and trigger a real publish.
   if (params.some((param) => HELP_FLAGS.includes(param))) {
-    showHelp();
+    await showHelp();
     return;
   }
 
@@ -403,13 +403,16 @@ const isHelpInvocation = (command, params) =>
   !command || HELP_FLAGS.includes(command) || params.some((param) => HELP_FLAGS.includes(param));
 
 const notifyNewRelease = async (command, params) => {
-  const force = isHelpInvocation(command, params);
+  const isHelp = isHelpInvocation(command, params);
 
-  if (!force && (!commands.includes(command) || MOUNT_COMMANDS.includes(command))) {
+  if (!isHelp && (!commands.includes(command) || MOUNT_COMMANDS.includes(command))) {
     return;
   }
 
-  await notifyLatestRelease(process.cwd(), { force });
+  // The help footer has just asked GitHub on the spot and written the answer to
+  // the cache, so the mount notice reads a value seconds old: forcing it again
+  // here would be a second call for the same tag.
+  await notifyLatestRelease(process.cwd());
 };
 
 // -----------------------------------------------------------------------------

@@ -9,6 +9,7 @@
 // itself from it, and this renders it.
 
 import { isLinkedCli } from './install-cli.js';
+import { describeReleaseStatus } from './latest-release.js';
 import { colors } from './logger.js';
 
 // -----------------------------------------------------------------------------
@@ -73,7 +74,28 @@ const printCommand = (name, description, column, available) => {
 
 // -----------------------------------------------------------------------------
 
-export const printHelp = (groups, { version, docs }) => {
+// The footer is the only line of the help that waits for anything: the table is
+// already on screen when GitHub is asked, so the delay is never in the way of
+// what was typed. The answer is forced rather than read from the six hour
+// cache, because `fox` and `fox --help` are exactly when someone wonders where
+// they stand, and it refreshes the cache the mount notice reads right after.
+const releaseMark = async (version) => {
+  const { state, latest } = await describeReleaseStatus(version, { force: true });
+
+  if (state === 'current') {
+    return `  ${colors.green}${colors.bold}✓ up to date${colors.reset}`;
+  }
+
+  if (state === 'behind') {
+    return `  ${colors.yellow}${colors.bold}↑ ${latest} is out${colors.reset}`;
+  }
+
+  return '';
+};
+
+// -----------------------------------------------------------------------------
+
+export const printHelp = async (groups, { version, docs }) => {
   const names = groups.flatMap(({ commands }) => commands.map(([name]) => name));
   const column = names.reduce((max, name) => Math.max(max, name.length), 0) + GUTTER;
   const available = Math.max(width() - column - 2, 24);
@@ -95,9 +117,11 @@ export const printHelp = (groups, { version, docs }) => {
   // holds, and the version beside it is then not a released one.
   const attachment = isLinkedCli() ? ` ${colors.yellow}(symlinked)` : '';
 
+  const mark = await releaseMark(version);
+
   console.log('');
   console.log(
-    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.green}${colors.bold}${docs}${colors.reset}`,
+    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.green}${colors.bold}${docs}${colors.reset}${mark}`,
   );
   console.log('');
 };

@@ -137,6 +137,31 @@ const isNewer = (candidate, current) => {
 
 // -----------------------------------------------------------------------------
 
+// Where a version stands against the latest release, for the footer of the help
+// to say it in one word. The CLI is asked about itself here, not about the
+// mount: the mounted addon has its own notice below, and the two are pinned
+// separately.
+//
+// `unknown` covers everything the check could not answer: no network, GitHub
+// silent, or the opt out set. The footer stays quiet then rather than claiming
+// a verdict it does not have.
+const describeReleaseStatus = async (version, { force = false } = {}) => {
+  if (process.env[OPT_OUT]) {
+    return { state: 'unknown' };
+  }
+
+  const tag = await resolveLatestTag({ force });
+  const latest = tag?.replace(/^v/, '');
+
+  if (!latest) {
+    return { state: 'unknown' };
+  }
+
+  return { state: isNewer(latest, version) ? 'behind' : 'current', latest };
+};
+
+// -----------------------------------------------------------------------------
+
 // Silent in every case but one: a pinned mount strictly behind a release. A
 // linked mount follows a checkout and is SUPPOSED to differ from any release,
 // and a missing one has nothing to compare.
@@ -174,4 +199,4 @@ const notifyLatestRelease = async (projectRoot = process.cwd(), { force = false 
 
 // -----------------------------------------------------------------------------
 
-export { fetchLatestTag, notifyLatestRelease };
+export { describeReleaseStatus, fetchLatestTag, notifyLatestRelease };
