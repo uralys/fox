@@ -43,6 +43,26 @@ var STICK_RELEASE: float = 0.25
 var STICK_TURN: float = 0.35
 var STICK_NEUTRAL_DEBOUNCE_MS: int = 40
 
+# ── Diagnostics ───────────────────────────────────────────────────────────────
+# ONE stream, off by default: a log nobody asked for is a log nobody reads.
+#   STICK_TRACE — ONE readable timeline of the analog stick: engage, turn, dip,
+#     debounce, release, on a clock reset at each fresh push (`+NNNms` since the
+#     push started), so a single flick can be read as a story. A consumer (the
+#     game) prints its own lines on the SAME clock via `trace_ms()` / `trace()`,
+#     which is what makes "the stick let go here, the pawn stepped there" legible.
+var STICK_TRACE: bool = false
+# Keycodes that toggle STICK_TRACE live (empty = no toggle, the default). A trace
+# is read DURING a session, on the gesture that misbehaves: relaunching the game to
+# set an environment variable means replaying everything up to the screen that
+# showed the problem, and floods the log with the way back. The GAME arms these,
+# and only in a build where they belong (see InputTuning).
+#
+# Several keycodes, because a toggle the OS eats is a toggle that does not exist:
+# macOS keeps the F-row for its own media keys unless the user opted out, so an
+# F10 press never reaches the app at all — no event, nothing to log, and the
+# session looks broken for no visible reason.
+var TRACE_TOGGLE_KEYS: Array[int] = []
+
 # Speed-adaptive turn angle (game-driven via `stick_speed_factor`). The deflection a
 # turn must reach AWAY from the base axis before it commits: the classic 45° quadrant
 # split at rest, shrinking toward STICK_TURN_ANGLE_FAST at top speed so a fast,
@@ -179,6 +199,17 @@ var _left_axis_by_device: Dictionary = {}   # device -> Vector2
 var _right_axis_by_device: Dictionary = {}  # device -> Vector2
 var _stick_direction: int = -1
 var _neutral_pending: bool = false  # a release is being debounced (see STICK_NEUTRAL_DEBOUNCE_MS)
+var _neutral_pending_since_ms: int = 0  # when the stick physically dipped below RELEASE
+# Trace clock: reset when a push STARTS from neutral, so every traced line reads
+# as an offset inside that one push (`+0` = the stick just engaged).
+# Stick history (unthrottled, window-sized), so a consumer can ask what the stick is
+# DOING rather than only where it is: springing back, or still sweeping through the
+# cardinal it currently reads as. Both are things a stick can tell about itself that
+# a D-pad cannot, and both arrive BEFORE the latch that would report them.
+var _stick_history: Array = []   # [[ticks_msec, magnitude, angle_deg], …] oldest first
+var _trace_origin_ms: int = 0
+var _trace_last_sample_ms: int = 0
+var _trace_last_sample_mag: float = -1.0
 
 # Set by the game (0..1): how fast the controlled character is moving. 0 keeps the
 # precise 45° split (default for menus / other fox games); toward 1 the turn angle
@@ -213,17 +244,13 @@ func _ready():
 	_joypad_dpad_to_direction[JOY_BUTTON_DPAD_LEFT] = DIR_LEFT
 	_joypad_dpad_to_direction[JOY_BUTTON_DPAD_RIGHT] = DIR_RIGHT
 
-	for device in Input.get_connected_joypads():
-		print('[DIAG Controls] connected at ready: device=', device, ' name=', Input.get_joy_name(device), ' guid=', Input.get_joy_guid(device))
 	Input.joy_connection_changed.connect(func(device, connected):
-		print('[DIAG Controls] joy_connection_changed device=', device, ' connected=', connected, ' name=', Input.get_joy_name(device))
 		if not connected:
 			# Drop its stale axis reading — otherwise a disconnected pad's last
 			# non-neutral value keeps "winning" _strongest_axis_vector() forever.
 			_left_axis_by_device.erase(device)
 			_right_axis_by_device.erase(device)
 	)
-	set_process(true)
 
 # ------------------------------------------------------------------------------
 
@@ -234,8 +261,6 @@ func _input(event):
 		_handle_joypad_button(event)
 	elif event is InputEventJoypadMotion:
 		_handle_joypad_motion(event)
-	elif event is InputEventScreenTouch:
-		print('[DIAG Controls] RAW ScreenTouch index=', event.index, ' pressed=', event.pressed, ' pos=', event.position)
 
 # ------------------------------------------------------------------------------
 # Keyboard
@@ -255,6 +280,12 @@ func _handle_key(event: InputEventKey):
 
 	var keycode := event.keycode
 
+	if TRACE_TOGGLE_KEYS.has(keycode):
+		if event.pressed:
+			STICK_TRACE = not STICK_TRACE
+			print('[trace] input trace ', 'ON' if STICK_TRACE else 'OFF', ' (toggle key)')
+		return
+
 	var key_action := _key_to_button(keycode)
 	if key_action != '':
 		# Steam Deck (and any pad) injects a synthetic keyboard key alongside the
@@ -264,9 +295,7 @@ func _handle_key(event: InputEventKey):
 		# not mere presence — see GAMEPAD_KEY_MIRROR_MS). A real desktop keypress with
 		# no recent gamepad event always goes through, even beside an idle controller.
 		if _is_gamepad_mirror_action(key_action, event.pressed):
-			print('[DIAG Controls] keyboard key_action=', key_action, ' DROPPED as gamepad mirror, pressed=', event.pressed)
 			return
-		print('[DIAG Controls] keyboard key_action=', key_action, ' keycode=', keycode, ' pressed=', event.pressed, ' (last_input_was_gamepad was ', last_input_was_gamepad, ')')
 		last_input_was_gamepad = false
 		if event.pressed:
 			_emit_button_pressed(key_action)
@@ -395,7 +424,6 @@ func _is_gamepad_mirror_direction(direction: int, pressed: bool) -> bool:
 
 func _handle_joypad_button(event: InputEventJoypadButton):
 	var button := event.button_index
-	print('[DIAG Controls] joypad button_index=', button, ' pressed=', event.pressed, ' device=', event.device)
 	# A gamepad button is the source of truth for the mirror dedup below and marks the
 	# pad as the last-active device (set BEFORE any emit so the interpreter reads it).
 	last_input_was_gamepad = true
@@ -465,7 +493,6 @@ func _emit_direction_pressed(direction: int, from_gamepad: bool):
 	# (a menu cursor jumping two items, an extra confirm sound) per SESSION diagnosis.
 	if _direction_down.has(direction):
 		return
-	print('[DIAG Controls] EMITTED direction_pressed direction=', direction)
 	_direction_down[direction] = from_gamepad
 	direction_pressed.emit(direction, from_gamepad)
 
@@ -479,45 +506,12 @@ func _emit_direction_released(direction: int, from_gamepad: bool):
 # Joypad motion — analog stick (hysteresis) + analog triggers (edge)
 # ------------------------------------------------------------------------------
 
-# DIAG — counts raw motion events per device over a rolling window so we can
-# compare event VOLUME between devices (e.g. Deck's own sticks vs an external
-# pad) without flooding the log with a print per axis tick. Flushed by _process.
-var _diag_motion_count: Dictionary = {}   # device -> count since last flush
-var _diag_motion_elapsed: float = 0.0
-
-# DIAG — peak trigger value (L2/R2) per device over the same rolling window, so we
-# can see whether a pad's analog triggers actually reach STICK_ENGAGE (0.5) at all
-# (e.g. a different resting/max range under Steam Input) without flooding the log.
-var _diag_trigger_peak: Dictionary = {}  # "device:L"/"device:R" -> peak value since last flush
-
-func _process(delta: float) -> void:
-	_diag_motion_elapsed += delta
-	if _diag_motion_elapsed < 1.0:
-		return
-	_diag_motion_elapsed = 0.0
-	if not _diag_motion_count.is_empty():
-		for device in _diag_motion_count:
-			print('[DIAG Controls] motion events/s device=', device, ' count=', _diag_motion_count[device])
-		_diag_motion_count.clear()
-	if not _diag_trigger_peak.is_empty():
-		for key in _diag_trigger_peak:
-			print('[DIAG Controls] trigger peak/s ', key, '=', _diag_trigger_peak[key])
-		_diag_trigger_peak.clear()
-
-func _diag_track_trigger_peak(device: int, side: String, value: float) -> void:
-	var key := str(device) + ':' + side
-	if value > float(_diag_trigger_peak.get(key, 0.0)):
-		_diag_trigger_peak[key] = value
-
 func _handle_joypad_motion(event: InputEventJoypadMotion):
-	_diag_motion_count[event.device] = int(_diag_motion_count.get(event.device, 0)) + 1
 	match event.axis:
 		JOY_AXIS_TRIGGER_LEFT:
-			_diag_track_trigger_peak(event.device, 'L', event.axis_value)
 			_handle_trigger(event.axis_value, true, event.device)
 			return
 		JOY_AXIS_TRIGGER_RIGHT:
-			_diag_track_trigger_peak(event.device, 'R', event.axis_value)
 			_handle_trigger(event.axis_value, false, event.device)
 			return
 		JOY_AXIS_LEFT_X:
@@ -567,7 +561,7 @@ func _handle_trigger(value: float, is_left: bool, device: int):
 # per-frame drift overwrite the active one, dropping magnitude below RELEASE every
 # frame → a flood of re-latches. Comparing by magnitude instead means whichever
 # stick the player is actually holding always dominates any other idle noise.
-var _diag_strongest_device: int = -1  # which device's axis won the last pick
+var _strongest_device: int = -1  # which device's axis won the last pick
 
 func _strongest_axis_vector() -> Vector2:
 	var best := Vector2.ZERO
@@ -582,13 +576,98 @@ func _strongest_axis_vector() -> Vector2:
 		if v.length() > best.length():
 			best = v
 			best_device = device
-	_diag_strongest_device = best_device
+	_strongest_device = best_device
 	return best
+
+# How far back `stick_is_releasing` compares, and the drop over that window that
+# counts as a spring-back rather than a hand relaxing. A released stick falls the
+# whole way in a frame or two (measured: 0.85 -> 0.0 in 16ms), while a hand easing
+# off drifts by a hundredth per frame — the two do not overlap.
+var STICK_FALL_WINDOW_MS: int = 32
+var STICK_FALL_DROP: float = 0.12
+
+# Same idea for rotation: how far back `stick_is_turning` compares, and the angle
+# swept over that window that means the stick is still travelling. A thumb holding
+# a cardinal jitters by a degree or two; a sweep from one cardinal to the next runs
+# at 1000°/s and up (measured: 90° in 66ms), so the two do not overlap either.
+var STICK_SWEEP_WINDOW_MS: int = 32
+var STICK_SWEEP_DEGREES: float = 20.0
+
+# Is the stick's magnitude collapsing right now? True from the first frame of a
+# spring-back, which is EARLIER than the dip below STICK_RELEASE and much earlier
+# than the debounced release. It answers "this push is over" while the stick is
+# still deflected, so a consumer can stop treating it as held without waiting for a
+# threshold that arrives after the fact.
+func stick_is_releasing() -> bool:
+	if _stick_direction == -1 or _stick_history.is_empty():
+		return false
+	var current: float = _stick_history[-1][1]
+	var reference = _history_reference(STICK_FALL_WINDOW_MS)
+	if reference == null:
+		return false
+	return float(reference[1]) - current >= STICK_FALL_DROP
+
+# Is the stick still SWEEPING through the cardinal it currently reads as? True while
+# the thumb travels from one direction to the next, before the new one latches. The
+# latched direction is a snapshot of an arc in motion: on a 180° sweep the middle
+# cardinal is transit, not a destination, and a consumer that repeats an action per
+# held direction (a step, an auto-fire) would spend the transit as if it had been
+# aimed at. A D-pad has no transit — its two buttons are 17ms apart — which is why
+# this reads as "the stick overshoots the corner".
+func stick_is_turning() -> bool:
+	if _stick_direction == -1 or _stick_history.is_empty():
+		return false
+	var last: Array = _stick_history[-1]
+	if float(last[1]) < STICK_TURN:
+		return false
+	var reference = _history_reference(STICK_SWEEP_WINDOW_MS)
+	if reference == null or float(reference[1]) < STICK_TURN:
+		return false
+	return absf(angle_difference(deg_to_rad(float(reference[2])), deg_to_rad(float(last[2])))) >= deg_to_rad(STICK_SWEEP_DEGREES)
+
+# The newest history entry at least `window` ms old — the "where it was" a
+# derivative needs. Null when the history does not reach that far back.
+func _history_reference(window_ms: int):
+	var now := Time.get_ticks_msec()
+	var reference = null
+	for entry in _stick_history:
+		if now - int(entry[0]) >= window_ms:
+			reference = entry
+	return reference
+
+# Milliseconds since the current push engaged — the shared clock of the trace. A
+# consumer prints its own lines against it so device events and game events read
+# on one timeline.
+func trace_ms() -> int:
+	return Time.get_ticks_msec() - _trace_origin_ms
+
+# Print one traced line (no-op while STICK_TRACE is off). `who` is the source tag:
+# `stick` here, the game passes its own (`pawn`, …).
+func trace(who: String, event: String, detail: String = '') -> void:
+	if not STICK_TRACE:
+		return
+	var stamp := '+' + str(trace_ms()).pad_zeros(4)
+	print('[trace] ', stamp, 'ms  ', who.rpad(6), ' ', event.rpad(9), ' ', detail)
+
+# How long the debounce still owes the pending stick release (0 when none is
+# pending). The stick is ALREADY back below RELEASE when this is non-zero: the
+# latch is only kept alive in case the dip is a flick THROUGH the centre. A
+# consumer that would otherwise act on a still-held direction (a step repeat,
+# an auto-fire) can wait out this remainder instead of counting the debounce as
+# hold time — the D-pad has no such latency, and the stick must not feel heavier
+# for it. Generic: it reports the DEVICE state, no game semantics.
+func stick_release_pending_ms() -> int:
+	if not _neutral_pending:
+		return 0
+	var elapsed := Time.get_ticks_msec() - _neutral_pending_since_ms
+	return maxi(0, STICK_NEUTRAL_DEBOUNCE_MS - elapsed)
 
 func _update_stick():
 	var vector := _strongest_axis_vector()
 	var magnitude := vector.length()
 	stick_moved.emit(vector)
+	_record_stick(vector, magnitude)
+	_trace_sample(magnitude)
 
 	var desired := _stick_direction
 	if magnitude < STICK_RELEASE:
@@ -602,7 +681,7 @@ func _update_stick():
 	if desired == _stick_direction:
 		# Re-deflected before a pending release committed → keep the latch alive.
 		if _neutral_pending:
-			print('[DIAG Controls] stick debounce CANCELLED (re-deflected) magnitude=', magnitude, ' device=', _diag_strongest_device)
+			trace('stick', 'dip-end', 're-deflected, debounce cancelled  mag=' + _fmt_mag(magnitude))
 		_neutral_pending = false
 		return
 
@@ -611,8 +690,9 @@ func _update_stick():
 		# release + re-press. Hold the current latch; a cardinal re-engaging
 		# within the window becomes a direct turn, else _commit_neutral fires.
 		if not _neutral_pending:
-			print('[DIAG Controls] stick debounce START magnitude=', magnitude, ' device=', _diag_strongest_device, ' held_direction=', _stick_direction)
+			trace('stick', 'dip', 'below RELEASE ' + _fmt_mag(STICK_RELEASE) + '  mag=' + _fmt_mag(magnitude) + '  debounce=' + str(STICK_NEUTRAL_DEBOUNCE_MS) + 'ms  still-held=' + _dir_name(_stick_direction))
 			_neutral_pending = true
+			_neutral_pending_since_ms = Time.get_ticks_msec()
 			get_tree().create_timer(STICK_NEUTRAL_DEBOUNCE_MS / 1000.0).timeout.connect(_commit_neutral)
 		return
 
@@ -632,10 +712,18 @@ func _commit_neutral():
 func _latch_stick(direction: int, magnitude: float):
 	if direction == _stick_direction:
 		return
-	print('[DIAG Controls] stick latch: ', _stick_direction, ' -> ', direction, ' magnitude=', magnitude, ' device=', _diag_strongest_device)
+	if direction == -1:
+		trace('stick', 'release', 'committed after debounce, push lasted ' + str(trace_ms()) + 'ms')
+	elif _stick_direction == -1:
+		# A fresh push: restart the clock so the whole gesture reads from +0.
+		_trace_origin_ms = Time.get_ticks_msec()
+		_trace_last_sample_mag = -1.0
+		trace('stick', 'engage', _dir_name(direction) + '  mag=' + _fmt_mag(magnitude) + '  engage-at=' + _fmt_mag(STICK_ENGAGE) + '  device=' + str(_strongest_device))
+	else:
+		trace('stick', 'turn', _dir_name(_stick_direction) + ' -> ' + _dir_name(direction) + '  mag=' + _fmt_mag(magnitude))
 	if direction != -1:
 		last_input_was_gamepad = true
-		last_gamepad_device = _diag_strongest_device
+		last_gamepad_device = _strongest_device
 		last_gamepad_input_ms = Time.get_ticks_msec()
 	_stick_direction = direction
 	# Restart the base-commit clock on every latch and drop the base on release, so
@@ -644,6 +732,44 @@ func _latch_stick(direction: int, magnitude: float):
 	if direction == -1:
 		_stick_base_direction = -1
 	stick_direction_changed.emit(direction, magnitude)
+
+func _record_stick(vector: Vector2, magnitude: float) -> void:
+	var now := Time.get_ticks_msec()
+	_stick_history.append([now, magnitude, rad_to_deg(vector.angle())])
+	# Keep one sample older than the longest window (the reference) and all newer.
+	var keep := maxi(STICK_FALL_WINDOW_MS, STICK_SWEEP_WINDOW_MS)
+	while _stick_history.size() > 2 and now - int(_stick_history[1][0]) >= keep:
+		_stick_history.remove_at(0)
+
+func _dir_name(direction: int) -> String:
+	match direction:
+		DIR_TOP: return 'TOP'
+		DIR_RIGHT: return 'RIGHT'
+		DIR_BOTTOM: return 'BOTTOM'
+		DIR_LEFT: return 'LEFT'
+	return 'none'
+
+func _fmt_mag(value: float) -> String:
+	return String.num(value, 2)
+
+# The spring-back curve is the whole diagnosis (how long the stick takes to fall
+# under RELEASE is latency the player never asked for), so the magnitude is
+# sampled while a push is live — throttled to one line per 16ms AND per 0.08 of
+# travel, which draws the curve without flooding.
+func _trace_sample(magnitude: float) -> void:
+	if not STICK_TRACE or _stick_direction == -1:
+		return
+	var now := Time.get_ticks_msec()
+	if now - _trace_last_sample_ms < 16:
+		return
+	if _trace_last_sample_mag >= 0.0 and absf(magnitude - _trace_last_sample_mag) < 0.08:
+		return
+	_trace_last_sample_ms = now
+	_trace_last_sample_mag = magnitude
+	var angle := 0.0
+	if not _stick_history.is_empty():
+		angle = float(_stick_history[-1][2])
+	trace('stick', 'axis', 'mag=' + _fmt_mag(magnitude) + '  ang=' + str(int(angle)))
 
 # Speed-adaptive 4-way classification. At rest (stick_speed_factor 0) it is the plain
 # 45° quadrant split. As speed rises, the angle a turn must deflect from the BASE axis
