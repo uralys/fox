@@ -90,12 +90,14 @@ export const printHelp = (groups, { version, docs }) => {
     }
   });
 
-  // The footer closes the page, it does not compete with it: grey, except the
-  // one word worth stopping on. A symlinked CLI runs whatever the checkout
-  // holds, so the version printed beside it is not a released one.
+  // The footer names the tool, so it keeps the magenta no group wears. Only the
+  // attachment steps out of it: a symlinked CLI runs whatever the checkout
+  // holds, and the version beside it is then not a released one.
   const attachment = isLinkedCli() ? ` ${colors.yellow}(symlinked)` : '';
 
   console.log('');
-  console.log(`${colors.gray}fox CLI v${version}${attachment}${colors.reset}  ${colors.gray}${docs}${colors.reset}`);
+  console.log(
+    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.cyan}${docs}${colors.reset}`,
+  );
   console.log('');
 };
