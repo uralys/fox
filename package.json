@@ -19,6 +19,7 @@
   },
   "scripts": {
     "ncu": "npm-check-updates",
+    "version": "node cli/sync-plugin-version.js",
     "lint": "biome check cli/",
     "lint:fix": "biome check --write cli/"
   },
