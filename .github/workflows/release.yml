@@ -1,0 +1,48 @@
+# Packages the addon alone and attaches it to the release.
+#
+# The Godot Asset Library installs whatever archive it is pointed at, straight
+# into the user's project. A GitHub source archive would therefore drop `cli/`,
+# `docs/`, `package.json` and the rest of this repository into their game, so
+# the asset entry points at this zip instead.
+#
+# The archive keeps `addons/` as its root on purpose: Godot's asset installer
+# strips a single top-level folder, except when that folder is `addons/`.
+
+name: release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  addon-zip:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check plugin.cfg against the tag
+        run: |
+          tag='${{ github.event.release.tag_name }}'
+          declared=$(sed -n 's/^version="\(.*\)"$/\1/p' addons/fox/plugin.cfg)
+          if [ "$tag" != "v$declared" ]; then
+            echo "tag $tag does not match plugin.cfg version $declared"
+            exit 1
+          fi
+
+      - name: Package the addon
+        run: |
+          tag='${{ github.event.release.tag_name }}'
+          git archive "$tag" --format=zip \
+            --output="fox-addon-${tag#v}.zip" addons/fox
+
+      - name: Attach it to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag='${{ github.event.release.tag_name }}'
+          gh release upload "$tag" "fox-addon-${tag#v}.zip" \
+            --repo '${{ github.repository }}' --clobber
