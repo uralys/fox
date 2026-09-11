@@ -10,6 +10,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { reimportProject } from './import-assets.js';
 import { linkLogger } from './logger.js';
 import { ADDON_MOUNT, describeMount, LINKED, MISSING, readMountedVersion } from './resolve-fox-mount.js';
 
@@ -56,9 +57,13 @@ const link = async (params = []) => {
 
   linkLogger.success(`${ADDON_MOUNT} -> ${fs.readlinkSync(mountPath)}`);
   linkLogger.warn('Linked: the game now follows your checkout, not a released version');
-  linkLogger.done('run `fox import` to reimport the addon');
 
-  return true;
+  if (params.includes('--no-import')) {
+    linkLogger.done('run `fox import` to reimport the addon');
+    return true;
+  }
+
+  return await reimportProject(projectRoot, linkLogger);
 };
 
 // -----------------------------------------------------------------------------

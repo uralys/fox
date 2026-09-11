@@ -118,11 +118,12 @@ Commands:
   fox tag [patch|minor|major]   bump version in project.godot and create a
                                 git tag
 
-  fox upgrade [version]         pin addons/fox to a released version
-                                (latest by default)
+  fox upgrade [version]         pin addons/fox to a released version and
+                                reimport (latest by default, --no-import
+                                to skip)
 
   fox link [path-to-fox]        mount your local fox checkout in
-                                addons/fox, to follow it live
+                                addons/fox to follow it live, and reimport
 
   fox export                    export a bundle for one of your presets
 
@@ -477,8 +478,14 @@ itch is optional the same way. No `butler`, or a `butler` that cannot reach the 
 ## upgrade and link
 
 A game mounts the Fox runtime at `res://addons/fox` in one of two ways, and
-these two commands switch between them. Both leave the mount ready to reimport:
-run `fox import` afterwards.
+these two commands switch between them. Both reimport the project when they are
+done: a freshly mounted addon carries no `.import` sidecar, since those are
+generated per project and never travel with a release, so Godot could not load
+it until the import ran. Pass `--no-import` to skip that step.
+
+The reimport is also skipped, with a warning and without failing the command,
+when Godot cannot be resolved: mounting the addon on a machine that only builds
+is a legitimate thing to do.
 
 Every command opens on the mount it is about to work with, so the two versions
 at play are never confused: the CLI's own on the left, the mounted addon's on
@@ -491,10 +498,11 @@ the right.
 ```
 
 ```sh
-fox upgrade          # pin addons/fox to the latest release
-fox upgrade 2.1.0    # or to a given one (the `v` prefix is optional)
-fox link             # follow ../fox instead, live
-fox link ../../fox   # or a checkout somewhere else
+fox upgrade             # pin addons/fox to the latest release
+fox upgrade 2.1.0       # or to a given one (the `v` prefix is optional)
+fox upgrade --no-import # leave the reimport to you
+fox link                # follow ../fox instead, live
+fox link ../../fox      # or a checkout somewhere else
 ```
 
 `fox upgrade` **deletes** `addons/fox` before laying the new version down, so a

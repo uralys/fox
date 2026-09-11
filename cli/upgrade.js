@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { reimportProject } from './import-assets.js';
 import { upgradeLogger } from './logger.js';
 import { ADDON_MOUNT, describeMount, LINKED, MISSING, PINNED, readMountedVersion } from './resolve-fox-mount.js';
 
@@ -131,9 +132,13 @@ const upgrade = async (params = []) => {
     fs.cpSync(addon, mountPath, { recursive: true });
 
     upgradeLogger.success(`${ADDON_MOUNT} is now ${version}`);
-    upgradeLogger.done('run `fox import` to reimport the addon');
 
-    return true;
+    if (params.includes('--no-import')) {
+      upgradeLogger.done('run `fox import` to reimport the addon');
+      return true;
+    }
+
+    return await reimportProject(projectRoot, upgradeLogger);
   } catch (error) {
     upgradeLogger.error(error.message);
     return false;

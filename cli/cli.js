@@ -327,8 +327,11 @@ const execute = async () => {
   const yargs = yargsFactory(process.argv.splice(2))
     .usage('Usage: fox <command> [options]')
     .command(TAG, 'bump version in project.godot and create git tag (fox tag [patch|minor|major])')
-    .command(UPGRADE, `pin ${ADDON_MOUNT} to a released version (fox upgrade [version], latest by default)`)
-    .command(LINK, `mount your local fox checkout in ${ADDON_MOUNT}, to follow it live (fox link [path-to-fox])`)
+    .command(UPGRADE, `pin ${ADDON_MOUNT} to a released version and reimport (fox upgrade [version] [--no-import])`)
+    .command(
+      LINK,
+      `mount your local fox checkout in ${ADDON_MOUNT} to follow it live, and reimport (fox link [path-to-fox])`,
+    )
     .command(RUN_EDITOR, 'open Godot Editor with your main scene')
     .command(RUN_GAME, 'start your game locally')
     .command(IMPORT, 'import assets headless, as the editor does when opening the project (fox import [--force])')
