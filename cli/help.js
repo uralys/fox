@@ -13,6 +13,15 @@ import { colors } from './logger.js';
 
 // -----------------------------------------------------------------------------
 
+// One colour per group, in the order the groups are declared. The palette only
+// has to be long enough for the table in cli.js; it cycles rather than running
+// out, so adding a group never prints an undefined escape.
+const GROUP_COLORS = [colors.green, colors.yellow, colors.magenta, colors.blue];
+
+const groupColor = (index) => GROUP_COLORS[index % GROUP_COLORS.length];
+
+// -----------------------------------------------------------------------------
+
 const MIN_WIDTH = 60;
 const MAX_WIDTH = 110;
 const GUTTER = 4;
@@ -46,10 +55,14 @@ const printCommand = (name, description, column, available) => {
   const [first, ...rest] = wrap(description, available);
   const pad = ' '.repeat(column - name.length);
 
+  // Every command name shares one colour while the group titles carry the
+  // palette: the names form a single column the eye can run down, and the
+  // colour is left to say where one group ends and the next starts.
+  //
   // No colour on the description: `\x1b[37m` is not the terminal's own white,
   // it is the palette's white slot, and it comes out dimmed or yellowish on the
   // themes Chris uses. The default foreground is the only real white here.
-  console.log(`  ${colors.cyan}${colors.bold}${name}${colors.reset}${pad}${first}`);
+  console.log(`  ${colors.blue}${colors.bold}${name}${colors.reset}${pad}${first}`);
 
   for (const line of rest) {
     console.log(`  ${' '.repeat(column)}${line}`);
@@ -66,20 +79,21 @@ export const printHelp = (groups, { version, docs }) => {
   console.log('');
   console.log(`${colors.bold}fox${colors.reset} <command> [options]`);
 
-  for (const { title, commands } of groups) {
+  groups.forEach(({ title, commands }, index) => {
     console.log('');
-    console.log(`${colors.cyan}${colors.bold}${title}${colors.reset}`);
+    console.log(`${groupColor(index)}${colors.bold}${colors.underline}${title}${colors.reset}`);
 
     for (const [name, description] of commands) {
       printCommand(name, description, column, available);
     }
-  }
+  });
 
-  const attachment = isLinkedCli() ? ' (symlinked)' : '';
+  // The footer closes the page, it does not compete with it: grey, except the
+  // one word worth stopping on. A symlinked CLI runs whatever the checkout
+  // holds, so the version printed beside it is not a released one.
+  const attachment = isLinkedCli() ? ` ${colors.yellow}(symlinked)` : '';
 
   console.log('');
-  console.log(
-    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.cyan}${docs}${colors.reset}`,
-  );
+  console.log(`${colors.gray}fox CLI v${version}${attachment}${colors.reset}  ${colors.gray}${docs}${colors.reset}`);
   console.log('');
 };

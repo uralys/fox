@@ -3,6 +3,7 @@
 const colors = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
+  underline: '\x1b[4m',
   cyan: '\x1b[36m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',

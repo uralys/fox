@@ -127,12 +127,18 @@ const linkCli = (checkout, logger) => {
 };
 
 // -----------------------------------------------------------------------------
-// Whether the running `fox` is the checkout rather than a published version.
+// Whether the running `fox` is a checkout rather than a published version.
 //
-// The executable in the npm prefix is ALWAYS a symlink, so its own presence
-// proves nothing: what tells `fox link` from `fox upgrade` is the PACKAGE behind
-// it. A pinned install resolves to the very path the bin points at, while a
-// linked checkout resolves somewhere else entirely.
+// The question is not whether symlinks are involved: the executable npm writes
+// is ALWAYS a symlink, and comparing its target to its realpath only catches
+// `npm link`. A hand written symlink pointing straight at `cli/cli.js` in a
+// checkout has a target and a realpath that agree, and used to be reported as a
+// pinned release while running the working tree.
+//
+// What actually separates the two is WHERE the running file lives. A version
+// installed from a tag always sits under `node_modules`; a checkout never does,
+// however it was reached: `npm link`, a hand written symlink, or plain
+// `node cli/cli.js`.
 
 const isLinkedCli = () => {
   const invoked = process.argv[1];
@@ -142,10 +148,8 @@ const isLinkedCli = () => {
   }
 
   try {
-    const pointed = path.resolve(path.dirname(invoked), fs.readlinkSync(invoked));
-    return fs.realpathSync(invoked) !== pointed;
+    return !fs.realpathSync(invoked).split(path.sep).includes('node_modules');
   } catch {
-    // Not a symlink at all: `node cli/cli.js` run straight from a checkout.
     return false;
   }
 };
