@@ -11,6 +11,15 @@ import shell from 'shelljs';
 
 // -----------------------------------------------------------------------------
 
+import { colors } from '../logger.js';
+
+// -----------------------------------------------------------------------------
+// Enough commits to recognize what the tag is missing, not the whole branch.
+
+const MAX_SUBJECTS = 10;
+
+// -----------------------------------------------------------------------------
+
 const git = (command) => {
   const { code, stdout } = shell.exec(`git ${command}`, { silent: true });
   return code === 0 ? stdout.trim() : null;
@@ -34,6 +43,7 @@ export const readTagState = (version) => {
     tagged: true,
     branch: git('rev-parse --abbrev-ref HEAD'),
     ahead: Number.parseInt(git(`rev-list --count ${tag}..HEAD`) || '0', 10),
+    subjects: (git(`log --max-count=${MAX_SUBJECTS} --format='%h %s' ${tag}..HEAD`) || '').split('\n').filter(Boolean),
     dirty: git('status --porcelain') !== '',
   };
 };
@@ -63,4 +73,47 @@ export const tagStateLine = (state) => {
     clean: false,
     message: `${state.branch} is ${state.ahead} ${commits} ahead of ${state.tag}${dirt}: the version below does NOT describe them`,
   };
+};
+
+// -----------------------------------------------------------------------------
+// The listing ends on this box rather than opening on it: everything above is
+// read from bytes and from the stores, and this is the one line that says which
+// tree those bytes were supposed to come from. Red, because a tree ahead of its
+// tag makes every version printed above ambiguous.
+
+const boxed = (lines, color) => {
+  const width = lines.reduce((max, line) => Math.max(max, line.length), 0) + 2;
+  const edge = (left, right) => `${color}${left}${'─'.repeat(width)}${right}${colors.reset}`;
+  const bar = `${color}│${colors.reset}`;
+
+  console.log('');
+  console.log(edge('┌', '┐'));
+
+  for (const line of lines) {
+    console.log(`${bar} ${line}${' '.repeat(width - line.length - 1)}${bar}`);
+  }
+
+  console.log(edge('└', '┘'));
+};
+
+// -----------------------------------------------------------------------------
+
+export const printTagState = (state, projectVersion) => {
+  const line = tagStateLine(state);
+
+  if (!line) {
+    return;
+  }
+
+  const lines = [`project.godot is ${projectVersion}`, line.message];
+
+  if (state.subjects?.length) {
+    lines.push('', ...state.subjects.map((subject) => `  ${subject}`));
+
+    if (state.ahead > state.subjects.length) {
+      lines.push(`  ... and ${state.ahead - state.subjects.length} more`);
+    }
+  }
+
+  boxed(lines, line.clean ? colors.green : colors.red);
 };

@@ -6,7 +6,7 @@
 // A store that is unreachable never fails the listing — each half prints what it
 // could read and says why the rest is missing.
 
-import { readTagState, tagStateLine } from '../bundler/git-state.js';
+import { printTagState, readTagState } from '../bundler/git-state.js';
 import { publishableTargets } from '../bundler/publish-config.js';
 import { readProjectVersion } from '../bundler/tag.js';
 import { foxLogger } from '../logger.js';
@@ -29,18 +29,13 @@ const ls = async (settings, target) => {
   foxLogger.log(`${core.title} — project.godot is ${projectVersion}`);
 
   // The version alone cannot tell the tagged tree from the one that kept
-  // committing after it: say where HEAD actually stands before listing bytes
-  // that claim to be that version.
-  const state = tagStateLine(readTagState(projectVersion));
-
-  if (state?.clean) {
-    foxLogger.log(state.message);
-  } else if (state) {
-    foxLogger.warn(state.message);
-  }
+  // committing after it. The verdict closes the listing (see printTagState).
+  const state = readTagState(projectVersion);
 
   if (target) {
-    return await LISTERS[target](settings, { projectVersion });
+    const listed = await LISTERS[target](settings, { projectVersion });
+    printTagState(state, projectVersion);
+    return listed;
   }
 
   // Without a store named, list the ones the project actually publishes to
@@ -56,6 +51,8 @@ const ls = async (settings, target) => {
   for (const name of targets) {
     await LISTERS[name](settings, { projectVersion });
   }
+
+  printTagState(state, projectVersion);
 
   return true;
 };
