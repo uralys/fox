@@ -18,7 +18,7 @@ Add it as an `Autoload` named `Controls`:
 ```ini
 [autoload]
 
-Controls="*res://fox/autoloads/controls.gd"
+Controls="*res://addons/fox/autoloads/controls.gd"
 ```
 
 ## Signals
@@ -143,7 +143,7 @@ Controls.stick_speed_factor = 0.0
 
 ## A note on `keyboard.gd`
 
-`fox/autoloads/keyboard.gd` is a much simpler, older input helper that emits plain
+`addons/fox/autoloads/keyboard.gd` is a much simpler, older input helper that emits plain
 `direction_up/down/left/right`, `confirm`, `cancel` signals from keyboard and
 D-pad only (no analog stick, no tuning). Prefer `Controls` for new games; keep
 `Keyboard` only for minimal menus that never touch the analog stick.

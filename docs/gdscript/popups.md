@@ -17,7 +17,7 @@ Fox has two popup helpers — pick the one that matches your need:
 Create a `ReferenceRect` extending `components/popup`:
 
 ```gdscript
-extends 'res://fox/components/popup.gd'
+extends 'res://addons/fox/components/popup.gd'
 ```
 
 If you override `_ready`, call `super._ready()`:
@@ -57,7 +57,7 @@ Exports / flags:
 ## Example
 
 ```gdscript
-extends 'res://fox/components/popup.gd'
+extends 'res://addons/fox/components/popup.gd'
 
 func _ready():
   super._ready()

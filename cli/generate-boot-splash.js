@@ -5,21 +5,26 @@
 // -----------------------------------------------------------------------------
 // One rule, three surfaces: the boot splash, the animated splash screen and the
 // launch storyboard must show the SAME logo at the SAME size. The geometry is
-// declared once, in `fox/components/splash/splash-screen.gd` (`BASE_CANVAS`,
-// `LOGO_BASE_WIDTH`), and read from there — never redeclared here, or the three
-// surfaces would drift apart at the first tweak. See docs/splash.md
+// declared once, in `addons/fox/components/splash/splash-screen.gd`
+// (`BASE_CANVAS`, `LOGO_BASE_WIDTH`), and read from there — never redeclared
+// here, or the three surfaces would drift apart at the first tweak.
+// See docs/splash.md
 // -----------------------------------------------------------------------------
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { ensureImageMagick, quote, runMagick } from './imagemagick.js';
 import { splashLogger } from './logger.js';
+import { resolveFoxPath, resolveFoxResPath } from './resolve-fox-mount.js';
 
 // -----------------------------------------------------------------------------
 
-const SPLASH_SCREEN_SOURCE = 'fox/components/splash/splash-screen.gd';
+// Both paths are relative to the Fox mount, resolved per project: `addons/fox`
+// once the game consumes Fox as an addon, `fox` while it still sits on the
+// legacy mount.
+const SPLASH_SCREEN_SOURCE = 'components/splash/splash-screen.gd';
+const LOGO_SOURCE = 'assets/splash/logo-uralys.png';
 
-const DEFAULT_LOGO = 'res://fox/assets/splash/logo-uralys.png';
 const DEFAULT_OUTPUT = 'assets/generated/boot-splash.png';
 
 // `boot_splash/bg_color` defaults to black: the generated frame must sit on the
@@ -40,7 +45,8 @@ const resolveResPath = (value, projectRoot) =>
 // longer matches the animated splash: a parsing failure is an abort, never a
 // fallback.
 const readSplashGeometry = (projectRoot) => {
-  const source = path.join(projectRoot, SPLASH_SCREEN_SOURCE);
+  const splashScreenSource = resolveFoxPath(SPLASH_SCREEN_SOURCE, projectRoot);
+  const source = path.join(projectRoot, splashScreenSource);
 
   if (!fs.existsSync(source)) {
     splashLogger.error(`Aborting: splash doctrine not found at ${source}`);
@@ -51,13 +57,13 @@ const readSplashGeometry = (projectRoot) => {
 
   const canvas = CANVAS_PATTERN.exec(content);
   if (!canvas) {
-    splashLogger.error(`Aborting: could not read BASE_CANVAS in ${SPLASH_SCREEN_SOURCE}`);
+    splashLogger.error(`Aborting: could not read BASE_CANVAS in ${splashScreenSource}`);
     return null;
   }
 
   const logoWidth = LOGO_WIDTH_PATTERN.exec(content);
   if (!logoWidth) {
-    splashLogger.error(`Aborting: could not read LOGO_BASE_WIDTH in ${SPLASH_SCREEN_SOURCE}`);
+    splashLogger.error(`Aborting: could not read LOGO_BASE_WIDTH in ${splashScreenSource}`);
     return null;
   }
 
@@ -73,7 +79,11 @@ const readSplashGeometry = (projectRoot) => {
 const generateBootSplash = (config = {}) => {
   const projectRoot = config.projectRoot || process.cwd();
 
-  const { input = DEFAULT_LOGO, output = DEFAULT_OUTPUT, backgroundColor = DEFAULT_BACKGROUND } = config;
+  const {
+    input = resolveFoxResPath(LOGO_SOURCE, projectRoot),
+    output = DEFAULT_OUTPUT,
+    backgroundColor = DEFAULT_BACKGROUND,
+  } = config;
 
   if (!ensureImageMagick(splashLogger)) {
     return false;

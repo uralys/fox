@@ -32,27 +32,41 @@ Then > `Select Current Folder`
 
 Edit your project settings and `Create & Edit`
 
-### 2 - Clone this repo next to `your-game`
+### 2 - Mount Fox as an addon
+
+Fox is a standard Godot addon: its runtime tree lives in `addons/fox` of this
+repository, and your game mounts it at `res://addons/fox`.
+
+Pick one of the two mounts below.
+
+#### dev mount: symlink, follows the fox repo
+
+Clone this repo next to `your-game`:
 
 ```sh
 git clone https://github.com/uralys/fox
 ```
 
-To keep same paths and `res://`, symlink godot elements in the `/fox` folder like this:
+Then link the addon folder into your game, so `res://addons/fox` always
+reflects your local fox checkout:
 
 **macOS / Linux:**
 
 ```sh
 cd your-game
-ln -s ../fox/fox fox
+mkdir -p addons
+ln -s ../../fox/addons/fox addons/fox
 ```
+
+The link target is relative to the `addons` folder holding it, hence the two
+`..` levels.
 
 **Windows / WSL:**
 
 On WSL, `ln -s` creates a Linux symlink that Godot (running as a native Windows app) cannot resolve. You must use a Windows NTFS junction instead:
 
 ```sh
-cmd.exe /c "mklink /J C:\path\to\your-game\fox C:\path\to\fox\fox"
+cmd.exe /c "mklink /J C:\path\to\your-game\addons\fox C:\path\to\fox\addons\fox"
 ```
 
 > **Note:** To use [check-projects](https://github.com/uralys/check-projects) on WSL, symlink your `/mnt/c/` repos into your Linux home:
@@ -61,6 +75,20 @@ cmd.exe /c "mklink /J C:\path\to\your-game\fox C:\path\to\fox\fox"
 > ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/fox ~/Projects/uralys/gamedev/fox
 > ln -s /mnt/c/Users/chris/Projects/uralys/gamedev/your-game ~/Projects/uralys/gamedev/your-game
 > ```
+
+#### pinned install: a copy of the addon at a given version
+
+When the game must not move with the fox repo, copy the addon folder at the
+version you want and commit it with your game:
+
+```sh
+git clone --depth 1 --branch 2.0.0 https://github.com/uralys/fox /tmp/fox-2.0.0
+mkdir -p your-game/addons
+cp -R /tmp/fox-2.0.0/addons/fox your-game/addons/fox
+```
+
+Upgrading is then a matter of deleting `addons/fox` and copying the next
+version in: nothing outside that folder belongs to Fox.
 
 ### 3 - Declare your main Scene
 
@@ -73,7 +101,7 @@ Then add attach a `app.gd` script to this scene.
 You can remove the default code and replace with:
 
 ```gdscript
-extends 'res://fox/core/app.gd'
+extends 'res://addons/fox/core/app.gd'
 
 func _ready():
   super._ready()
@@ -104,7 +132,7 @@ by default:
 - `app/scene` should also be a `Node2D`
 - `app/hud` should be a `CanvasLayer`
 
-To change these defaults, edit the `fox/core` "extends XXX"
+To change these defaults, edit the `addons/fox/core` "extends XXX"
 
 ```sh
 app
@@ -112,23 +140,49 @@ app
 └── hud
 ```
 
-### 4 - Declare Fox default config
+### 4 - Enable the Fox plugin
 
-Now you need to setup Fox default paths within the `project.godot` `[autoload]` section.
+Fox registers its own autoloads through an `EditorPlugin`. Open the editor and
+enable it once:
+
+`Project > Project Settings > Plugins > Fox > Enable`
+
+Enabling the plugin writes these autoloads into your `project.godot`:
+
+| Autoload | Script |
+|----------|--------|
+| `G` | `res://addons/fox/core/globals.gd` |
+| `DEBUG` | `res://addons/fox/core/debug.gd` |
+| `Gesture` | `res://addons/fox/autoloads/gesture.gd` |
+
+An autoload your game already declares is **left untouched**: the plugin skips
+any `autoload/<Name>` already present in the project settings, so an override
+(see [extending default Fox Nodes](#-extending-default-fox-nodes)) always wins,
+whatever the order in which you enable the plugin.
+
+#### optional autoloads
+
+The other libs are autoloads too, and the plugin does not register them: add
+the ones you use to the `[autoload]` section of your `project.godot`.
 
 ```ini
 [autoload]
 
-G="*res://fox/core/globals.gd"
-DEBUG="*res://fox/core/debug.gd"
-Gesture="*res://fox/autoloads/gesture.gd"
+Controls="*res://addons/fox/autoloads/controls.gd"
+HotReload="*res://addons/fox/autoloads/hot-reload.gd"
+Generate="*res://addons/fox/autoloads/generate.gd"
+FrameProbe="*res://addons/fox/autoloads/frame-probe.gd"
+Sound="*res://addons/fox/core/sound.gd"
+Leaderboard="*res://addons/fox/core/leaderboard.gd"
+AppStore="*res://addons/fox/iap/appstore.gd"
+PlayStore="*res://addons/fox/iap/playstore.gd"
 ```
 
-Other libs are autoloads too — add the ones you use, e.g.
-`Controls="*res://fox/autoloads/controls.gd"` (input), `HotReload`, `Sound`,
-`Generate`, `AppStore` / `PlayStore`. See each lib's doc.
+See each lib's doc for what it brings and how to configure it.
 
-and set few default options
+#### bundle options
+
+Finally, set your bundle defaults:
 
 ```ini
 [bundle]
@@ -149,7 +203,8 @@ At this point, you should have something like this:
 ├── fox
 └── your-game
   ├──.godot
-  ├── fox -> ../fox/fox
+  ├── addons
+  │   └── fox -> ../../fox/addons/fox
   ├── fox.config.json
   ├── icon.svg
   ├── project.godot
@@ -179,7 +234,7 @@ For example, to extend Globals and add your own:
 Create a `globals.gd`
 
 ```gdscript
-extends 'res://fox/core/globals.gd'
+extends 'res://addons/fox/core/globals.gd'
 ```
 
 And replace the autoload in `project.godot` with yours:
@@ -188,6 +243,9 @@ And replace the autoload in `project.godot` with yours:
 [autoload]
 G="*res://src/globals.gd"
 ```
+
+Since the plugin skips any autoload already declared, this override survives a
+disable / enable cycle of the Fox plugin.
 
 To better use Fox core, screens and components, you can organise your project like this:
 
@@ -198,7 +256,8 @@ To better use Fox core, screens and components, you can organise your project li
   ├── assets
   │   ├── map.png
   │   └── logo.svg
-  ├── fox -> ../fox/fox
+  ├── addons
+  │   └── fox -> ../../fox/addons/fox
   ├── fox.config.json
   ├── project.godot
   ├── readme.md

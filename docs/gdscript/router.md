@@ -24,11 +24,11 @@ To illustrate `scene` layout:
 
 ## Initial code
 
-- Extend `router.gd` from `fox/core/router.gd`
+- Extend `router.gd` from `addons/fox/core/router.gd`
 - Implement your `openXXX` by calling `openScene`
 
 ```gdscript
-extends 'res://fox/core/router.gd'
+extends 'res://addons/fox/core/router.gd'
 
 var home = preload("res://src/screens/home.tscn")
 

@@ -1,6 +1,6 @@
 # Files
 
-`Files` is an autoload (`fox/core/files.gd`) for project file I/O. It reads the
+`Files` is an autoload (`addons/fox/core/files.gd`) for project file I/O. It reads the
 bundle config, provides a **safe read** for a `store_var` save file, and keeps
 **rotating local backups** of it.
 
@@ -15,7 +15,7 @@ Files="*res://src/core/files.gd"
 
 ```gdscript
 # src/core/files.gd — extend the fox base, add project helpers
-extends 'res://fox/core/files.gd'
+extends 'res://addons/fox/core/files.gd'
 
 func read_json(path: String):
     var file = FileAccess.open(path, FileAccess.READ)

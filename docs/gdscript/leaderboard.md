@@ -1,6 +1,6 @@
 # Leaderboard
 
-`Leaderboard` is an autoload (`fox/core/leaderboard.gd`): the single transport
+`Leaderboard` is an autoload (`addons/fox/core/leaderboard.gd`): the single transport
 between a game and the Uralys leaderboard service at
 `https://leaderboard.uralys.com`. It submits a value on a board, reads a top-N,
 reads a rank, and reads a top-N restricted to a list of Steam friends.
@@ -14,12 +14,12 @@ straight at the fox script, or extend it by path to override a hook:
 ```ini
 [autoload]
 
-Leaderboard="*res://fox/core/leaderboard.gd"
+Leaderboard="*res://addons/fox/core/leaderboard.gd"
 ```
 
 ```gdscript
 # src/core/leaderboard.gd: extend the fox base to override a hook
-extends 'res://fox/core/leaderboard.gd'
+extends 'res://addons/fox/core/leaderboard.gd'
 
 func _is_valid_board(board: String) -> bool:
     return not board.begins_with('mine-')
@@ -209,7 +209,7 @@ the network.
 
 ```gdscript
 # src/core/leaderboard.gd
-extends 'res://fox/core/leaderboard.gd'
+extends 'res://addons/fox/core/leaderboard.gd'
 
 # Only shipped campaign levels have a comparable board: a level the player
 # authored or downloaded is keyed 'mine-<slug>' / 'ugc-<id>' and stays local.

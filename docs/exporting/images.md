@@ -9,7 +9,7 @@ folder are described in [the CLI doc](../cli.md#generated-assets).
 
 ## Icons
 
-use `fox/assets/android/adaptive_icon_template.afdesign` at your convenience, to generate these files:
+use `addons/fox/assets/android/adaptive_icon_template.afdesign` at your convenience, to generate these files:
 
 - android adaptive: use `adaptive` artboard, hide parts for foreground/background, export 1000x1000
 - icon 1200x1200: use `ios` artboard
@@ -98,7 +98,7 @@ fox generate:boot-splash
 application/boot_splash/image="res://assets/generated/boot-splash.png"
 ```
 
-Its geometry comes from `fox/components/splash/splash-screen.gd`, so the boot
+Its geometry comes from `addons/fox/components/splash/splash-screen.gd`, so the boot
 splash, the animated splash and the iOS storyboard always show the same logo at
 the same size.
 

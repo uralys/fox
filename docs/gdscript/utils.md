@@ -136,7 +136,7 @@ it as an `Autoload` (e.g. `Generate`):
 ```ini
 [autoload]
 
-Generate="*res://fox/autoloads/generate.gd"
+Generate="*res://addons/fox/autoloads/generate.gd"
 ```
 
 - `Generate.uid(prefix)` → a unique id, e.g. `player-1718000000-12345-678901`
@@ -165,7 +165,7 @@ var nick = Generate.name()        # "FieryFox"
 ## HoloDrawUtils
 
 Holographic 2D draw helpers for custom `_draw()` code, at
-`res://fox/libs/holo-draw-utils.gd`. Static only, no autoload.
+`res://addons/fox/libs/holo-draw-utils.gd`. Static only, no autoload.
 
 ### `HoloDrawUtils.draw_spaced(canvas, font, pos, text, font_size, color, spacing)`
 
@@ -206,7 +206,7 @@ func _draw():
 ## MenuNavigator
 
 Shared keyboard / gamepad focus cursor for menus, at
-`res://fox/libs/menu-navigator.gd`. Unlike the other libs here it is a
+`res://addons/fox/libs/menu-navigator.gd`. Unlike the other libs here it is a
 `RefCounted` you instantiate per menu: `MenuNavigator.new()`.
 
 It walks a ragged grid of focusable items, keeps a `(row, col)` cursor,
@@ -270,7 +270,7 @@ is where a screen runs its own layout (a coverflow slide, a header label).
 ## ConfigStore
 
 Generic CRUD over a folder of slugified `.tres` resources, at
-`res://fox/libs/config-store.gd`. Static only, and agnostic of any concrete
+`res://addons/fox/libs/config-store.gd`. Static only, and agnostic of any concrete
 resource class: a game pins a directory and a fallback slug, then delegates.
 
 The id of a config **is** its file basename, so `path_for(dir, id)` is always

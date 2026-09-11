@@ -20,8 +20,8 @@ Add the relevant store(s) as autoloads:
 ```ini
 [autoload]
 
-AppStore="*res://fox/iap/appstore.gd"
-PlayStore="*res://fox/iap/playstore.gd"
+AppStore="*res://addons/fox/iap/appstore.gd"
+PlayStore="*res://addons/fox/iap/playstore.gd"
 ```
 
 Both stores expect your game to provide:

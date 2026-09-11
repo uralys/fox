@@ -8,7 +8,7 @@ The `Sound` core feature plays one-shot SFX and looping music through pooled
 Create `src/core/sound.gd` extending the Fox core:
 
 ```gdscript
-extends 'res://fox/core/sound.gd'
+extends 'res://addons/fox/core/sound.gd'
 
 # map sound names to .ogg paths
 var oggFiles = {
@@ -55,7 +55,7 @@ a volume table / channel mix by overriding that hook instead of re-wrapping
 `play()`:
 
 ```gdscript
-extends 'res://fox/core/sound.gd'
+extends 'res://addons/fox/core/sound.gd'
 
 var SOUNDS_VOLUME := 0.8
 
@@ -100,7 +100,7 @@ table. It is read once and cached, so returning a literal costs nothing per
 play:
 
 ```gdscript
-extends 'res://fox/core/sound.gd'
+extends 'res://addons/fox/core/sound.gd'
 
 var SELECT = 'select'
 var SWITCH = 'switch'
@@ -152,7 +152,7 @@ levels.
 
 ### Wiring the settings screen
 
-The bindings of `fox/components/settings` consume these four functions
+The bindings of `addons/fox/components/settings` consume these four functions
 directly, one channel per toggle plus its slider:
 
 ```gdscript

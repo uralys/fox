@@ -10,7 +10,7 @@ Add it as an `Autoload` named `G`:
 ```ini
 [autoload]
 
-G="*res://fox/core/globals.gd"
+G="*res://addons/fox/core/globals.gd"
 ```
 
 On startup `G` reads your `[bundle]` settings from `project.godot` and exposes
@@ -61,13 +61,13 @@ Add it as an `Autoload` named `DEBUG`:
 ```ini
 [autoload]
 
-DEBUG="*res://fox/core/debug.gd"
+DEBUG="*res://addons/fox/core/debug.gd"
 ```
 
 Extend it from your own script to declare flags inside an `options` dictionary:
 
 ```gdscript
-extends 'res://fox/core/debug.gd'
+extends 'res://addons/fox/core/debug.gd'
 
 var NO_INTRO_ANIMATION = true
 var SOUND_OFF = false

@@ -15,7 +15,7 @@ The base is extended **by path**, like `sound.gd` or `router.gd`: it carries no
 `class_name`. Create `src/core/steam.gd` in your game:
 
 ```gdscript
-extends 'res://fox/core/steam.gd'
+extends 'res://addons/fox/core/steam.gd'
 ```
 
 Add it as an `Autoload` named `SteamManager`. Nothing else is required: the base
@@ -34,7 +34,7 @@ Three rules, and they are the whole contract:
   shutdown never runs.
 
 ```gdscript
-extends 'res://fox/core/steam.gd'
+extends 'res://addons/fox/core/steam.gd'
 
 func _on_initialized() -> void:
   # a live Steam session is guaranteed here
@@ -62,7 +62,7 @@ still runs from the environment.
 
 The singleton is never named by its bare `Steam` global identifier either: it is
 resolved dynamically into `_steam`, which keeps the base parsable in every
-context, including when it is loaded through the symlinked `res://fox/` path.
+context, including when it is loaded through the symlinked `res://addons/fox/` path.
 
 ## State
 
@@ -182,7 +182,7 @@ typical case is a build shipping as a separate demo app whose purchase
 call-to-action has to open the full game:
 
 ```gdscript
-extends 'res://fox/core/steam.gd'
+extends 'res://addons/fox/core/steam.gd'
 
 # the store link always points at the full game, even from the demo build
 func get_store_app_id() -> int:

@@ -100,6 +100,9 @@ export const writeOverride = (settings, { bundleId, platform, env, target = DEFA
   }
 
   const override = { bundle: {}, fox: {}, custom: {} };
+  // Sibling checkout of the Fox repository, NOT the runtime tree mounted inside
+  // the game: the version lives in the repository root, which the move of the
+  // runtime to `addons/fox` left untouched.
   const foxPackageJSON = JSON.parse(fs.readFileSync('../fox/package.json', 'utf8'));
   const appVersion = readProjectVersion();
   const subtitle = getSubtitle(bundles[bundleId]);

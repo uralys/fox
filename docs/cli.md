@@ -67,6 +67,25 @@ Example:
 fox run:game --headless --debug-collisions
 ```
 
+### project detection
+
+Every command starts by checking that the current folder is a game using Fox.
+The probe is the runtime's `default.config.json`, looked up under the mount
+holding it: `addons/fox/default.config.json` first, then the legacy `fox/`
+mount for a game whose runtime has not been moved to `addons/` yet. Every other
+runtime file the CLI reads (the boot splash sources included) is resolved the
+same way, addon mount first.
+
+When neither mount carries it, the command stops on:
+
+```txt
+<current folder> is not a project using Fox: no addons/fox/default.config.json
+```
+
+The error names the addon mount even for a legacy project, because that is
+where the runtime is expected to live from now on. The legacy candidate is a
+transition tolerance: it goes away once every game is migrated.
+
 ### lint
 
 The CLI sources under `cli/` are linted and formatted with
@@ -246,7 +265,7 @@ not per bundle, and lands in `assets/generated/boot-splash.png`.
 
 ```json
 "generate:boot-splash": {
-  "input": "res://fox/assets/splash/logo-uralys.png",
+  "input": "res://addons/fox/assets/splash/logo-uralys.png",
   "output": "assets/generated/boot-splash.png",
   "backgroundColor": "#000000"
 }
@@ -255,7 +274,7 @@ not per bundle, and lands in `assets/generated/boot-splash.png`.
 The geometry is **not** configurable, on purpose: the boot splash, the animated
 splash screen and the iOS launch storyboard must show the same logo at the same
 size, so the canvas and the logo width are read from `BASE_CANVAS` and
-`LOGO_BASE_WIDTH` in `fox/components/splash/splash-screen.gd`. Change the
+`LOGO_BASE_WIDTH` in `addons/fox/components/splash/splash-screen.gd`. Change the
 constant there, run the command again, and the three surfaces stay aligned.
 
 Keep `backgroundColor` equal to your `boot_splash/bg_color`, or a seam shows
@@ -487,7 +506,7 @@ Add `HotReload` to your project's `[autoload]` section in `project.godot`:
 ```ini
 [autoload]
 
-HotReload="*res://fox/autoloads/hot-reload.gd"
+HotReload="*res://addons/fox/autoloads/hot-reload.gd"
 ```
 
 Add `.hot-reload` and `.nav-state` to your `.gitignore`.
@@ -506,7 +525,7 @@ Add `.hot-reload` and `.nav-state` to your `.gitignore`.
 
 ### Navigation state (NavState)
 
-The Router persists a typed `NavState` (`fox/core/nav-state.gd`) to `.nav-state` (JSON). It stores the current scene path and a `path` array representing nested sub-view segments — similar to outlets in Ember.js or React Router.
+The Router persists a typed `NavState` (`addons/fox/core/nav-state.gd`) to `.nav-state` (JSON). It stores the current scene path and a `path` array representing nested sub-view segments — similar to outlets in Ember.js or React Router.
 
 On hot reload or full restart (`r`), the app restores the last visited scene and navigates to the exact sub-view.
 

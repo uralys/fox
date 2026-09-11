@@ -26,6 +26,7 @@ import generateSplashscreens from './generate-splashscreens.js';
 import generateSteamScreenshots from './generate-steam-screenshots.js';
 import importAssets from './import-assets.js';
 import ls from './ls/index.js';
+import { ADDON_MOUNT, resolveFoxPath } from './resolve-fox-mount.js';
 import resolveGodotPath from './resolve-godot.js';
 import runGame from './run-game.js';
 
@@ -79,7 +80,9 @@ const HELP_FLAGS = ['-h', '--help'];
 
 // -----------------------------------------------------------------------------
 
-const DEFAULT_CONFIG_FILE = 'fox/default.config.json';
+// Relative to the Fox mount, resolved at runtime: `addons/fox` on a migrated
+// project, `fox` on a project still on the legacy mount.
+const DEFAULT_CONFIG_FILE = 'default.config.json';
 const CONFIG_FILE = 'fox.config.json';
 
 // -----------------------------------------------------------------------------
@@ -173,14 +176,14 @@ const cli = async (yargs, params) => {
 
   foxLogger.log(`v${pkg.version} ${command}`);
 
-  const defaultConfigPath = path.resolve(process.cwd(), `${DEFAULT_CONFIG_FILE}`);
+  const defaultConfigPath = path.resolve(process.cwd(), resolveFoxPath(DEFAULT_CONFIG_FILE));
 
   let defaultConfig;
 
   try {
     defaultConfig = (await import(pathToFileURL(defaultConfigPath), { with: { type: 'json' } })).default;
   } catch {
-    foxLogger.error(`${process.cwd()} is not a project using Fox`);
+    foxLogger.error(`${process.cwd()} is not a project using Fox: no ${ADDON_MOUNT}/${DEFAULT_CONFIG_FILE}`);
     return;
   }
 
@@ -327,7 +330,7 @@ const execute = async () => {
     )
     .command(
       GENERATE_BOOT_SPLASH,
-      'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from fox/components/splash/splash-screen.gd',
+      'generate the Godot boot splash frame (assets/generated/boot-splash.png), sized from addons/fox/components/splash/splash-screen.gd',
     )
     .command(GENERATE_SCREENSHOTS, 'resize all images in a folder to 2560x1600, to match store requirements')
     .command(GENERATE_STEAM_SCREENSHOTS, 'resize all images from <source-folder> to 1920x1080 for Steam (flat output)')

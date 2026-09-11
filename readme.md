@@ -47,10 +47,29 @@ This other one sends a body to a REST API, handles and logs the result while sho
   })
 ```
 
+## Installation
+
+Fox is a standard Godot addon: its runtime tree lives in
+[addons/fox](./addons/fox), and a game mounts it at `res://addons/fox`, either
+as a symlink on your fox checkout while developing, or as a copy of the folder
+pinned to a version.
+
+```sh
+cd your-game
+mkdir -p addons
+ln -s ../../fox/addons/fox addons/fox
+```
+
+Then enable the plugin from `Project > Project Settings > Plugins > Fox`: it
+registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
+autoload your game already declares.
+
+The full walkthrough, the Windows junction, the pinned install and the optional
+autoloads are in [Installing Fox](./docs/install.md).
+
 ## Documentation
 
-Full documentation lives in [docs](./docs). Start with
-[Installing Fox](./docs/install.md).
+Full documentation lives in [docs](./docs).
 
 ### Core
 

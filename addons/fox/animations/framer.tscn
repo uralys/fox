@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmt1xncsfu3xe"]
+
+[ext_resource type="Script" uid="uid://intgbyls1skk" path="res://addons/fox/animations/framer.gd" id="1"]
+
+[node name="framer" type="Node"]
+script = ExtResource("1")

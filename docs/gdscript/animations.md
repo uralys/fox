@@ -94,7 +94,7 @@ Animate.flash(coin, {duration = 0.15})
 
 ## Framer
 
-`framer.gd` (`fox/animations/framer.gd`) tweens a sprite's `frame` property to
+`framer.gd` (`addons/fox/animations/framer.gd`) tweens a sprite's `frame` property to
 play a spritesheet animation. Attach it as a child of an `AnimatedSprite`-style
 node (it animates its parent's `frame`):
 

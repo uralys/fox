@@ -1,10 +1,10 @@
 # Draggable Camera
 
-To enable dragging a Camera2D, you can attach the [draggable-camera](../../fox/behaviours/draggable-camera.gd) script to any Camera2D Node.
+To enable dragging a Camera2D, you can attach the [draggable-camera](../../addons/fox/behaviours/draggable-camera.gd) script to any Camera2D Node.
 
 ## Setup
 
-Create a `Camera2D` node, and look for the [draggable-camera](../../fox/behaviours/draggable-camera.gd) script to it from the Inspector.
+Create a `Camera2D` node, and look for the [draggable-camera](../../addons/fox/behaviours/draggable-camera.gd) script to it from the Inspector.
 
 <img title="nesting app/scene" width="250px" src="../../assets/docs/draggable-attach-script.png"/>
 

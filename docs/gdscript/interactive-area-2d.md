@@ -3,12 +3,12 @@
 This is an `Area2D` able to listen for mouse / touch events.
 The Node where this interactive `Area2D` is attached can be touched, dragged, used as a drop area.
 
-An `interactiveArea2D` uses [Gesture](../../fox/autoloads/gesture.gd) behind the hood.
+An `interactiveArea2D` uses [Gesture](../../addons/fox/autoloads/gesture.gd) behind the hood.
 
 
 ## Setup
 
-- Attach the [interactiveArea2D](../../fox/behaviours/interactive-area-2d.tscn) **Scene** as child to your Node.
+- Attach the [interactiveArea2D](../../addons/fox/behaviours/interactive-area-2d.tscn) **Scene** as child to your Node.
 
 - Add a `CollisionShape2D` to the `interactiveArea` Node and set its shape e.g(`RectangleShape2D`).
 

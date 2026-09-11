@@ -1,0 +1,81 @@
+{
+  "core": {
+    "title": "Your Game",
+    "useNotifications": false
+  },
+  "generate:icons": {
+    "input": "_release/images/",
+    "output": "assets/generated",
+    "base": "icon-1200x1200.png",
+    "desktop": "icon-desktop-512x512.png",
+    "background": "adaptive-background.png",
+    "foreground": "adaptive-foreground.png"
+  },
+  "generate:splashscreens": {
+    "input": "_release/images/base-splashscreen.png",
+    "output": "assets/generated"
+  },
+  "generate:boot-splash": {
+    "input": "res://addons/fox/assets/splash/logo-uralys.png",
+    "output": "assets/generated/boot-splash.png",
+    "backgroundColor": "#000000"
+  },
+  "generate:screenshots": {
+    "input": "_release/images/raw-shots",
+    "output": "_release/images/generated-screenshots",
+    "orientation": "landscape",
+    "sizes": [
+      { "name": "iPhone_6'7", "resolution": "2796x1290" },
+      { "name": "iPhone_6'5", "resolution": "2778x1284" },
+      { "name": "iPhone_5'5", "resolution": "2208x1242" },
+      { "name": "iPad_12'9", "resolution": "2732x2048" },
+      { "name": "16'9", "resolution": "2160x1215" },
+      { "name": "4'3", "resolution": "1440x1080" },
+      { "name": "macOS", "resolution": "2560x1600" },
+      { "name": "webp-16'9", "resolution": "2160x1215", "extension": ".webp" }
+    ]
+  },
+  "generate:steam-screenshots": {
+    "output": "assets/_steam/screenshots"
+  },
+  "publish": {
+    "steam": {
+      "appId": "<your-steam-app-id>",
+      "login": "<your-steam-partner-login>",
+      "contentRoot": "export",
+      "depots": {
+        "<windows-depot-id>": "windows",
+        "<linux-depot-id>": "linux",
+        "<macos-depot-id>": "macos"
+      },
+      "branch": ""
+    }
+  },
+  "run:editor": {
+    "resolution": "2980x2220",
+    "position": "0,0"
+  },
+  "update-po-files": {
+    "poFiles": "./assets/translations/*.po",
+    "potTemplate": "./assets/translations/locales.pot"
+  },
+  "run:game": {
+    "position": "1120,20",
+    "resolutions": {
+      "steamdeck": "1280x800",
+      "desktop": "1920x1080"
+    }
+  },
+  "bundles": {
+    "yourApp": {
+      "uid": "com.your.app.id",
+      "Android": {
+        "storeUrl": "https://play.google.com/store/apps/details?id=com.xxx.xxx"
+      },
+      "iOS": {
+        "appId": "idxxx",
+        "storeUrl": "https://apps.apple.com/us/app/idxxx"
+      }
+    }
+  }
+}
