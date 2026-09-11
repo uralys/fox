@@ -84,9 +84,32 @@ const readMountedVersion = (projectRoot = process.cwd()) => {
 
 // -----------------------------------------------------------------------------
 
+// One line for the CLI header: which mount this project uses, which version it
+// holds, and how it is attached.
+//
+// The CLI version and the mounted version are two different things: a game can
+// sit on a pinned 2.0.0 while the CLI running the command is newer. Printing
+// only the CLI version, as the header used to, hid both that gap and the fact
+// that a linked game follows a checkout rather than a release.
+const describeMountLabel = (projectRoot = process.cwd()) => {
+  const { kind } = describeMount(projectRoot);
+
+  if (kind === MISSING) {
+    // A game still on the flat `fox/` mount predates `plugin.cfg`: there is no
+    // version to read, and saying so is the useful part.
+    const legacy = path.resolve(projectRoot, LEGACY_MOUNT, 'default.config.json');
+    return fs.existsSync(legacy) ? `${LEGACY_MOUNT} (legacy mount)` : null;
+  }
+
+  return `${ADDON_MOUNT} ${readMountedVersion(projectRoot) ?? 'unknown'} (${kind})`;
+};
+
+// -----------------------------------------------------------------------------
+
 export {
   ADDON_MOUNT,
   describeMount,
+  describeMountLabel,
   LEGACY_MOUNT,
   LINKED,
   MISSING,

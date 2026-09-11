@@ -480,6 +480,16 @@ A game mounts the Fox runtime at `res://addons/fox` in one of two ways, and
 these two commands switch between them. Both leave the mount ready to reimport:
 run `fox import` afterwards.
 
+Every command opens on the mount it is about to work with, so the two versions
+at play are never confused: the CLI's own on the left, the mounted addon's on
+the right.
+
+```txt
+● Fox v2.0.0 ls — addons/fox 2.0.0 (linked)
+● Fox v2.0.0 import — addons/fox 1.9.0 (pinned)
+● Fox v2.0.0 ls — fox (legacy mount)
+```
+
 ```sh
 fox upgrade          # pin addons/fox to the latest release
 fox upgrade 2.1.0    # or to a given one (the `v` prefix is optional)

@@ -27,7 +27,7 @@ import generateSteamScreenshots from './generate-steam-screenshots.js';
 import importAssets from './import-assets.js';
 import link from './link.js';
 import ls from './ls/index.js';
-import { ADDON_MOUNT, resolveFoxPath } from './resolve-fox-mount.js';
+import { ADDON_MOUNT, describeMountLabel, resolveFoxPath } from './resolve-fox-mount.js';
 import resolveGodotPath from './resolve-godot.js';
 import runGame from './run-game.js';
 import upgrade from './upgrade.js';
@@ -196,7 +196,9 @@ const cli = async (yargs, params) => {
 
   // --------
 
-  foxLogger.log(`v${pkg.version} ${command}`);
+  const mountLabel = describeMountLabel();
+
+  foxLogger.log(`v${pkg.version} ${command}${mountLabel ? ` — ${mountLabel}` : ''}`);
 
   const defaultConfigPath = path.resolve(process.cwd(), resolveFoxPath(DEFAULT_CONFIG_FILE));
 
