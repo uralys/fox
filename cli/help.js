@@ -8,6 +8,7 @@
 // command table below is the single source of what fox can do: yargs registers
 // itself from it, and this renders it.
 
+import { isLinkedCli } from './install-cli.js';
 import { colors } from './logger.js';
 
 // -----------------------------------------------------------------------------
@@ -45,10 +46,13 @@ const printCommand = (name, description, column, available) => {
   const [first, ...rest] = wrap(description, available);
   const pad = ' '.repeat(column - name.length);
 
-  console.log(`  ${colors.green}${colors.bold}${name}${colors.reset}${pad}${colors.white}${first}${colors.reset}`);
+  // No colour on the description: `\x1b[37m` is not the terminal's own white,
+  // it is the palette's white slot, and it comes out dimmed or yellowish on the
+  // themes Chris uses. The default foreground is the only real white here.
+  console.log(`  ${colors.cyan}${colors.bold}${name}${colors.reset}${pad}${first}`);
 
   for (const line of rest) {
-    console.log(`  ${' '.repeat(column)}${colors.white}${line}${colors.reset}`);
+    console.log(`  ${' '.repeat(column)}${line}`);
   }
 };
 
@@ -60,7 +64,7 @@ export const printHelp = (groups, { version, docs }) => {
   const available = Math.max(width() - column - 2, 24);
 
   console.log('');
-  console.log(`${colors.bold}${colors.white}fox${colors.reset} <command> [options]`);
+  console.log(`${colors.bold}fox${colors.reset} <command> [options]`);
 
   for (const { title, commands } of groups) {
     console.log('');
@@ -71,7 +75,11 @@ export const printHelp = (groups, { version, docs }) => {
     }
   }
 
+  const attachment = isLinkedCli() ? ' (symlinked)' : '';
+
   console.log('');
-  console.log(`${colors.gray}fox CLI v${version}${colors.reset}  ${colors.blue}${docs}${colors.reset}`);
+  console.log(
+    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.cyan}${docs}${colors.reset}`,
+  );
   console.log('');
 };

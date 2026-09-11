@@ -127,5 +127,29 @@ const linkCli = (checkout, logger) => {
 };
 
 // -----------------------------------------------------------------------------
+// Whether the running `fox` is the checkout rather than a published version.
+//
+// The executable in the npm prefix is ALWAYS a symlink, so its own presence
+// proves nothing: what tells `fox link` from `fox upgrade` is the PACKAGE behind
+// it. A pinned install resolves to the very path the bin points at, while a
+// linked checkout resolves somewhere else entirely.
 
-export { linkCli, pinCli };
+const isLinkedCli = () => {
+  const invoked = process.argv[1];
+
+  if (!invoked) {
+    return false;
+  }
+
+  try {
+    const pointed = path.resolve(path.dirname(invoked), fs.readlinkSync(invoked));
+    return fs.realpathSync(invoked) !== pointed;
+  } catch {
+    // Not a symlink at all: `node cli/cli.js` run straight from a checkout.
+    return false;
+  }
+};
+
+// -----------------------------------------------------------------------------
+
+export { isLinkedCli, linkCli, pinCli };

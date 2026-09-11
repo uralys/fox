@@ -69,7 +69,7 @@ const IMPORT = 'import';
 
 const COMMAND_GROUPS = [
   {
-    title: 'play',
+    title: 'work',
     commands: [
       [RUN_EDITOR, 'open Godot Editor with your main scene'],
       [RUN_GAME, 'start your game locally'],
