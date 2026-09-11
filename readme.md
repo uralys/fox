@@ -50,9 +50,22 @@ This other one sends a body to a REST API, handles and logs the result while sho
 ## Installation
 
 Fox is a standard Godot addon: its runtime tree lives in
-[addons/fox](./addons/fox), and a game mounts it at `res://addons/fox`, either
-as a symlink on your fox checkout while developing, or as a copy of the folder
-pinned to a version.
+[addons/fox](./addons/fox), and a game mounts it at `res://addons/fox`.
+
+Copy the addon folder at the version you want, and commit it with your game:
+
+```sh
+git clone --depth 1 --branch v2.0.0 https://github.com/uralys/fox /tmp/fox-2.0.0
+mkdir -p your-game/addons
+cp -R /tmp/fox-2.0.0/addons/fox your-game/addons/fox
+```
+
+Your game is now pinned: it moves to the next Fox when you decide to, by
+deleting `addons/fox` and copying the next version in. Nothing outside that
+folder belongs to Fox.
+
+While working on Fox itself, symlink your checkout instead, so
+`res://addons/fox` always reflects it:
 
 ```sh
 cd your-game
@@ -60,12 +73,16 @@ mkdir -p addons
 ln -s ../../fox/addons/fox addons/fox
 ```
 
-Then enable the plugin from `Project > Project Settings > Plugins > Fox`: it
-registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
+Either way, enable the plugin from `Project > Project Settings > Plugins > Fox`:
+it registers the `G`, `DEBUG` and `Gesture` autoloads, and leaves alone any
 autoload your game already declares.
 
-The full walkthrough, the Windows junction, the pinned install and the optional
-autoloads are in [Installing Fox](./docs/install.md).
+The full walkthrough, the Windows junction and the optional autoloads are in
+[Installing Fox](./docs/install.md).
+
+> Coming from Fox 1.x? The runtime moved from `res://fox/` to
+> `res://addons/fox/`: see the [2.0.0 release notes](https://github.com/uralys/fox/releases/tag/v2.0.0)
+> for the migration steps.
 
 ## Documentation
 

@@ -82,7 +82,7 @@ When the game must not move with the fox repo, copy the addon folder at the
 version you want and commit it with your game:
 
 ```sh
-git clone --depth 1 --branch 2.0.0 https://github.com/uralys/fox /tmp/fox-2.0.0
+git clone --depth 1 --branch v2.0.0 https://github.com/uralys/fox /tmp/fox-2.0.0
 mkdir -p your-game/addons
 cp -R /tmp/fox-2.0.0/addons/fox your-game/addons/fox
 ```
