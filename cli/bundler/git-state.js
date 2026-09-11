@@ -101,7 +101,7 @@ export const printTagState = (state, projectVersion) => {
   // A box that only states the gap leaves the reader looking for the command:
   // the way out of it is a single one, so it is the one thing highlighted here.
   if (!line.clean) {
-    const command = `${colors.bold}fox tag [patch|minor|major]${colors.reset}${colors.magenta}`;
+    const command = `${colors.bold}fox tag${colors.reset}${colors.magenta}`;
     lines.push('', `${colors.magenta}run ${command} to bump the version and tag these commits${colors.reset}`);
   }
 
