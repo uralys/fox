@@ -117,11 +117,10 @@ comparing the mounted version with the latest release, and prints one box when
 the game is behind:
 
 ```txt
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ addons/fox is 1.9.0, and 2.0.2 is out                                       │
-│                                                                             │
-│ run `fox upgrade` to pin it, or `fox upgrade --no-import` to reimport later │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────┐
+│ addons/fox is 1.9.0, and 2.0.2 is out │
+│ run `fox upgrade` to install          │
+└───────────────────────────────────────┘
 ```
 
 The answer is **cached**, once for the machine, in `.fox/latest-release.json`

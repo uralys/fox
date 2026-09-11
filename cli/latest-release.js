@@ -187,14 +187,7 @@ const notifyLatestRelease = async (projectRoot = process.cwd(), { force = false 
     return;
   }
 
-  logBox(
-    [
-      `${ADDON_MOUNT} is ${installed}, and ${latest} is out`,
-      '',
-      'run `fox upgrade` to pin it, or `fox upgrade --no-import` to reimport later',
-    ],
-    colors.yellow,
-  );
+  logBox([`${ADDON_MOUNT} is ${installed}, and ${latest} is out`, 'run `fox upgrade` to install'], colors.yellow);
 };
 
 // -----------------------------------------------------------------------------
