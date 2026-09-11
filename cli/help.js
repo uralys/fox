@@ -83,14 +83,14 @@ const releaseMark = async (version) => {
   const { state, latest } = await describeReleaseStatus(version, { force: true });
 
   if (state === 'current') {
-    return `  ${colors.green}${colors.bold}✓ up to date${colors.reset}`;
+    return `${colors.green}${colors.bold}✓ up to date${colors.reset}`;
   }
 
   if (state === 'behind') {
-    return `  ${colors.yellow}${colors.bold}↑ ${latest} is out${colors.reset}`;
+    return `${colors.yellow}${colors.bold}↑ ${latest} is out${colors.reset}`;
   }
 
-  return '';
+  return null;
 };
 
 // -----------------------------------------------------------------------------
@@ -121,7 +121,14 @@ export const printHelp = async (groups, { version, docs }) => {
 
   console.log('');
   console.log(
-    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.green}${colors.bold}${docs}${colors.reset}${mark}`,
+    `${colors.magenta}${colors.bold}fox CLI v${version}${attachment}${colors.reset}  ${colors.green}${colors.bold}${docs}${colors.reset}`,
   );
+
+  // On its own line under the footer, not appended to it: the version and the
+  // link name the tool, the verdict is about your copy of it.
+  if (mark) {
+    console.log(mark);
+  }
+
   console.log('');
 };
