@@ -130,14 +130,31 @@ const UPLOAD = 'upload';
 const EXPORT = 'export';
 const EXIT = 'exit';
 
+const distinct = (report, field) => [...new Set(report.map((slot) => slot[field]).filter(Boolean))];
+
 const payloadVersion = (report) => {
-  const versions = [...new Set(report.map(({ version }) => version).filter(Boolean))];
+  const versions = distinct(report, 'version');
   return versions.length === 1 ? versions[0] : null;
 };
 
 const payloadEnv = (report) => {
-  const envs = [...new Set(report.map(({ env }) => env).filter(Boolean))];
+  const envs = distinct(report, 'env');
   return envs.length === 1 ? envs[0] : null;
+};
+
+// Folders that disagree are named by what they hold, not counted: "0.9.0
+// (macos, windows), 0.12.1 (linux)" says which export to redo, where a bare
+// "they disagree" sends the reader back to the lines above to work it out.
+const groupByValue = (report, field) => {
+  const slotsHolding = (value) =>
+    report
+      .filter((entry) => entry[field] === value)
+      .map(({ folder }) => folder)
+      .join(', ');
+
+  return distinct(report, field)
+    .map((value) => `${value} (${slotsHolding(value)})`)
+    .join(', ');
 };
 
 const confirmPayload = async ({
@@ -152,15 +169,31 @@ const confirmPayload = async ({
   report,
   assumeYes,
 }) => {
-  // The env is read back from the payload whenever the folders carry it, so the
-  // chip names what is IN the folder rather than what was asked for.
-  const bakedEnv = payloadEnv(report) || env;
+  // The env and the version are read back from the payload whenever the folders
+  // carry them, so the chips name what is IN the folders rather than what was
+  // asked for. When the folders do NOT agree, there is no single value to name:
+  // saying so is the whole point, and falling back to the repo here is what
+  // once printed "payload is 0.26.3 while project.godot is 0.26.3" over three
+  // folders holding 0.9.0 and 0.12.1.
+  const bakedEnv = payloadEnv(report);
+  const bakedVersion = payloadVersion(report);
+
+  const mixedEnvs = !bakedEnv && distinct(report, 'env').length > 1;
+  const mixedVersions = !bakedVersion && distinct(report, 'version').length > 1;
+
+  const shownEnv = bakedEnv ? envChip(bakedEnv) : mixedEnvs ? `mixed: ${groupByValue(report, 'env')}` : envChip(env);
+
+  const shownVersion = mixedVersions
+    ? `mixed: ${groupByValue(report, 'version')} (project.godot says ${projectVersion})`
+    : bakedVersion
+      ? `${bakedVersion}${bakedVersion === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`
+      : `unknown, nothing readable in the folders (project.godot says ${projectVersion})`;
 
   const shown = {
     ...details,
     contentRoot,
-    env: envChip(bakedEnv),
-    version: `${version}${version === projectVersion ? '' : ` (project.godot says ${projectVersion})`}`,
+    env: shownEnv,
+    version: shownVersion,
   };
 
   report.forEach(({ slot, folder, files, version: slotVersion, env: slotEnv, exportedAt }) => {
@@ -171,20 +204,20 @@ const confirmPayload = async ({
 
   logger.data(shown);
 
-  const mismatched = report.filter(({ version: slotVersion }) => slotVersion && slotVersion !== version);
-
-  if (mismatched.length) {
-    logger.warn('folders disagree on the version — check what you exported');
-  }
-
   // The store is half of the answer to "what am I about to publish": the same
   // version and env go to two different places, so the chip names the target.
-  const destination = `(${envChip(bakedEnv)}) to ${title} on ${targetChip(target)}`;
+  // The full breakdown stays in the box above; a choice line only needs to say
+  // that there is no single env.
+  const envLabel = bakedEnv ? envChip(bakedEnv) : mixedEnvs ? 'mixed envs' : envChip(env);
+  const destination = `(${envLabel}) to ${title} on ${targetChip(target)}`;
 
   // When the payload matches the repo there is one sensible answer, so a plain
-  // confirm is enough. When it does not, refusing is not the useful reply — the
+  // confirm is enough. When it does not, refusing is not the useful reply: the
   // useful reply is the export that would fix it, offered first and by default.
-  if (version === projectVersion && !mismatched.length) {
+  // A folder whose bytes say nothing readable is not a mismatch: it has always
+  // been confirmed against the repo, and only a DISAGREEMENT sends the run to
+  // the harder question below.
+  if (!mixedVersions && !mixedEnvs && (!bakedVersion || bakedVersion === projectVersion)) {
     // `--yes` answers THIS confirm and only this one: the payload matches the
     // repo and every folder agrees, so there is one sensible answer and a
     // scripted loop should not stop on it.
@@ -200,7 +233,19 @@ const confirmPayload = async ({
     return go ? UPLOAD : EXIT;
   }
 
-  logger.warn(`payload is ${version} while project.godot is ${projectVersion}`);
+  // What is wrong is said in the words of what was READ: one stale payload and
+  // three folders exported at different times are not the same accident, and
+  // the line has to be enough on its own to know which one it is.
+  const trouble = mixedVersions
+    ? `the folders hold ${groupByValue(report, 'version')}, not one version to publish` +
+      ` (project.godot says ${projectVersion})`
+    : `payload is ${bakedVersion} while project.godot is ${projectVersion}`;
+
+  logger.warn(trouble);
+
+  if (mixedEnvs) {
+    logger.warn(`and they were exported on different envs: ${groupByValue(report, 'env')}`);
+  }
 
   // ⛔ `--yes` deliberately does NOT reach here. A payload that disagrees with the
   // repo is exactly the case where the right answer depends on what the person
@@ -210,9 +255,16 @@ const confirmPayload = async ({
     return EXIT;
   }
 
+  // `version` is what the upload would be LABELLED with: the agreed payload
+  // version, or the repo's when the folders carry none. Naming it on the choice
+  // keeps "upload anyway" from reading as if it shipped that version.
+  const anyway = mixedVersions
+    ? `upload these folders as they are, labelled ${version} ${destination}`
+    : `upload ${version} anyway ${destination}`;
+
   const { choice } = await inquirer.prompt([
     {
-      message: `payload is ${version}, what now?`,
+      message: mixedVersions ? 'folders disagree, what now?' : `payload is ${version}, what now?`,
       name: 'choice',
       type: 'select',
       choices: [
@@ -220,7 +272,7 @@ const confirmPayload = async ({
           name: `fox export ${envChip(env)} on ${targetChip(target)} now, then publish ${projectVersion}`,
           value: EXPORT,
         },
-        { name: `upload ${version} anyway ${destination}`, value: UPLOAD },
+        { name: anyway, value: UPLOAD },
         { name: 'exit', value: EXIT },
       ],
     },
@@ -370,9 +422,29 @@ const isPlaceholder = (value) => typeof value === 'string' && value.startsWith('
 // export folder, show it, and let the answer be the export that would fix it.
 // Returns the version to publish, or null when nothing should be uploaded.
 
-const settleOnPayload = async ({ settings, logger, title, env, target, contentRoot, folders, details, assumeYes }) => {
+// `prepare` is what turns exported files into depot content (on Steam: the
+// macOS .app unfolded out of its archive). It runs before EVERY reading, not
+// once: an export inside the loop lays a fresh archive next to the bundle that
+// the previous run unfolded, and reading the folder without repeating the step
+// reports the OLD bundle — a payload that never agrees, one version bump per
+// attempt, and a loop with no way out.
+const settleOnPayload = async ({
+  settings,
+  logger,
+  title,
+  env,
+  target,
+  contentRoot,
+  folders,
+  details,
+  prepare,
+  assumeYes,
+}) => {
   const projectVersion = readProjectVersion();
-  let report = verifyContent(contentRoot, folders, logger);
+
+  const readFolders = () => (prepare && !prepare() ? null : verifyContent(contentRoot, folders, logger));
+
+  let report = readFolders();
 
   if (!report) {
     return null;
@@ -400,12 +472,15 @@ const settleOnPayload = async ({ settings, logger, title, env, target, contentRo
 
     logger.log(`Running fox export on "${env}" for "${target}"...`);
 
-    if (!(await exportBundle(settings, { forcedEnv: env, forcedTarget: target }))) {
+    // `keepVersion`: this export repairs the payload of the version already
+    // named in the offer above. Bumping would tag a commit per attempt and hand
+    // back a payload that disagrees with the repo all over again.
+    if (!(await exportBundle(settings, { forcedEnv: env, forcedTarget: target, keepVersion: true }))) {
       logger.error('Export failed — nothing uploaded');
       return null;
     }
 
-    report = verifyContent(contentRoot, folders, logger);
+    report = readFolders();
 
     if (!report) {
       return null;
@@ -579,11 +654,6 @@ const publishToSteam = async (settings, { env, store, argBranch, state, assumeYe
 
   steamLogger.log(`Publishing ${core.title} (appId ${appId})`);
 
-  if (!unfoldBundles(absoluteContentRoot, depots, steamLogger)) {
-    steamLogger.error('Publish failed');
-    return;
-  }
-
   const version = await settleOnPayload({
     settings,
     logger: steamLogger,
@@ -598,6 +668,7 @@ const publishToSteam = async (settings, { env, store, argBranch, state, assumeYe
       branch: branch || '(none — build stays unassigned)',
       env: envChip(env),
     },
+    prepare: () => unfoldBundles(absoluteContentRoot, depots, steamLogger),
     assumeYes,
   });
 

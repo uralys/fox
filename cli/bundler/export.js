@@ -498,13 +498,23 @@ const exportedLabel = (presets, env, target) => {
 };
 
 // Two lines on purpose: the identity of the build on one, the destination it is
-// about to fill on the other, arrowed so it reads as a consequence.
-const logBundleBanner = ({ presets, title, bundleId, env, target, version, exportRoot }) => {
+// about to fill on the other, arrowed so it reads as a consequence. They are
+// printed at two different moments, because the destination is only known once
+// env and target are settled: `fox publish` forces both, and a banner printed
+// before that announced the env left behind by the last `fox switch` — "DEMO on
+// ITCH.IO" in the middle of a PROD-on-Steam export.
+const logBundleIdentity = ({ title, bundleId, version }) => {
+  const c = colors.cyan;
+  const r = colors.reset;
+
+  console.log(`${c}├─${r} ${c}●${r} ${BOLD}${title}${r} ${colors.gray}(${bundleId})${r} ${BOLD}v${version}${r}`);
+};
+
+const logBundleDestination = ({ presets, env, target, exportRoot }) => {
   const c = colors.cyan;
   const r = colors.reset;
   const destination = exportRoot ? ` ${colors.gray}-> ${exportRoot}/${r}` : '';
 
-  console.log(`${c}├─${r} ${c}●${r} ${BOLD}${title}${r} ${colors.gray}(${bundleId})${r} ${BOLD}v${version}${r}`);
   console.log(
     `${c}├────>${r}  ${envChip(env)} ${colors.gray}on${r} ${targetChip(target)}${destination} ${exportedLabel(presets, env, target)}`,
   );
@@ -655,7 +665,7 @@ const matchPlatform = (available, asked) => {
   return found.length ? found : [];
 };
 
-const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform } = {}) => {
+const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform, keepVersion } = {}) => {
   const { core: coreConfig, bundles } = settings;
   foxLogger.log('Exporting a bundle...');
 
@@ -714,15 +724,7 @@ const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform 
     return;
   }
 
-  logBundleBanner({
-    presets,
-    title: getTitle(coreConfig),
-    bundleId,
-    env: currentEnv,
-    target: currentTarget,
-    version: readProjectVersion(),
-    exportRoot: exportRootFor(presets, currentEnv, currentTarget),
-  });
+  logBundleIdentity({ title: getTitle(coreConfig), bundleId, version: readProjectVersion() });
 
   const env = forcedEnv || (await inquireEnv(presets, currentEnv, currentTarget));
 
@@ -735,6 +737,8 @@ const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform 
   if (target !== currentTarget) {
     foxLogger.warn(`switching target: ${currentTarget} -> ${target} (override.cfg is rewritten)`);
   }
+
+  logBundleDestination({ presets, env, target, exportRoot: exportRootFor(presets, env, target) });
 
   // ---------
 
@@ -768,13 +772,21 @@ const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform 
 
   let newVersion;
 
-  if (env === 'release') {
+  if (env === 'release' && !keepVersion) {
     newVersion = await tagVersion();
     if (!newVersion) {
       foxLogger.error('Failed during versioning');
       return;
     }
     presets = readPresets();
+  } else if (keepVersion) {
+    // `fox publish` offers this export to REPAIR the payload of a version it
+    // has already named ("then publish 0.26.4"). Bumping here would answer a
+    // different question, tag a commit per attempt, and hand back a payload
+    // that still disagrees with the repo — the very loop this export exists to
+    // close.
+    newVersion = readProjectVersion();
+    foxLogger.log(`re-exporting ${newVersion} for publish (no version bump)`);
   } else {
     newVersion = readProjectVersion();
     foxLogger.log(`env=${env} — skipping version bump (using ${newVersion})`);
