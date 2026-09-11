@@ -153,7 +153,10 @@ const logHeader = (title) => {
 
 // -----------------------------------------------------------------------------
 
-const foxLogger = createLogger({ name: 'Fox', color: 'cyan' });
+// Lowercase, unlike every other tag: this one opens on the command that was
+// typed, right under the 🦊 line naming the mount, and `fox ls` is what the
+// reader ran. The others name a component (`Godot`, `Switch`), not a command.
+const foxLogger = createLogger({ name: 'fox', color: 'cyan' });
 const godotLogger = createLogger({ name: 'Godot', color: 'yellow' });
 const switchLogger = createLogger({ name: 'Switch', color: 'blue' });
 const presetLogger = createLogger({ name: 'Preset', color: 'magenta' });

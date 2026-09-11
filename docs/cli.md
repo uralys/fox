@@ -487,14 +487,31 @@ The reimport is also skipped, with a warning and without failing the command,
 when Godot cannot be resolved: mounting the addon on a machine that only builds
 is a legitimate thing to do.
 
-Every command opens on the mount it is about to work with, so the two versions
-at play are never confused: the CLI's own on the left, the mounted addon's on
-the right.
+Every command opens on the mount it is about to work with. The version on that
+line is the one the GAME runs; the CLI's own is a `fox --version` away, and
+printing both put the same number twice whenever they agreed.
 
 ```txt
-● Fox v2.0.0 ls — addons/fox 2.0.0 (linked)
-● Fox v2.0.0 import — addons/fox 1.9.0 (pinned)
-● Fox v2.0.0 ls — fox (legacy mount)
+🦊 addons/fox 2.0.2
+● fox ls
+```
+
+Only a linked mount is spelled out, with the word the game prints at boot: a
+pinned copy is the normal case, while a linked one follows a checkout rather
+than a release, so the version beside it is whatever that tree holds.
+
+```txt
+🦊 addons/fox 2.0.2 (symlinked)
+● fox ls
+```
+
+A game still on the flat mount predates `plugin.cfg`, so there is no version to
+read and saying so is the useful part. A project with no mount at all gets no
+line at all: the error that follows already names what is missing.
+
+```txt
+🦊 fox (legacy mount)
+● fox ls
 ```
 
 ```sh

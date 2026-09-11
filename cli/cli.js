@@ -196,9 +196,16 @@ const cli = async (yargs, params) => {
 
   // --------
 
+  // The mount is its own line, above the tree: it belongs to the project, not
+  // to the command, and putting it on the `●` line printed the version twice
+  // when the CLI and the addon happened to be on the same one.
   const mountLabel = describeMountLabel();
 
-  foxLogger.log(`v${pkg.version} ${command}${mountLabel ? ` — ${mountLabel}` : ''}`);
+  if (mountLabel) {
+    console.log(`🦊 ${mountLabel}`);
+  }
+
+  foxLogger.log(command);
 
   const defaultConfigPath = path.resolve(process.cwd(), resolveFoxPath(DEFAULT_CONFIG_FILE));
 

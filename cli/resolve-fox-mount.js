@@ -84,13 +84,14 @@ const readMountedVersion = (projectRoot = process.cwd()) => {
 
 // -----------------------------------------------------------------------------
 
-// One line for the CLI header: which mount this project uses, which version it
-// holds, and how it is attached.
+// The line every command opens on: which mount this project uses, and which
+// version it holds. That version is the one the GAME runs, and it is the only
+// one worth reading here; the CLI's own is a `fox --version` away.
 //
-// The CLI version and the mounted version are two different things: a game can
-// sit on a pinned 2.0.0 while the CLI running the command is newer. Printing
-// only the CLI version, as the header used to, hid both that gap and the fact
-// that a linked game follows a checkout rather than a release.
+// Only a linked mount is spelled out, and with the word the game prints at boot.
+// A pinned copy is the normal case and needs no adjective, while a linked one
+// follows a checkout rather than a release: the version beside it is whatever
+// that tree happens to hold.
 const describeMountLabel = (projectRoot = process.cwd()) => {
   const { kind } = describeMount(projectRoot);
 
@@ -101,7 +102,10 @@ const describeMountLabel = (projectRoot = process.cwd()) => {
     return fs.existsSync(legacy) ? `${LEGACY_MOUNT} (legacy mount)` : null;
   }
 
-  return `${ADDON_MOUNT} ${readMountedVersion(projectRoot) ?? 'unknown'} (${kind})`;
+  const version = readMountedVersion(projectRoot) ?? 'unknown';
+  const attachment = kind === LINKED ? ' (symlinked)' : '';
+
+  return `${ADDON_MOUNT} ${version}${attachment}`;
 };
 
 // -----------------------------------------------------------------------------
