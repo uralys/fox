@@ -32,6 +32,21 @@ answered right there. When a branch is given, the build is set live on it; with
 no branch, it stays unassigned and waits for you in Steamworks › SteamPipe ›
 Builds.
 
+### the macOS bundle is unfolded first
+
+The macOS preset exports a `.zip` holding the `.app`, because that is the only
+shape Godot can sign and notarize. A depot, however, ships what it is given: an
+untouched folder puts a single archive in the depot, so the launch option
+`<Game>.app` declared in Steamworks points at nothing, no macOS player can start
+the game, and the checklist line *the default branch includes `<Game>.app`*
+stays unticked whatever branch you set live.
+
+So `fox publish steam` unfolds the archive in place before writing the VDF:
+`unzip` restores the executable bit of the binary, and the archive is removed so
+the depot never carries the same bundle twice. There is no archive left
+afterwards, so running it again changes nothing. An archive holding no `.app` is
+left alone.
+
 ## itch.io, with butler
 
 itch.io has no depots: each folder is pushed to a **channel**, and the channel

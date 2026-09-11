@@ -11,6 +11,7 @@ import shell from 'shelljs';
 import { createLogger, foxLogger } from '../logger.js';
 import { formatStamp, newestMtime, readBakedBundle } from './baked-bundle.js';
 import exportBundle, { envChip, targetChip } from './export.js';
+import unfoldBundles from './macos-bundle.js';
 import { exportRoot, publishableEnvs, publishableTargets, readPublishConfig } from './publish-config.js';
 import createSteamcmdLog from './steamcmd-log.js';
 import { readProjectVersion } from './tag.js';
@@ -577,6 +578,11 @@ const publishToSteam = async (settings, { env, store, argBranch, state, assumeYe
   const absoluteContentRoot = path.resolve(process.cwd(), store.contentRoot || exportRoot(env, 'steam'));
 
   steamLogger.log(`Publishing ${core.title} (appId ${appId})`);
+
+  if (!unfoldBundles(absoluteContentRoot, depots, steamLogger)) {
+    steamLogger.error('Publish failed');
+    return;
+  }
 
   const version = await settleOnPayload({
     settings,
