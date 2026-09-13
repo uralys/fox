@@ -19,6 +19,7 @@ import exportWeb from './bundler/export-web.js';
 import publish from './bundler/publish.js';
 import switchBundle from './bundler/switch.js';
 import { SEMVER_LEVELS, tagVersion } from './bundler/tag.js';
+import generateApng from './generate-apng.js';
 import generateBootSplash from './generate-boot-splash.js';
 import generateIcons from './generate-icons.js';
 import generateScreenshots from './generate-screenshots.js';
@@ -55,6 +56,7 @@ const GENERATE_SPLASHSCREENS = 'generate:splashscreens';
 const GENERATE_BOOT_SPLASH = 'generate:boot-splash';
 const GENERATE_SCREENSHOTS = 'generate:screenshots';
 const GENERATE_STEAM_SCREENSHOTS = 'generate:steam-screenshots';
+const GENERATE_APNG = 'generate:apng';
 const UPDATE_PO_FILES = 'update-po-files';
 
 const RUN_EDITOR = 'run:editor';
@@ -123,6 +125,10 @@ const COMMAND_GROUPS = [
       ],
       [GENERATE_SCREENSHOTS, 'resize all images in a folder to 2560x1600, to match store requirements'],
       [GENERATE_STEAM_SCREENSHOTS, 'resize all images from <source-folder> to 1920x1080 for Steam (flat output)'],
+      [
+        GENERATE_APNG,
+        'turn video clips (files or a folder) into looping animated PNGs, truecolour where a GIF would band (fox generate:apng <clip.mp4 …|folder> [--out] [--fps] [--width] [--duration] [--start])',
+      ],
       [UPDATE_PO_FILES, 'calls msgmerge on all .po files in your project -- experimental setup for avindi'],
     ],
   },
@@ -243,6 +249,15 @@ const cli = async (yargs, params) => {
 
   if (command === LINK) {
     return await link(params);
+  }
+
+  // --------
+
+  // A converter, not a build step: it reads a file the caller names and writes
+  // beside it, so it runs outside any project and before `fox.config.json` is
+  // looked for.
+  if (command === GENERATE_APNG) {
+    return generateApng(params);
   }
 
   // --------

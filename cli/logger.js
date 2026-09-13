@@ -186,6 +186,7 @@ const presetLogger = createLogger({ name: 'Preset', color: 'magenta' });
 const iconsLogger = createLogger({ name: 'Icons', color: 'green' });
 const splashLogger = createLogger({ name: 'Splash', color: 'green' });
 const screenshotsLogger = createLogger({ name: 'Screenshots', color: 'green' });
+const apngLogger = createLogger({ name: 'APNG', color: 'green' });
 const versionLogger = createLogger({ name: 'Version', color: 'blue' });
 const upgradeLogger = createLogger({ name: 'Upgrade', color: 'magenta' });
 const linkLogger = createLogger({ name: 'Link', color: 'magenta' });
@@ -194,6 +195,7 @@ const presetsLogger = createLogger({ name: 'Presets', color: 'gray' });
 // -----------------------------------------------------------------------------
 
 export {
+  apngLogger,
   colors,
   createLogger,
   foxLogger,
