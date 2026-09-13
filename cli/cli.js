@@ -33,6 +33,7 @@ import { ADDON_MOUNT, describeMountLabel, readMountedVersion, resolveFoxPath } f
 import resolveGodotPath from './resolve-godot.js';
 import runGame from './run-game.js';
 import upgrade from './upgrade.js';
+import { verifyChannel } from './verify-channel.js';
 
 // -----------------------------------------------------------------------------
 
@@ -259,8 +260,17 @@ const cli = async (yargs, params) => {
 
   // The executable is global, one per machine, while a mount is per project:
   // `fox upgrade` and `fox link` both repoint it, so the last one run owns it.
-  // Saying nothing when they agree keeps the header to one number; saying it
-  // when they do not is the only warning a mismatched pair ever gets.
+  //
+  // Two things can disagree, and they are not the same question. WHERE each
+  // half comes from is a broken install and stops the command (verify-channel.js
+  // says why); which VERSION two pinned halves hold is a stale one, and a
+  // warning is enough. Asking the version first would let an off-channel pair
+  // through whenever the numbers happened to match, which is exactly how a bare
+  // `npm link` used to pass unnoticed.
+  if (!verifyChannel()) {
+    return;
+  }
+
   const mountedVersion = readMountedVersion();
 
   if (mountedVersion && mountedVersion !== pkg.version) {
