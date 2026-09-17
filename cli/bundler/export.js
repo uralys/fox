@@ -11,6 +11,7 @@ import shell from 'shelljs';
 import { colors, foxLogger, godotLogger } from '../logger.js';
 import resolveGodotPath from '../resolve-godot.js';
 import { readSetting } from './baked-bundle.js';
+import { runBeforeExportHooks } from './hooks.js';
 import ini from './ini.js';
 import { TARGET_CHOICES } from './publish-config.js';
 import { PRESETS_CFG, readPresets, writePresets } from './read-presets.js';
@@ -792,9 +793,29 @@ const exportBundle = async (settings, { forcedEnv, forcedTarget, forcedPlatform,
     foxLogger.log(`env=${env} — skipping version bump (using ${newVersion})`);
   }
 
-  // ---------
+  // --------- the game generates what must agree with THIS build, then we bake
 
   try {
+    // Here and nowhere else. Earlier and `newVersion` does not exist yet, so a
+    // hook stamping a version would stamp the previous one — which is the bug
+    // this exists to remove, reproduced by the fix. Later and the bake has
+    // already started, so a refusal would leave a half-baked tree behind.
+    if (!runBeforeExportHooks(settings, { env, target, platforms, version: newVersion, bundleId })) {
+      foxLogger.error('Aborting run: a "before" hook refused this build');
+      return;
+    }
+
+    // A hook may have rewritten a versioned file, `export_presets.cfg` included.
+    // What we hold in memory predates it, and `writePresets` rewrites the WHOLE
+    // file from that object: without this re-read, the export would silently
+    // undo the hook it just ran.
+    presets = readPresets();
+
+    if (!presets) {
+      foxLogger.error('Failed during reading presets after the "before" hooks');
+      return;
+    }
+
     for (const platform of platforms) {
       const preset = findPreset(presets, platform, env, target);
 

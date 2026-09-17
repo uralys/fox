@@ -191,6 +191,7 @@ const versionLogger = createLogger({ name: 'Version', color: 'blue' });
 const upgradeLogger = createLogger({ name: 'Upgrade', color: 'magenta' });
 const linkLogger = createLogger({ name: 'Link', color: 'magenta' });
 const presetsLogger = createLogger({ name: 'Presets', color: 'gray' });
+const hooksLogger = createLogger({ name: 'Hooks', color: 'blue' });
 
 // -----------------------------------------------------------------------------
 
@@ -200,6 +201,7 @@ export {
   createLogger,
   foxLogger,
   godotLogger,
+  hooksLogger,
   iconsLogger,
   linkLogger,
   logBox,

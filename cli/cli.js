@@ -178,6 +178,11 @@ const getSettings = async (command, defaultConfig) => {
     core: { ...defaultConfig.core, ...config.core },
     bundles: config.bundles,
     publish: { ...defaultConfig.publish, ...config.publish },
+    // Beside `publish` and for the same reason: an export is not only reached by
+    // `fox export`. `fox publish` offers one too, and its `config` block is the
+    // publish one, so a hook read from `config` would never run on the path that
+    // ships. This one is read by name, whatever the command.
+    export: { ...defaultConfig.export, ...config.export },
   };
 };
 

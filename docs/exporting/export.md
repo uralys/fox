@@ -124,3 +124,47 @@ Publishing it to itch is a `butler` channel like the others: add it under
 a playable page, never for a build handed to players. It writes into
 `_build/web/` and never into the preset's `export_path`, so it cannot drop a
 debug page in the folder `fox publish` uploads.
+
+## before hooks: what the game generates for the build
+
+A game often has to **generate something that must agree with the build about to
+leave**: a file stamped with the version, a manifest, an asset pass. Running that
+by hand works until the day nobody thinks about it, and the build ships with the
+previous version's answer inside. Silently, because a stale generated file looks
+exactly like a fresh one.
+
+Declare those commands and `fox export` runs them itself:
+
+```json
+"export": {
+  "before": ["python3 tools/stamp-version.py --apply"]
+}
+```
+
+Each one runs through a shell, from the project root, with the build it is
+generating for in its environment:
+
+```sh
+FOX_ENV=demo  FOX_TARGET=itch  FOX_VERSION=0.26.9
+FOX_PLATFORMS=Web  FOX_BUNDLE_ID=corridors
+```
+
+Their output goes straight to the terminal, and **a non-zero exit aborts the
+export**. That is the point: a hook is there to say "not like that", and one that
+could only warn would be a comment. The abort happens before the first bake, so
+nothing is left behind.
+
+Three things worth knowing:
+
+- **They run after the version is resolved.** On `env=release`, `fox export`
+  bumps the version in the middle of its own run, so a hook reading it any
+  earlier would read the previous one, which is exactly the bug this feature
+  removes.
+- **They may rewrite `export_presets.cfg`.** It is already a baked-then-restored
+  file, so a hook's edit reaches Godot and the tree is clean again afterwards.
+  `fox` re-reads the presets after the hooks for that reason.
+- **They run on the publish path too.** `fox publish` offers to re-export, and
+  the hooks run there as well: the block is read by name, not from the command
+  being run.
+
+A hook must therefore be idempotent, quick, and touch no git state of its own.
