@@ -125,7 +125,8 @@ instead of pinning a copy, so the game rides their working tree:
 
 ```sh
 cd your-game
-fox link ../fox
+fox link                 # follows ../fox, the layout every game of the folder uses
+fox link ../../fox       # or pass the path when your checkout lives elsewhere
 ```
 
 A mount that is already such a symlink is left alone by the installer: it never

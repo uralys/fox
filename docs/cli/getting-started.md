@@ -161,6 +161,7 @@ Commands:
 
   fox link [path-to-fox]        mount your local fox checkout in
                                 addons/fox to follow it live, and reimport
+                                (../fox by default)
 
   fox export                    export a bundle for one of your presets
 

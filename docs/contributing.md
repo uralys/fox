@@ -47,8 +47,17 @@ Clone this repo next to `your-game`, then:
 
 ```sh
 cd your-game
-fox link ../fox     # or, without the CLI:
+fox link            # or, without the CLI:
 ln -s ../../fox/addons/fox addons/fox
+```
+
+`fox link` takes no argument when the checkout sits next to the game, at
+`../fox`: that is the default. A checkout living anywhere else is passed as a
+path, relative to the game or absolute:
+
+```sh
+fox link ../../fox
+fox link /Users/chris/Projects/uralys/gamedev/fox
 ```
 
 The `ln -s` target is relative to the `addons` folder holding it, hence the two

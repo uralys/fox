@@ -104,7 +104,7 @@ const COMMAND_GROUPS = [
       ],
       [
         LINK,
-        `mount your local fox checkout in ${ADDON_MOUNT} and run its CLI, to follow it live (fox link [path-to-fox] [--no-cli] [--no-import] [--no-gitignore])`,
+        `mount your local fox checkout in ${ADDON_MOUNT} and run its CLI, to follow it live (fox link [path-to-fox, ../fox by default] [--no-cli] [--no-import] [--no-gitignore])`,
       ],
     ],
   },

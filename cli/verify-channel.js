@@ -80,7 +80,7 @@ const verifyChannel = (projectRoot = process.cwd()) => {
     return refuse([
       `your \`fox\` runs from a checkout while ${ADDON_MOUNT} is a pinned ${readMountedVersion(projectRoot) ?? 'unknown'} copy`,
       'The CLI and the runtime would come from two different trees.',
-      'Follow your checkout in this project: fox link ../fox',
+      'Follow your checkout in this project: fox link',
       'Or go back to a release: fox upgrade',
     ]);
   }
@@ -89,7 +89,7 @@ const verifyChannel = (projectRoot = process.cwd()) => {
     return refuse([
       `${ADDON_MOUNT} follows a checkout while your \`fox\` is a released version`,
       'The CLI and the runtime would come from two different trees.',
-      'Link the executable too: fox link ../fox',
+      'Link the executable too: fox link',
       'Or go back to a release: fox upgrade',
     ]);
   }
