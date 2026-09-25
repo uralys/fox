@@ -78,18 +78,22 @@ const runGame = (godotPath, params, config) => {
 
   const isIgnoredFolder = (path) => ignoredFolders.some((folder) => path === folder || path.includes(`${folder}/`));
 
+  // chokidar holds one fs.watch handle per directory: dot folders (.git, .godot,
+  // .pnpm-store...) and node_modules must be pruned as directories, or a big
+  // package store alone exhausts the file descriptors (EMFILE).
+  const isPrunedSegment = (segment) => segment === 'node_modules' || (segment.startsWith('.') && segment !== '.');
+  const isInPrunedFolder = (path) => path.split('/').some(isPrunedSegment);
+
   const watcher = chokidar.watch('.', {
     ignored: (path, stats) => {
-      if (isIgnoredFolder(path)) return true;
+      if (isIgnoredFolder(path) || isInPrunedFolder(path)) return true;
 
       if (!stats) return false;
 
       const validExtensions = ['.gd', '.tscn', '.cfg', '.json', '.yml'];
       const isWantedFile = validExtensions.some((ext) => path.endsWith(ext));
 
-      const isInGodotFolder = path.includes('.godot/');
-
-      return stats.isFile() && (!isWantedFile || isInGodotFolder);
+      return stats.isFile() && !isWantedFile;
     },
   });
 
@@ -101,7 +105,7 @@ const runGame = (godotPath, params, config) => {
       ? `${resolutionKey} (${config.resolutions[resolutionKey]})`
       : config.resolution || 'project.godot default',
     watching: '.gd .tscn .cfg .json .yml',
-    ignoring: ignoredFolders.map((folder) => `${folder}/`).join(' '),
+    ignoring: ['node_modules/', '.*/', ...ignoredFolders.map((folder) => `${folder}/`)].join(' '),
     keys: 'r = full restart, ctrl+c = exit',
     hotReload: 'scene reload on file change',
   });
