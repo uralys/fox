@@ -581,6 +581,16 @@ func _strongest_axis_vector() -> Vector2:
 	_strongest_device = best_device
 	return best
 
+# ONE stick's raw vector (strongest device), for a consumer that gives each stick
+# its own meaning (a pointer on the left, a pan on the right) instead of reading
+# the merged 4-way latch.
+func stick_vector(right: bool = false) -> Vector2:
+	var best := Vector2.ZERO
+	for v in (_right_axis_by_device if right else _left_axis_by_device).values():
+		if v.length() > best.length():
+			best = v
+	return best
+
 # How far back `stick_is_releasing` compares, and the drop over that window that
 # counts as a spring-back rather than a hand relaxing. A released stick falls the
 # whole way in a frame or two (measured: 0.85 -> 0.0 in 16ms), while a hand easing
