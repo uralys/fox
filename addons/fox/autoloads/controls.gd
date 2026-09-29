@@ -114,8 +114,9 @@ signal stick_moved(vector: Vector2)
 # POSITION (Godot's JOY_BUTTON_* layout), never by game meaning, so the vocabulary
 # survives across PlayStation / Xbox / Switch / others (Godot maps each pad to the
 # same positions; only the printed labels differ):
-#   button_a / button_b / button_x / button_y / start / shoulder_left /
-#   shoulder_right / trigger_left / trigger_right / stick_left / stick_right.
+#   button_a / button_b / button_x / button_y / start / button_select /
+#   shoulder_left / shoulder_right / trigger_left / trigger_right / stick_left /
+#   stick_right.
 # Keyboard keys are folded onto their nearest device action so the interpreter only
 # ever maps one vocabulary.
 signal button_pressed(action: String)
@@ -472,6 +473,7 @@ func _joypad_button_to_action(button: int) -> String:
 		JOY_BUTTON_X: return 'button_x'
 		JOY_BUTTON_Y: return 'button_y'
 		JOY_BUTTON_START: return 'start'
+		JOY_BUTTON_BACK: return 'button_select'
 		JOY_BUTTON_LEFT_SHOULDER: return 'shoulder_left'
 		JOY_BUTTON_RIGHT_SHOULDER: return 'shoulder_right'
 		JOY_BUTTON_LEFT_STICK: return 'stick_left'
