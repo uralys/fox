@@ -116,7 +116,10 @@ signal stick_moved(vector: Vector2)
 # same positions; only the printed labels differ):
 #   button_a / button_b / button_x / button_y / start / button_select /
 #   shoulder_left / shoulder_right / trigger_left / trigger_right / stick_left /
-#   stick_right.
+#   stick_right / paddle_l4 / paddle_r4 / paddle_l5 / paddle_r5.
+# The paddles are the back grips (Steam Deck L4 / R4 / L5 / R5, Xbox Elite P1-P4).
+# Under Steam Input a game only sees them when the controller layout binds them to
+# the virtual pad's paddles.
 # Keyboard keys are folded onto their nearest device action so the interpreter only
 # ever maps one vocabulary.
 signal button_pressed(action: String)
@@ -478,6 +481,11 @@ func _joypad_button_to_action(button: int) -> String:
 		JOY_BUTTON_RIGHT_SHOULDER: return 'shoulder_right'
 		JOY_BUTTON_LEFT_STICK: return 'stick_left'
 		JOY_BUTTON_RIGHT_STICK: return 'stick_right'
+		# SDL's order on a Steam Deck: right upper, left upper, right lower, left lower.
+		JOY_BUTTON_PADDLE1: return 'paddle_r4'
+		JOY_BUTTON_PADDLE2: return 'paddle_l4'
+		JOY_BUTTON_PADDLE3: return 'paddle_r5'
+		JOY_BUTTON_PADDLE4: return 'paddle_l5'
 	return ''
 
 # ------------------------------------------------------------------------------
