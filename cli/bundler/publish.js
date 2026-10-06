@@ -168,6 +168,7 @@ const confirmPayload = async ({
   version,
   report,
   assumeYes,
+  uploadChosen,
 }) => {
   // The env and the version are read back from the payload whenever the folders
   // carry them, so the chips name what is IN the folders rather than what was
@@ -223,6 +224,13 @@ const confirmPayload = async ({
     // scripted loop should not stop on it.
     if (assumeYes) {
       logger.log(`--yes: uploading ${version} ${destination}`);
+      return UPLOAD;
+    }
+
+    // The export offered below reads "fox export now, then publish": picking it
+    // already answered this question, so the repaired payload goes up unasked.
+    if (uploadChosen) {
+      logger.log(`uploading ${version} ${destination}`);
       return UPLOAD;
     }
 
@@ -516,6 +524,7 @@ const settleOnPayload = async ({
   }
 
   let version = payloadVersion(report) || projectVersion;
+  let uploadChosen = false;
 
   for (;;) {
     const decision = await confirmPayload({
@@ -529,11 +538,14 @@ const settleOnPayload = async ({
       version,
       report,
       assumeYes,
+      uploadChosen,
     });
 
     if (decision !== EXPORT) {
       return decision === UPLOAD ? version : null;
     }
+
+    uploadChosen = true;
 
     logger.log(`Running fox export on "${env}" for "${target}"...`);
 
