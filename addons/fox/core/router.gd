@@ -136,14 +136,22 @@ func _getNavFilePath() -> String:
     _navFilePath = ProjectSettings.globalize_path('res://') + '.nav-state'
   return _navFilePath
 
+# The nav state only serves hot reload. An exported build has no 'editor'
+# feature, and its res:// is the install folder (inside the .app on macOS):
+# writing there would ship the file in the next depot uploaded from that folder.
+func _isNavStatePersisted() -> bool:
+  return OS.has_feature('editor')
+
 func _persistNavState():
-  if not _navState:
+  if not _navState or not _isNavStatePersisted():
     return
   var file = FileAccess.open(_getNavFilePath(), FileAccess.WRITE)
   if file:
     file.store_string(_navState.to_json())
 
 func _loadPersistedNavState():
+  if not _isNavStatePersisted():
+    return null
   var fpath = _getNavFilePath()
   if not FileAccess.file_exists(fpath):
     return null
