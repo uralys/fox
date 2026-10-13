@@ -80,8 +80,12 @@ func _foxVersion() -> String:
 # id with the full game. Key the save file on the demo env so the two variants never
 # share a local file, and each app's Cloud syncs its own save filename. Non-demo envs
 # keep the plain `saved-data.<bundle>.bin` (backward compatible).
+# A run from source (editor binary) adds `.dev`: it shares the `user://` folder that
+# Steam Auto-Cloud watches, and writing the shipped filename outside a Steam launch
+# leaves the Cloud save in a permanent conflict.
 func _recordSuffix(env):
-  return '.demo' if env == DEMO else ''
+  var suffix = '.demo' if env == DEMO else ''
+  return suffix + '.dev' if OS.has_feature('editor') else suffix
 
 # True when the build is aimed at Steam, and therefore when Steam plumbing (the
 # SDK init, the overlay, the Workshop, Cloud) is expected to exist at all. This is
