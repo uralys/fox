@@ -42,6 +42,7 @@ func _ready():
   self.VERSION = ProjectSettings.get_setting('bundle/version')
   self.VERSION_CODE = ProjectSettings.get_setting('bundle/versionCode')
   self.RECORD_PATH = 'user://saved-data.' + self.BUNDLE_ID + _recordSuffix(self.ENV) + '.bin'
+  _seedDevRecord()
 
   self.log('========================================')
   self.log('[🦊 Fox]', _foxVersion())
@@ -86,6 +87,18 @@ func _foxVersion() -> String:
 func _recordSuffix(env):
   var suffix = '.demo' if env == DEMO else ''
   return suffix + '.dev' if OS.has_feature('editor') else suffix
+
+# The first run from source after the `.dev` split would otherwise open on an empty
+# save and a brand new profile. When the `.dev` file is missing, it starts as a copy
+# of the shipped one; the shipped file is only read, never written.
+func _seedDevRecord():
+  if not OS.has_feature('editor') or FileAccess.file_exists(RECORD_PATH):
+    return
+  var shipped = RECORD_PATH.trim_suffix('.dev.bin') + '.bin'
+  if not FileAccess.file_exists(shipped):
+    return
+  var error = DirAccess.copy_absolute(ProjectSettings.globalize_path(shipped), ProjectSettings.globalize_path(RECORD_PATH))
+  self.log('[🦊 Fox] dev save seeded from ' + shipped.get_file() + (' (failed: %d)' % error if error != OK else ''))
 
 # True when the build is aimed at Steam, and therefore when Steam plumbing (the
 # SDK init, the overlay, the Workshop, Cloud) is expected to exist at all. This is
