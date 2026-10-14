@@ -10,7 +10,7 @@ import shell from 'shelljs';
 
 import { createLogger, foxLogger } from '../logger.js';
 import { formatStamp, newestMtime, readBakedBundle } from './baked-bundle.js';
-import exportBundle, { envChip, targetChip } from './export.js';
+import exportBundle, { ALL, envChip, targetChip } from './export.js';
 import unfoldBundles from './macos-bundle.js';
 import { exportRoot, publishableEnvs, publishableTargets, readPublishConfig } from './publish-config.js';
 import createSteamcmdLog from './steamcmd-log.js';
@@ -552,7 +552,11 @@ const settleOnPayload = async ({
     // `keepVersion`: this export repairs the payload of the version already
     // named in the offer above. Bumping would tag a commit per attempt and hand
     // back a payload that disagrees with the repo all over again.
-    if (!(await exportBundle(settings, { forcedEnv: env, forcedTarget: target, keepVersion: true }))) {
+    // `forcedPlatform: ALL`: a store receives every platform of its pair, so a
+    // partial export would upload a payload missing the others.
+    if (
+      !(await exportBundle(settings, { forcedEnv: env, forcedTarget: target, forcedPlatform: ALL, keepVersion: true }))
+    ) {
       logger.error('Export failed — nothing uploaded');
       return null;
     }

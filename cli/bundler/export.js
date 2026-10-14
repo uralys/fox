@@ -24,7 +24,7 @@ import updatePreset from './update-preset.js';
 
 const PROJECT_GODOT = 'project.godot';
 
-const ALL = 'all';
+export const ALL = 'all';
 
 // `Web` sits in the same list as the desktop platforms on purpose: an HTML5 build
 // is a build like any other — it carries a [bundle], it belongs to an env and to a
