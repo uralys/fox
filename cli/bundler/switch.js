@@ -26,6 +26,15 @@ import { getSubtitle, getTitle } from './export.js';
 
 const OVERRIDE_CFG = './override.cfg';
 
+// The feature-tagged keys win over the plain one, so each is overridden.
+const WINDOW_MODE_KEYS = [
+  'window/size/mode',
+  'window/size/mode.macos',
+  'window/size/mode.windows',
+  'window/size/mode.linuxbsd',
+];
+const WINDOW_MODE_WINDOWED = 0;
+
 const PLATFORM_BY_PROCESS = {
   darwin: 'macOS',
   win32: 'Windows Desktop',
@@ -177,6 +186,18 @@ export const writeOverride = (settings, { bundleId, platform, env, target = DEFA
 
   // ---------
 
+  // A debug run is a window next to the editor and the terminal, whatever the
+  // game's project.godot asks of its players. It has to be set here, before the
+  // window exists: switching back to windowed at runtime is lost on macOS, whose
+  // fullscreen transition is still running when the first script executes.
+  if (env === 'debug') {
+    override.display = Object.fromEntries(
+      WINDOW_MODE_KEYS.map((key) => [key, WINDOW_MODE_WINDOWED]),
+    );
+  }
+
+  // ---------
+
   const dataDisplay = {};
   Object.keys(override.bundle).forEach((key) => {
     dataDisplay[`[bundle] ${key}`] = override.bundle[key];
@@ -186,6 +207,9 @@ export const writeOverride = (settings, { bundleId, platform, env, target = DEFA
   });
   if (override.steam) {
     dataDisplay['[steam] initialization/app_id'] = override.steam['initialization/app_id'];
+  }
+  if (override.display) {
+    dataDisplay['[display] window/size/mode'] = 'windowed';
   }
   switchLogger.data(dataDisplay);
 
