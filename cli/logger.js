@@ -33,7 +33,109 @@ const SYMBOLS = {
 // bytes but no columns, so counting it would push every right border out by the
 // length of the colour codes on that line.
 const ANSI = /\x1b\[[0-9;]*m/g;
+const ANSI_TOKEN = /(\x1b\[[0-9;]*m)/;
 const visibleLength = (text) => text.replace(ANSI, '').length;
+
+// -----------------------------------------------------------------------------
+// Every line is cut to the terminal before it is printed: a line wider than the
+// terminal is wrapped by the terminal itself, at column 0, so a box border or a
+// tree gutter lands in the left margin of the next row and the frame breaks.
+// Piped output has no width to read, hence the conventional 80 columns.
+
+const DEFAULT_COLUMNS = 80;
+const MIN_TEXT_WIDTH = 20;
+
+const terminalColumns = () => {
+  const columns = process.stdout.columns || Number.parseInt(process.env.COLUMNS, 10);
+  return columns > 0 ? columns : DEFAULT_COLUMNS;
+};
+
+// The last column is left empty: a terminal that wraps eagerly would otherwise
+// push the newline onto an empty extra row.
+const availableWidth = (used) => Math.max(MIN_TEXT_WIDTH, terminalColumns() - used - 1);
+
+// Word wrap that keeps the colours: a sequence still open at a break is closed
+// at the end of the row and reopened on the next one, so a border printed after
+// the text never inherits it. A word longer than the whole width is split.
+const wrapText = (text, width, indent = '') => {
+  if (visibleLength(text) <= width) {
+    return [text];
+  }
+
+  const rows = [];
+  let row = '';
+  let rowLength = 0;
+  let pending = '';
+  let active = '';
+
+  const breakRow = () => {
+    rows.push(active ? `${row}${colors.reset}` : row);
+    row = `${indent}${active}`;
+    rowLength = indent.length;
+    pending = '';
+  };
+
+  const place = (word) => {
+    if (rowLength + pending.length + word.length <= width) {
+      row += `${pending}${word}`;
+      rowLength += pending.length + word.length;
+      pending = '';
+      return;
+    }
+
+    if (rowLength > indent.length) {
+      breakRow();
+      place(word);
+      return;
+    }
+
+    const chars = Array.from(word);
+    let head = '';
+
+    while (chars.length && rowLength + head.length + chars[0].length <= width) {
+      head += chars.shift();
+    }
+
+    row += head;
+    rowLength += head.length;
+    breakRow();
+
+    if (chars.length) {
+      place(chars.join(''));
+    }
+  };
+
+  for (const part of text.split(ANSI_TOKEN)) {
+    if (ANSI_TOKEN.test(part)) {
+      row += part;
+      active = part === colors.reset ? '' : `${active}${part}`;
+      continue;
+    }
+
+    for (const word of part.split(/( +)/)) {
+      if (!word) {
+        continue;
+      }
+
+      if (word.startsWith(' ')) {
+        pending += word;
+        continue;
+      }
+
+      place(word);
+    }
+  }
+
+  rows.push(row);
+  return rows;
+};
+
+// A wrapped box row keeps the indentation of its line, plus two spaces, so a
+// continuation never reads as a new entry.
+const wrapBoxLine = (line, width) => {
+  const lead = line.replace(ANSI, '').match(/^ */)[0];
+  return wrapText(line, width, `${lead}  `);
+};
 
 // -----------------------------------------------------------------------------
 
@@ -67,14 +169,27 @@ const createLogger = ({ name, color }) => {
   // below it is already qualified by that header, so repeating the tag on each
   // one only pushes the message right. A child-level call arriving first still
   // opens the tree, tag included — nothing can end up orphaned under no header.
+  // A message too long for the terminal continues under itself, behind a `│`
+  // that keeps the tree connected, instead of wrapping back to column 0.
+  const print = (head, message, continued = SYMBOLS.pipe) => {
+    const indent = visibleLength(head);
+    const [first, ...rest] = wrapText(message, availableWidth(indent));
+
+    console.log(`${head}${first}`);
+
+    for (const row of rest) {
+      console.log(`${gutter(continued)}${' '.repeat(indent - 1)}${row}`);
+    }
+  };
+
   const emit = (symbol, decoration, message) => {
     if (!started) {
       started = true;
-      console.log(`${gutter(SYMBOLS.parent)} ${tag} ${decoration}${message}`);
+      print(`${gutter(SYMBOLS.parent)} ${tag} ${decoration}`, message);
       return;
     }
 
-    console.log(`${gutter(symbol)} ${decoration}${message}`);
+    print(`${gutter(symbol)} ${decoration}`, message);
   };
 
   const log = (message) => {
@@ -103,34 +218,26 @@ const createLogger = ({ name, color }) => {
   // closing line rendered as a header would read as the start of a new section.
   const done = (message) => {
     const prefix = started ? '' : `${tag} `;
-    console.log(`${gutter(SYMBOLS.close)} ${colors.green}${SYMBOLS.success}${r}  ${prefix}${message}`);
+    print(`${gutter(SYMBOLS.close)} ${colors.green}${SYMBOLS.success}${r}  ${prefix}`, message, ' ');
     started = false;
   };
 
   const data = (obj) => {
-    const entries = Object.entries(obj);
-    const lines = entries.map(([key, value]) => {
-      const formatted = formatValue(value);
-      return `${key}: ${formatted}`;
-    });
+    // `│  │ ` before the text and ` │` after it: 7 columns of frame.
+    const textWidth = availableWidth(7);
 
-    const maxLen = lines.reduce((max, line) => {
-      const plainLines = line.split('\n');
-      const longest = plainLines.reduce((m, l) => Math.max(m, visibleLength(l)), 0);
-      return Math.max(max, longest);
-    }, 0);
+    const rows = Object.entries(obj)
+      .flatMap(([key, value]) => `${key}: ${formatValue(value)}`.split('\n'))
+      .flatMap((line) => wrapBoxLine(line, textWidth));
 
-    const width = maxLen + 2;
+    const width = rows.reduce((max, row) => Math.max(max, visibleLength(row)), 0) + 2;
     const pipe = `${c}${SYMBOLS.pipe}${r}`;
 
     console.log(`${pipe}  ┌${'─'.repeat(width)}┐`);
 
-    for (const line of lines) {
-      const subLines = line.split('\n');
-      for (const subLine of subLines) {
-        const padding = width - visibleLength(subLine) - 1;
-        console.log(`${pipe}  │ ${subLine}${' '.repeat(Math.max(0, padding))}│`);
-      }
+    for (const row of rows) {
+      const padding = width - visibleLength(row) - 1;
+      console.log(`${pipe}  │ ${row}${' '.repeat(Math.max(0, padding))}│`);
     }
 
     console.log(`${pipe}  └${'─'.repeat(width)}┘`);
@@ -149,16 +256,18 @@ const createLogger = ({ name, color }) => {
 // listing, a new release waiting to be pinned). Colour carries the verdict.
 
 const logBox = (lines, color = colors.white) => {
-  const width = lines.reduce((max, line) => Math.max(max, visibleLength(line)), 0) + 2;
+  // `│ ` before the text and ` │` after it: 4 columns of frame.
+  const rows = lines.flatMap((line) => wrapBoxLine(line, availableWidth(4)));
+  const width = rows.reduce((max, row) => Math.max(max, visibleLength(row)), 0) + 2;
   const edge = (left, right) => `${color}${left}${'─'.repeat(width)}${right}${colors.reset}`;
   const bar = `${color}${SYMBOLS.pipe}${colors.reset}`;
 
   console.log('');
   console.log(edge('┌', '┐'));
 
-  for (const line of lines) {
-    const padding = width - visibleLength(line) - 1;
-    console.log(`${bar} ${line}${' '.repeat(Math.max(0, padding))}${bar}`);
+  for (const row of rows) {
+    const padding = width - visibleLength(row) - 1;
+    console.log(`${bar} ${row}${' '.repeat(Math.max(0, padding))}${bar}`);
   }
 
   console.log(edge('└', '┘'));
